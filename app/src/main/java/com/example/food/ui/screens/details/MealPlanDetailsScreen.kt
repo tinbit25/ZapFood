@@ -36,7 +36,7 @@ fun MealPlanDetailsScreen(
     onNavigateBack: () -> Unit
 ) {
     val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
-    val plan = mealPlans.find { it.mealPlanId == planId } ?: return
+    val plan = mealPlans.find { it.id.toString() == planId } ?: return
 
     var selectedTab by remember { mutableStateOf("Lunch") }
     val tabs = listOf("Overview", "Breakfast", "Lunch", "Dinner", "Extras")
@@ -94,7 +94,7 @@ fun MealPlanDetailsScreen(
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = plan.mealPlanName, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(text = plan.name, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Text(
                 text = "RWF ${"%,.0f".format(plan.price * 1000)}/month", // Assuming price is in 'k' units or adjusting for RWF
                 fontSize = 18.sp,
@@ -221,7 +221,7 @@ fun MealDetailItem(meal: Meal) {
         )
         Spacer(modifier = Modifier.width(16.dp))
         Column {
-            Text(text = meal.mealName, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(text = meal.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",

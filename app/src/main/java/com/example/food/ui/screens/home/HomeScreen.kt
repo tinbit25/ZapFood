@@ -71,7 +71,7 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(mealPlans.take(3)) { plan ->
-                    HottestPlanCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.mealPlanId) })
+                    HottestPlanCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.id.toString()) })
                 }
             }
         }
@@ -97,7 +97,7 @@ fun HomeScreen(
         }
         
         items(mealPlans) { plan ->
-            LargePlanCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.mealPlanId) })
+            LargePlanCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.id.toString()) })
         }
     }
 }

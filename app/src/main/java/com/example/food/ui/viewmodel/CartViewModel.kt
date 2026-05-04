@@ -22,10 +22,10 @@ class CartViewModel : ViewModel() {
 
     fun addMeal(meal: Meal) {
         _cartState.update { state ->
-            val existing = state.meals.find { it.first.mealId == meal.mealId }
+            val existing = state.meals.find { it.first.id == meal.id }
             if (existing != null) {
                 state.copy(meals = state.meals.map { 
-                    if (it.first.mealId == meal.mealId) it.first to it.second + 1 else it 
+                    if (it.first.id == meal.id) it.first to it.second + 1 else it 
                 })
             } else {
                 state.copy(meals = state.meals + (meal to 1))
@@ -35,10 +35,10 @@ class CartViewModel : ViewModel() {
 
     fun addMealPlan(plan: MealPlan) {
         _cartState.update { state ->
-            val existing = state.mealPlans.find { it.first.mealPlanId == plan.mealPlanId }
+            val existing = state.mealPlans.find { it.first.id == plan.id }
             if (existing != null) {
                 state.copy(mealPlans = state.mealPlans.map { 
-                    if (it.first.mealPlanId == plan.mealPlanId) it.first to it.second + 1 else it 
+                    if (it.first.id == plan.id) it.first to it.second + 1 else it 
                 })
             } else {
                 state.copy(mealPlans = state.mealPlans + (plan to 1))
@@ -48,13 +48,13 @@ class CartViewModel : ViewModel() {
 
     fun removeMeal(mealId: String) {
         _cartState.update { state ->
-            state.copy(meals = state.meals.filter { it.first.mealId != mealId })
+            state.copy(meals = state.meals.filter { it.first.id.toString() != mealId })
         }
     }
 
     fun removeMealPlan(planId: String) {
         _cartState.update { state ->
-            state.copy(mealPlans = state.mealPlans.filter { it.first.mealPlanId != planId })
+            state.copy(mealPlans = state.mealPlans.filter { it.first.id.toString() != planId })
         }
     }
     

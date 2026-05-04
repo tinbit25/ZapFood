@@ -6,6 +6,8 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.food.core.util.Resource
+import com.example.food.domain.usecase.AuthUseCase
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
@@ -17,7 +19,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-class AuthViewModel : ViewModel() {
+sealed class AuthState {
+    object Idle : AuthState()
+    object Loading : AuthState()
+    data class Success(val userId: String, val displayName: String?) : AuthState()
+    data class Error(val message: String) : AuthState()
+}
+
+class AuthViewModel(
+    private val authUseCase: AuthUseCase = AuthUseCase()
+) : ViewModel() {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -33,38 +44,29 @@ class AuthViewModel : ViewModel() {
             try {
                 val credentialManager = CredentialManager.create(context)
 
-                // 1. Setup Google ID Option
                 val googleIdOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
                     .setServerClientId(WEB_CLIENT_ID)
                     .setAutoSelectEnabled(true)
                     .build()
 
-                // 2. Create the Request
                 val request = GetCredentialRequest.Builder()
                     .addCredentialOption(googleIdOption)
                     .build()
 
-                // 3. Launch the UI to get the credential
                 val result = credentialManager.getCredential(context, request)
 
-                // 4. Handle the Credential Result
                 val credential = result.credential
                 if (credential is androidx.credentials.CustomCredential &&
                     credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                    try {
-                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                        val idToken = googleIdTokenCredential.idToken
-                        authenticateWithFirebase(idToken)
-                    } catch (e: Exception) {
-                        _authState.value = AuthState.Error("Failed parsing credential")
-                    }
+                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                    authenticateWithFirebase(googleIdTokenCredential.idToken)
                 } else {
                     _authState.value = AuthState.Error("Unexpected credential type")
                 }
 
             } catch (e: GetCredentialCancellationException) {
-                _authState.value = AuthState.Idle // User cancelled
+                _authState.value = AuthState.Idle
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Sign-in failed")
             }
@@ -85,10 +87,7 @@ class AuthViewModel : ViewModel() {
                     photoUrl = user.photoUrl?.toString()
                 )
                 
-                _authState.value = AuthState.Success(
-                    userId = user.uid,
-                    displayName = user.displayName
-                )
+                _authState.value = AuthState.Success(user.uid, user.displayName)
             } else {
                 _authState.value = AuthState.Error("Firebase user is null")
             }
@@ -109,14 +108,11 @@ class AuthViewModel : ViewModel() {
             "email" to email,
             "photoUrl" to photoUrl,
             "lastLogin" to System.currentTimeMillis(),
-            "favoriteCategories" to emptyList<String>(),
-            "orderHistory" to emptyList<String>()
+            "role" to "CUSTOMER" // Default role
         )
 
         try {
-            firestore.collection("users").document(userId)
-                .set(userMap)
-                .await()
+            firestore.collection("users").document(userId).set(userMap).await()
         } catch (e: Exception) {
             e.printStackTrace()
         }
