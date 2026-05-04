@@ -1,23 +1,20 @@
 package com.example.food.ui.screens.menu
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.RestaurantMenu
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.food.ui.components.TopNavBar
 
 @Composable
 fun MenuScreen(
@@ -25,90 +22,87 @@ fun MenuScreen(
     onNavigateToCustom: () -> Unit,
     onNavigateToBrowse: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        TopNavBar(title = "Meal Planning Hub")
+    var selectedTab by remember { mutableIntStateOf(0) }
+    val tabs = listOf("My Meal Plans", "Saved Meal Plans")
 
-        Column(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0F0F0F))
+    ) {
+        // Title
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp)
-                .verticalScroll(rememberScrollState())
+                .fillMaxWidth()
+                .padding(vertical = 24.dp),
+            contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Choose your path",
-                fontSize = 24.sp,
+                text = "Meal Plans",
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                text = "How would you like to plan your meals today?",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp, bottom = 32.dp)
-            )
-
-            HubCard(
-                title = "AI Plan Generator",
-                description = "Let our AI craft a plan based on your health goals.",
-                icon = Icons.Default.AutoAwesome,
-                onClick = onNavigateToAI
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            HubCard(
-                title = "Create Custom Plan",
-                description = "Pick and mix meals from different vendors.",
-                icon = Icons.Default.Build,
-                onClick = onNavigateToCustom
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            HubCard(
-                title = "Browse Vendor Plans",
-                description = "Explore weekly and monthly plans from top chefs.",
-                icon = Icons.Default.RestaurantMenu,
-                onClick = onNavigateToBrowse
+                color = Color.White
             )
         }
-    }
-}
 
-@Composable
-fun HubCard(
-    title: String,
-    description: String,
-    icon: ImageVector,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Row(
-            modifier = Modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                modifier = Modifier.size(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(16.dp)
+        // Tabs
+        TabRow(
+            selectedTabIndex = selectedTab,
+            containerColor = Color.Transparent,
+            contentColor = Color(0xFFF16B24),
+            divider = {},
+            indicator = { tabPositions ->
+                TabRowDefaults.Indicator(
+                    modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                    color = Color.Transparent // We'll handle selection styling in the Tab itself
                 )
             }
-            Spacer(modifier = Modifier.width(20.dp))
-            Column {
-                Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text(text = description, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        ) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTab == index,
+                    onClick = { selectedTab = index },
+                    text = {
+                        Text(
+                            text = title,
+                            fontSize = 14.sp,
+                            color = if (selectedTab == index) Color.White else Color.Gray,
+                            fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                )
+            }
+        }
+
+        // Content
+        Box(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Surface(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clickable { onNavigateToAI() }, // Default to AI or show selection
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color(0xFF1A1A1A)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Create",
+                            tint = Color.White,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Create Meal Plan",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }

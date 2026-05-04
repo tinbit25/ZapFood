@@ -9,55 +9,57 @@ class MealRepository {
     private val mockMeals = listOf(
         Meal(
             mealId = "m1",
-            mealName = "Quinoa Salad",
-            description = "Healthy quinoa with vegetables",
-            imageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&auto=format&fit=crop",
-            calories = 350,
+            mealName = "Butter Chicken",
+            description = "Rich and creamy butter chicken with basmati rice.",
+            imageUrl = "https://images.unsplash.com/photo-1603894527026-267daa770047?w=500&auto=format&fit=crop",
+            calories = 650,
             price = 12.0,
-            vendorName = "Green Leaf Cafe"
+            vendorName = "Master Chef"
         ),
         Meal(
             mealId = "m2",
-            mealName = "Grilled Salmon",
-            description = "Atlantic salmon with asparagus",
-            imageUrl = "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=500&auto=format&fit=crop",
-            calories = 450,
-            price = 18.0,
-            vendorName = "Ocean Delights"
+            mealName = "Chicken Briyani",
+            description = "Fragrant rice with spiced chicken.",
+            imageUrl = "https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?w=500&auto=format&fit=crop",
+            calories = 550,
+            price = 14.0,
+            vendorName = "Master Chef"
         ),
         Meal(
             mealId = "m3",
-            mealName = "Vegan Buddha Bowl",
-            description = "A mix of healthy veggies and tofu",
-            imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop",
-            calories = 400,
-            price = 14.0,
-            vendorName = "The Vegan Spot"
+            mealName = "Spaghetti Bolognese",
+            description = "Classic Italian pasta with beef sauce.",
+            imageUrl = "https://images.unsplash.com/photo-1622973536968-3ead9e780960?w=500&auto=format&fit=crop",
+            calories = 500,
+            price = 15.0,
+            vendorName = "Master Chef"
         )
     )
 
     private val mockMealPlans = listOf(
         MealPlan(
             mealPlanId = "mp1",
-            mealPlanName = "Weight Loss Weekly",
-            description = "A 7-day plan focused on low calorie intake.",
-            imageUrl = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=500&auto=format&fit=crop",
-            type = MealPlanType.WEEKLY,
-            price = 85.0,
-            vendorName = "NutriFit",
+            mealPlanName = "Bachelors Safe Haven",
+            description = "Perfect plan for busy individuals.",
+            imageUrl = "https://images.unsplash.com/photo-1543332164-6e82f355bab7?w=800&auto=format&fit=crop",
+            type = MealPlanType.MONTHLY,
+            price = 350.0,
+            vendorName = "Master Chef",
             meals = mockMeals,
-            nutritionalSummary = NutritionalSummary(2100, 150f, 120f, 60f)
+            nutritionalSummary = NutritionalSummary(1500, 200f, 150f, 80f),
+            mpcode = "KR-BACH-99"
         ),
         MealPlan(
             mealPlanId = "mp2",
-            mealPlanName = "Muscle Gain Monthly",
-            description = "High protein plan for athletes.",
-            imageUrl = "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=500&auto=format&fit=crop",
-            type = MealPlanType.MONTHLY,
-            price = 320.0,
-            vendorName = "PowerEats",
-            meals = mockMeals,
-            nutritionalSummary = NutritionalSummary(3500, 300f, 250f, 100f)
+            mealPlanName = "Maseba's Table",
+            description = "Traditional local delicacies.",
+            imageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&auto=format&fit=crop",
+            type = MealPlanType.WEEKLY,
+            price = 85.0,
+            vendorName = "Abiye Briggs",
+            meals = mockMeals.take(2),
+            nutritionalSummary = NutritionalSummary(1800, 180f, 140f, 70f),
+            mpcode = "KR-MASE-01"
         )
     )
 

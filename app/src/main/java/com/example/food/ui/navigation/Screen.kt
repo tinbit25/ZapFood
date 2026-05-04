@@ -30,4 +30,8 @@ sealed class Screen(val route: String) {
     object MealPlanDetails : Screen("meal_plan_details/{planId}") {
         fun createRoute(planId: String) = "meal_plan_details/$planId"
     }
+
+    // Role-based Dashboards
+    object VendorDashboard : Screen("vendor_dashboard_screen")
+    object AdminDashboard : Screen("admin_dashboard_screen")
 }

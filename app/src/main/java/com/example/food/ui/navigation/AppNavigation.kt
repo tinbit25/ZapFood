@@ -28,6 +28,7 @@ import com.example.food.ui.screens.menu.CustomPlanCreatorScreen
 import com.example.food.ui.screens.cart.CheckoutScreen
 import com.example.food.ui.screens.cart.OrderSuccessScreen
 import com.example.food.ui.screens.details.MealPlanDetailsScreen
+import com.example.food.ui.screens.vendor.VendorDashboardScreen
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -271,8 +272,19 @@ fun AppNavigation(
                 MealPlanDetailsScreen(
                     planId = planId,
                     mealPlanViewModel = mealPlanViewModel,
+                    userViewModel = userViewModel,
                     cartViewModel = cartViewModel,
                     onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(route = Screen.VendorDashboard.route) {
+                VendorDashboardScreen(
+                    onLogout = {
+                        navController.navigate(Screen.Welcome.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
         }

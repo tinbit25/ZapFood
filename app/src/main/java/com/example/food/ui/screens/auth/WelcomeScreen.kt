@@ -35,81 +35,61 @@ fun WelcomeScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
         AsyncImage(
-            model = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1080&auto=format&fit=crop",
+            model = "https://images.unsplash.com/photo-1547573854-74d2a71d0827?q=80&w=1080&auto=format&fit=crop", // Warm dinner atmosphere
             contentDescription = "Welcome Background",
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
 
-        // Gradient Overlay
+        // Dark Gradient Overlay for button readability
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
-                            MaterialTheme.colorScheme.background
-                        ),
-                        startY = 0f,
-                        endY = Float.POSITIVE_INFINITY
+                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
+                        startY = 500f
                     )
                 )
         )
 
-        // Content
+        // Buttons at the bottom
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(24.dp),
             verticalArrangement = Arrangement.Bottom,
-            horizontalAlignment = Alignment.Start
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Welcome to",
-                color = MaterialTheme.colorScheme.onBackground,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Light
-            )
-            Text(
-                text = "Kravinz",
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Discover the best food around you and get it delivered to your doorstep.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 16.sp
-            )
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            PrimaryButton(
-                text = "Log In",
-                onClick = onNavigateToLogin
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            // Secondary button for sign up
+            // Get Started Button (Outlined)
             OutlinedButton(
                 onClick = onNavigateToSignUp,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                border = BorderStroke(1.dp, Color.White),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
+                    containerColor = Color.Black.copy(alpha = 0.3f),
+                    contentColor = Color.White
                 )
             ) {
                 Text(
-                    text = "Sign Up",
+                    text = "Get Started",
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Medium
                 )
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Log in Button (Solid Orange)
+            PrimaryButton(
+                text = "Log in",
+                onClick = onNavigateToLogin,
+                backgroundColor = Color(0xFFF16B24) // Brand Orange
+            )
+            
             Spacer(modifier = Modifier.height(32.dp))
         }
     }

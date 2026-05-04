@@ -1,6 +1,6 @@
 package com.example.food.ui.screens.menu
 
-import androidx.compose.animation.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,8 +27,12 @@ fun AIPlanGeneratorScreen(
         isGenerating = false
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        TopNavBar(title = "AI Plan Generator", onBackClick = onNavigateBack)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(androidx.compose.ui.graphics.Color(0xFF0F0F0F))
+    ) {
+        TopNavBar(title = "AI Generator", onBackClick = onNavigateBack)
 
         Box(
             modifier = Modifier
@@ -40,14 +44,15 @@ fun AIPlanGeneratorScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(64.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = 6.dp
+                        color = androidx.compose.ui.graphics.Color(0xFFF16B24),
+                        strokeWidth = 4.dp
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
-                        text = "Analyzing your preferences...",
+                        text = "Generating your plan...",
                         fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = androidx.compose.ui.graphics.Color.White
                     )
                     Text(
                         text = "Crafting a personalized meal plan just for you.",
@@ -62,19 +67,20 @@ fun AIPlanGeneratorScreen(
                         text = "Plan Ready!",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = androidx.compose.ui.graphics.Color(0xFFF16B24)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "We've created a custom 'Keto Explorer' plan based on your goal to lose weight.",
+                        text = "We've created a personalized plan based on your health goals and dietary preferences.",
                         fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        color = androidx.compose.ui.graphics.Color.LightGray,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(48.dp))
                     PrimaryButton(
                         text = "View Generated Plan",
-                        onClick = { onPlanGenerated("mp1") } // Mock ID
+                        onClick = { onPlanGenerated("mp1") },
+                        backgroundColor = androidx.compose.ui.graphics.Color(0xFFF16B24)
                     )
                 }
             }

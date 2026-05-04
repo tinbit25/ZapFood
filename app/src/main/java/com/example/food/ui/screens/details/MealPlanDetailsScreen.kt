@@ -1,152 +1,234 @@
 package com.example.food.ui.screens.details
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.food.ui.components.PrimaryButton
-import com.example.food.ui.components.TopNavBar
+import com.example.food.ui.viewmodel.UserViewModel
 import com.example.food.ui.viewmodel.MealPlanViewModel
 import com.example.food.ui.viewmodel.CartViewModel
-import com.example.food.data.model.MealPlan
-import com.example.food.data.model.Meal
+import androidx.compose.material3.*
 
 @Composable
 fun MealPlanDetailsScreen(
     planId: String,
     mealPlanViewModel: MealPlanViewModel,
+    userViewModel: UserViewModel,
     cartViewModel: CartViewModel,
     onNavigateBack: () -> Unit
 ) {
     val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
-    val plan = mealPlans.find { it.mealPlanId == planId }
+    val plan = mealPlans.find { it.mealPlanId == planId } ?: return
 
-    if (plan == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-        return
-    }
+    var selectedTab by remember { mutableStateOf("Lunch") }
+    val tabs = listOf("Overview", "Breakfast", "Lunch", "Dinner", "Extras")
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Color(0xFF0F0F0F))
     ) {
-        TopNavBar(title = "Meal Plan Details", onBackClick = onNavigateBack)
+        Box(modifier = Modifier.fillMaxWidth().height(300.dp)) {
+            AsyncImage(
+                model = plan.imageUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            
+            // Back Button
+            IconButton(
+                onClick = onNavigateBack,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.TopStart)
+                    .background(Color.Black.copy(alpha = 0.3f), CircleShape)
+            ) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+            }
+
+            // Vendor Logo Overlay
+            Surface(
+                modifier = Modifier
+                    .size(100.dp)
+                    .align(Alignment.BottomCenter)
+                    .offset(y = 50.dp),
+                shape = CircleShape,
+                color = Color.White,
+                border = BorderStroke(4.dp, Color(0xFF0F0F0F))
+            ) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(8.dp)) {
+                    AsyncImage(
+                        model = "https://img.freepik.com/free-vector/chef-logo-template-design_23-2150702462.jpg", // Mock logo
+                        contentDescription = "Vendor Logo",
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(60.dp))
 
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AsyncImage(
-                model = plan.imageUrl,
-                contentDescription = plan.mealPlanName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(260.dp)
-                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+            Text(text = plan.mealPlanName, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(
+                text = "RWF ${"%,.0f".format(plan.price * 1000)}/month", // Assuming price is in 'k' units or adjusting for RWF
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White
             )
+            Text(text = "by ${plan.vendorName}", fontSize = 14.sp, color = Color.Gray)
 
-            Column(modifier = Modifier.padding(24.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = plan.mealPlanName, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                        Text(text = "${plan.type.name} Plan • ${plan.vendorName}", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
-                    }
-                    Text(text = "$${plan.price}", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Stats Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                StatItem("🍳", "${plan.meals.size} meals")
+                StatItem("🍱", "${plan.nutritionalSummary.totalCalories} kcal")
+                StatItem("🛒", "2.5k Orders")
+                StatItem("📑", "MP Code")
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Tabs
+            ScrollableTabRow(
+                selectedTabIndex = tabs.indexOf(selectedTab),
+                containerColor = Color.Transparent,
+                contentColor = Color(0xFFF16B24),
+                edgePadding = 0.dp,
+                divider = {},
+                indicator = {}
+            ) {
+                tabs.forEach { tab ->
+                    val isSelected = selectedTab == tab
+                    Tab(
+                        selected = isSelected,
+                        onClick = { selectedTab = tab },
+                        text = {
+                            Surface(
+                                color = if (isSelected) Color(0xFFF16B24) else Color(0xFF1A1A1A),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            ) {
+                                Text(
+                                    text = tab,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                    color = if (isSelected) Color.White else Color.Gray,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                    )
                 }
+            }
 
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Text(text = "Nutritional Summary (Daily Average)", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                NutritionalSummaryRow(plan.nutritionalSummary.totalCalories, plan.nutritionalSummary.totalProteins, plan.nutritionalSummary.totalCarbs, plan.nutritionalSummary.totalFats)
+            Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                Text(text = "Included Meals", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                plan.meals.forEach { meal ->
-                    MealItemCard(meal)
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
+            // Meal List
+            plan.meals.forEach { meal ->
+                MealDetailItem(meal)
+                Divider(color = Color(0xFF1A1A1A), thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
             }
         }
 
-        Box(modifier = Modifier.padding(24.dp)) {
-            PrimaryButton(
-                text = "Purchase Plan ($${plan.price})",
-                onClick = { 
-                    cartViewModel.addMealPlan(plan)
-                    onNavigateBack() // Navigate back after adding
+        // Add to Cart and Share Row
+        Row(
+            modifier = Modifier.padding(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                PrimaryButton(
+                    text = "Add to Cart",
+                    onClick = { 
+                        cartViewModel.addMealPlan(plan)
+                        onNavigateBack()
+                    },
+                    backgroundColor = Color(0xFFF16B24)
+                )
+            }
+            
+            // Share Button
+            Surface(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clickable { 
+                        // Simulate sharing and reward points
+                        userViewModel.updateRewardPoints(10)
+                    },
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFF1A1A1A),
+                border = BorderStroke(1.dp, Color.Gray)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.filled.Share,
+                        contentDescription = "Share",
+                        tint = Color.White
+                    )
                 }
-            )
+            }
         }
     }
 }
 
 @Composable
-fun NutritionalSummaryRow(calories: Int, protein: Float, carbs: Float, fat: Float) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        NutrientItem("Calories", "$calories kcal")
-        NutrientItem("Protein", "${protein}g")
-        NutrientItem("Carbs", "${carbs}g")
-        NutrientItem("Fat", "${fat}g")
+fun StatItem(icon: String, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(text = icon, fontSize = 16.sp)
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(text = text, fontSize = 12.sp, color = Color.White)
     }
 }
 
 @Composable
-fun NutrientItem(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        Text(text = label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-@Composable
-fun MealItemCard(meal: Meal) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            AsyncImage(
-                model = meal.imageUrl,
-                contentDescription = meal.mealName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(RoundedCornerShape(8.dp))
+fun MealDetailItem(meal: Meal) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        AsyncImage(
+            model = meal.imageUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(80.dp)
+                .clip(RoundedCornerShape(12.dp))
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column {
+            Text(text = meal.mealName, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+                fontSize = 12.sp,
+                color = Color.Gray,
+                lineHeight = 16.sp
             )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(text = meal.mealName, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Text(text = "${meal.calories} kcal", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
         }
     }
 }

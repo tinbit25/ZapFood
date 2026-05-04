@@ -27,4 +27,14 @@ class UserViewModel(
             }
         }
     }
+
+    fun updateRewardPoints(points: Int) {
+        val currentUser = _user.value ?: return
+        _user.value = currentUser.copy(rewardPoints = currentUser.rewardPoints + points)
+    }
+
+    fun updateRole(newRole: com.example.food.data.model.UserRole) {
+        val currentUser = _user.value ?: return
+        _user.value = currentUser.copy(role = newRole)
+    }
 }

@@ -27,4 +27,20 @@ class MealPlanViewModel(
             }
         }
     }
+
+    // MPCode logic
+    fun generateMPCode(planId: String): String {
+        val plan = _mealPlans.value.find { it.mealPlanId == planId }
+        return plan?.mpcode ?: "MP-${planId.takeLast(4)}-${(1000..9999).random()}"
+    }
+
+    // Prototype Pattern: Clone plan for customization
+    fun clonePlanForEditing(originalPlan: MealPlan, newOwnerId: String): MealPlan {
+        return originalPlan.copy(
+            mealPlanId = "custom-${originalPlan.mealPlanId}-${System.currentTimeMillis()}",
+            mealPlanName = "Custom ${originalPlan.mealPlanName}",
+            ownerId = newOwnerId,
+            mpcode = "" // New plan, no code yet
+        )
+    }
 }
