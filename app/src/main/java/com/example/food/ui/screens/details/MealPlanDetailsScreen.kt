@@ -38,7 +38,7 @@ fun MealPlanDetailsScreen(
     onNavigateBack: () -> Unit
 ) {
     val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
-    val plan = mealPlans.find { it.id.toString() == planId } ?: return
+    val plan = mealPlans.find { it.id == planId } ?: return
 
     var selectedTab by remember { mutableStateOf("Lunch") }
     val tabs = listOf("Overview", "Breakfast", "Lunch", "Dinner", "Extras")

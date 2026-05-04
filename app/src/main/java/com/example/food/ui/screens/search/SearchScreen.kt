@@ -31,12 +31,12 @@ fun SearchScreen(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     
-    val vendorId = UUID.randomUUID()
+    val vendorId = java.util.UUID.randomUUID().toString()
     
     // Placeholder items for search
     val allItems = listOf(
         Meal(
-            id = UUID.randomUUID(),
+            id = java.util.UUID.randomUUID().toString(),
             name = "Classic Cheeseburger",
             description = "Juicy beef patty with cheese",
             price = 8.99,
@@ -46,7 +46,7 @@ fun SearchScreen(
             vendorName = "Burger King"
         ),
         Meal(
-            id = UUID.randomUUID(),
+            id = java.util.UUID.randomUUID().toString(),
             name = "Pepperoni Pizza",
             description = "Crispy crust with pepperoni",
             price = 12.99,
@@ -56,7 +56,7 @@ fun SearchScreen(
             vendorName = "Pizza Hut"
         ),
         Meal(
-            id = UUID.randomUUID(),
+            id = java.util.UUID.randomUUID().toString(),
             name = "Spicy Tuna Roll",
             description = "Fresh tuna with spicy mayo",
             price = 10.50,
@@ -66,7 +66,7 @@ fun SearchScreen(
             vendorName = "Sushi Zen"
         ),
         Meal(
-            id = UUID.randomUUID(),
+            id = java.util.UUID.randomUUID().toString(),
             name = "Chicken Salad",
             description = "Fresh greens with grilled chicken",
             price = 9.99,
@@ -108,7 +108,7 @@ fun SearchScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(filteredItems) { item ->
-                MealSearchItem(meal = item, onClick = { onNavigateToDetails(item.id.toString()) })
+                MealSearchItem(meal = item, onClick = { onNavigateToDetails(item.id) })
             }
             if (filteredItems.isEmpty()) {
                 item {

@@ -1,14 +1,14 @@
 package com.example.food.data.model
 
-import java.util.UUID
+import com.google.firebase.firestore.Exclude
 
 enum class UserRole {
     CUSTOMER, VENDOR, ADMIN
 }
 
 data class User(
-    val id: UUID = UUID.randomUUID(),
-    val userId: String = "", // Firebase UID
+    @get:Exclude val id: String = java.util.UUID.randomUUID().toString(), // Local-only, excluded from Firestore
+    val userId: String = "", // Firebase UID — used for all Firestore identity
     val displayName: String? = null,
     val email: String = "",
     val photoUrl: String? = null,
@@ -18,8 +18,8 @@ data class User(
     val lastLogin: Long = 0,
     val passwordHash: String = "",
     val activeSessionIds: List<String> = emptyList(),
-    
-    // Role-specific extensions (Simplified)
+
+    // Role-specific extensions
     val preferences: List<String> = emptyList(), // For Customer
     val dietaryNeeds: List<String> = emptyList(), // For Customer
     val cuisineType: String = "", // For Vendor

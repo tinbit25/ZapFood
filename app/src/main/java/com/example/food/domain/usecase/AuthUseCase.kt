@@ -31,10 +31,10 @@ class AuthUseCase(
         }
 
         val passwordHash = securityManager.hashPassword(password)
-        val id = UUID.randomUUID()
+        val id = UUID.randomUUID().toString()
         val newUser = User(
             id = id,
-            userId = id.toString(),
+            userId = id,
             displayName = fullName,
             email = email,
             role = role,

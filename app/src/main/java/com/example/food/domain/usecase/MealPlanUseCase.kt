@@ -14,12 +14,12 @@ class MealPlanUseCase(
 
     fun generateMPCode(plan: MealPlan): String {
         return if (plan.mpcode.isNotEmpty()) plan.mpcode 
-        else "MP-${plan.id.toString().takeLast(4)}-${(1000..9999).random()}"
+        else "MP-${plan.id.takeLast(4)}-${(1000..9999).random()}"
     }
 
     fun clonePlanForUser(originalPlan: MealPlan, userId: String): MealPlan {
         return originalPlan.copy(
-            id = UUID.randomUUID(),
+            id = java.util.UUID.randomUUID().toString(),
             name = "Custom ${originalPlan.name}",
             ownerId = userId,
             mpcode = ""

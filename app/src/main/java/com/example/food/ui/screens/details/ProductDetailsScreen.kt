@@ -32,13 +32,13 @@ fun ProductDetailsScreen(
 ) {
     // Mock data for the specific product (In real app, fetch from ViewModel)
     val product = Meal(
-        id = UUID.fromString(productId),
+        id = productId,
         name = "Classic Cheeseburger",
         description = "Juicy beef patty with cheese and premium ingredients.",
         price = 8.99,
         imageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop",
         calories = 650,
-        vendorId = UUID.randomUUID(),
+        vendorId = java.util.UUID.randomUUID().toString(),
         vendorName = "Burger King"
     )
 

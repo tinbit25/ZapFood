@@ -48,13 +48,13 @@ class CartViewModel : ViewModel() {
 
     fun removeMeal(mealId: String) {
         _cartState.update { state ->
-            state.copy(meals = state.meals.filter { it.first.id.toString() != mealId })
+            state.copy(meals = state.meals.filter { it.first.id != mealId })
         }
     }
 
     fun removeMealPlan(planId: String) {
         _cartState.update { state ->
-            state.copy(mealPlans = state.mealPlans.filter { it.first.id.toString() != planId })
+            state.copy(mealPlans = state.mealPlans.filter { it.first.id != planId })
         }
     }
     

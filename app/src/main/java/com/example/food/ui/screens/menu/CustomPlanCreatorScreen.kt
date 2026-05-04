@@ -34,7 +34,7 @@ fun CustomPlanCreatorScreen(
     val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
     val availableMeals = mealPlans.flatMap { it.meals }.distinctBy { it.id }
     
-    var selectedMeals by remember { mutableStateOf(setOf<UUID>()) }
+    var selectedMeals by remember { mutableStateOf(setOf<String>()) }
 
     Column(
         modifier = Modifier

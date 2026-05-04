@@ -3,8 +3,8 @@ package com.example.food.data.model
 import java.util.UUID
 
 data class Vendor(
-    val id: UUID = UUID.randomUUID(),
-    val userId: UUID, // Reference to User.id
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val userId: String, // Reference to User.id
     val businessName: String,
     val description: String,
     val logoUrl: String? = null,

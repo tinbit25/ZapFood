@@ -14,16 +14,16 @@ data class NutritionalSummary(
 )
 
 data class MealPlan(
-    val id: UUID = UUID.randomUUID(),
+    val id: String = java.util.UUID.randomUUID().toString(),
     val name: String,
     val description: String,
     val imageUrl: String,
     val type: MealPlanType,
     val price: Double,
-    val vendorId: UUID,
+    val vendorId: String,
     val vendorName: String,
     val meals: List<Meal> = emptyList(),
     val nutritionalSummary: NutritionalSummary,
     val mpcode: String = "",
-    val ownerId: String = "" // Keep String for Firebase ID or update to UUID if stored locally
+    val ownerId: String = ""
 )
