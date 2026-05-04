@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "11912048812",
+    "project_id": "zapfood-3e913",
+    "storage_bucket": "zapfood-3e913.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:11912048812:android:6779af21c28ee6b5506f09",
+        "android_client_info": {
+          "package_name": "com.example.food"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "11912048812-40ej1rfca529htojv8t0e44uh1o40oet.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.food",
+            "certificate_hash": "b41276eddbbe95bdf4215524cfa830f152a21a98"
+          }
+        },
+        {
+          "client_id": "11912048812-qstohuc1b0mmq3l5sb3bnd7s23r0eurf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjzuQ2n2Lv_Q1tduSYVV7xnqrQPMHLnx4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "11912048812-qstohuc1b0mmq3l5sb3bnd7s23r0eurf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
