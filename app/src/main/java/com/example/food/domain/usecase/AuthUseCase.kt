@@ -9,6 +9,7 @@ import com.example.food.data.repository.AuthRepository
 import com.example.food.data.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
 class AuthUseCase(
@@ -41,35 +42,35 @@ class AuthUseCase(
             passwordHash = passwordHash
         )
         
-        emit(authRepository.registerUser(newUser))
+        emit(authRepository.registerUser(newUser, password))
     }
 
     suspend fun login(email: String, password: String): Flow<Resource<Pair<User, AuthToken>>> = flow {
         emit(Resource.Loading())
-        
-        userRepository.getUserProfile().collect { user ->
-            if (user == null || user.email != email) {
-                emit(Resource.Error("User not found"))
-                return@collect
-            }
+        try {
+            val authResult = com.google.firebase.auth.FirebaseAuth.getInstance()
+                .signInWithEmailAndPassword(email, password)
+                .await()
+            val firebaseUid = authResult.user?.uid
+                ?: run { emit(Resource.Error("Login failed: no user returned")); return@flow }
 
-            if (!securityManager.verifyPassword(password, user.passwordHash)) {
-                emit(Resource.Error("Invalid credentials"))
-                return@collect
-            }
+            // Fetch the Firestore profile for this user
+            val doc = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users").document(firebaseUid).get().await()
+            val user = doc.toObject(User::class.java)
+                ?: run { emit(Resource.Error("User profile not found")); return@flow }
 
-            // Generate Tokens
-            val accessToken = securityManager.generateSimulatedToken(user.userId, user.role.name, 15)
-            val refreshToken = securityManager.generateSimulatedToken(user.userId, user.role.name, 10080) // 7 days
+            val accessToken = securityManager.generateSimulatedToken(firebaseUid, user.role.name, 15)
+            val refreshToken = securityManager.generateSimulatedToken(firebaseUid, user.role.name, 10080)
             val tokens = AuthToken(accessToken, refreshToken, System.currentTimeMillis() + (15 * 60 * 1000))
-            
             securityManager.saveTokens(tokens)
 
-            // Track Session
-            val session = AuthSession(userId = user.userId, expiryTimestamp = tokens.expiryTimestamp)
+            val session = AuthSession(userId = firebaseUid, expiryTimestamp = tokens.expiryTimestamp)
             authRepository.saveSession(session)
 
             emit(Resource.Success(Pair(user, tokens)))
+        } catch (e: Exception) {
+            emit(Resource.Error(e.localizedMessage ?: "Login failed"))
         }
     }
 

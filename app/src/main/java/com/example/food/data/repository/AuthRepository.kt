@@ -10,11 +10,19 @@ class AuthRepository {
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
-    suspend fun registerUser(user: User): Resource<User> {
-        val docId = if (user.userId.isNotEmpty()) user.userId else user.id.toString()
+    suspend fun registerUser(user: User, password: String): Resource<User> {
         return try {
-            firestore.collection("users").document(docId).set(user).await()
-            Resource.Success(user)
+            // Step 1: Create Firebase Auth account — this logs in the new user automatically
+            val authResult = auth.createUserWithEmailAndPassword(user.email, password).await()
+            val firebaseUid = authResult.user?.uid
+                ?: return Resource.Error("Firebase Auth failed: no UID returned")
+
+            // Step 2: Build the Firestore document with the real Firebase UID
+            val userToSave = user.copy(userId = firebaseUid)
+
+            // Step 3: Save profile to Firestore
+            firestore.collection("users").document(firebaseUid).set(userToSave).await()
+            Resource.Success(userToSave)
         } catch (e: Exception) {
             Resource.Error(e.localizedMessage ?: "Registration failed")
         }

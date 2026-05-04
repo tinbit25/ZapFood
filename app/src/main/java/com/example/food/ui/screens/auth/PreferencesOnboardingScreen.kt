@@ -1,14 +1,9 @@
-@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 package com.example.food.ui.screens.auth
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -16,7 +11,6 @@ import androidx.compose.ui.unit.sp
 import com.example.food.ui.components.PreferenceChip
 import com.example.food.ui.components.PrimaryButton
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PreferencesOnboardingScreen(
     onComplete: (List<String>, List<String>) -> Unit
@@ -52,21 +46,30 @@ fun PreferencesOnboardingScreen(
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(vertical = 12.dp)
         )
-        
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            goals.forEach { goal ->
-                PreferenceChip(
-                    text = goal,
-                    isSelected = selectedGoals.contains(goal),
-                    onSelectionChange = { isSelected ->
-                        selectedGoals = if (isSelected) selectedGoals + goal else selectedGoals - goal
+
+        // Manual chip grid - 2 per row (avoids FlowRow API version issues)
+        goals.chunked(2).forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                rowItems.forEach { goal ->
+                    Box(modifier = Modifier.weight(1f)) {
+                        PreferenceChip(
+                            text = goal,
+                            isSelected = selectedGoals.contains(goal),
+                            onSelectionChange = { isSelected ->
+                                selectedGoals = if (isSelected) selectedGoals + goal else selectedGoals - goal
+                            }
+                        )
                     }
-                )
+                }
+                // Fill remaining space if odd number of items
+                if (rowItems.size < 2) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
             }
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -77,21 +80,28 @@ fun PreferencesOnboardingScreen(
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(vertical = 12.dp)
         )
-        
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            diets.forEach { diet ->
-                PreferenceChip(
-                    text = diet,
-                    isSelected = selectedDiets.contains(diet),
-                    onSelectionChange = { isSelected ->
-                        selectedDiets = if (isSelected) selectedDiets + diet else selectedDiets - diet
+
+        diets.chunked(2).forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                rowItems.forEach { diet ->
+                    Box(modifier = Modifier.weight(1f)) {
+                        PreferenceChip(
+                            text = diet,
+                            isSelected = selectedDiets.contains(diet),
+                            onSelectionChange = { isSelected ->
+                                selectedDiets = if (isSelected) selectedDiets + diet else selectedDiets - diet
+                            }
+                        )
                     }
-                )
+                }
+                if (rowItems.size < 2) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
             }
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -105,18 +115,3 @@ fun PreferencesOnboardingScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun FlowRow(
-    modifier: Modifier = Modifier,
-    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
-    content: @Composable FlowRowScope.() -> Unit
-) {
-    androidx.compose.foundation.layout.FlowRow(
-        modifier = modifier,
-        horizontalArrangement = horizontalArrangement,
-        verticalArrangement = verticalArrangement,
-        content = content
-    )
-}
