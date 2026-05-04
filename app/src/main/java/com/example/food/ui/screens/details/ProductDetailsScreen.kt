@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.food.ui.components.PrimaryButton
 import com.example.food.ui.components.TopNavBar
-import com.example.food.ui.screens.home.FoodItem
+import com.example.food.data.model.Meal
 
 @Composable
 fun ProductDetailsScreen(
@@ -46,12 +46,16 @@ fun ProductDetailsScreen(
     onNavigateBack: () -> Unit
 ) {
     // Mock data for the specific product (In real app, fetch from ViewModel)
-    val product = FoodItem(
-        id = productId,
-        name = "Classic Cheeseburger",
-        description = "Juicy beef patty with melted cheese, fresh lettuce, tomato, and our signature sauce on a toasted brioche bun. Served with a side of crispy fries.",
+    val product = Meal(
+        mealId = productId,
+        mealName = "Classic Cheeseburger",
         price = 8.99,
-        imageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop"
+        imageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop",
+        calories = 650,
+        proteins = 35f,
+        carbs = 45f,
+        fats = 30f,
+        vendorName = "Burger King"
     )
 
     var quantity by remember { mutableIntStateOf(1) }
@@ -73,7 +77,7 @@ fun ProductDetailsScreen(
         ) {
             AsyncImage(
                 model = product.imageUrl,
-                contentDescription = product.name,
+                contentDescription = product.mealName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -88,7 +92,7 @@ fun ProductDetailsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = product.name,
+                        text = product.mealName,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground,
@@ -112,7 +116,7 @@ fun ProductDetailsScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = product.description,
+                    text = "Delicious ${product.mealName} prepared by ${product.vendorName}. Contains ${product.calories} calories.",
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 20.sp

@@ -13,8 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.food.ui.components.CustomTextField
-import com.example.food.ui.screens.home.FoodItem
-import com.example.food.ui.screens.home.FoodItemRow
+import com.example.food.data.model.Meal
+import com.example.food.ui.screens.home.MealRow
 
 @Composable
 fun SearchScreen(
@@ -25,13 +25,57 @@ fun SearchScreen(
     
     // Placeholder items for search
     val allItems = listOf(
-        FoodItem("1", "Classic Cheeseburger", "Juicy beef patty with cheese", 8.99, "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop"),
-        FoodItem("2", "Pepperoni Pizza", "Crispy crust with pepperoni", 12.99, "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&auto=format&fit=crop"),
-        FoodItem("3", "Spicy Tuna Roll", "Fresh tuna with spicy mayo", 10.50, "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=500&auto=format&fit=crop"),
-        FoodItem("4", "Chicken Salad", "Fresh greens with grilled chicken", 9.99, "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&auto=format&fit=crop")
+        Meal(
+            mealId = "1",
+            mealName = "Classic Cheeseburger",
+            description = "Juicy beef patty with cheese",
+            price = 8.99,
+            imageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop",
+            calories = 600,
+            proteins = 35f,
+            carbs = 45f,
+            fats = 30f,
+            vendorName = "Burger King"
+        ),
+        Meal(
+            mealId = "2",
+            mealName = "Pepperoni Pizza",
+            description = "Crispy crust with pepperoni",
+            price = 12.99,
+            imageUrl = "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&auto=format&fit=crop",
+            calories = 800,
+            proteins = 25f,
+            carbs = 90f,
+            fats = 35f,
+            vendorName = "Pizza Hut"
+        ),
+        Meal(
+            mealId = "3",
+            mealName = "Spicy Tuna Roll",
+            description = "Fresh tuna with spicy mayo",
+            price = 10.50,
+            imageUrl = "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=500&auto=format&fit=crop",
+            calories = 450,
+            proteins = 20f,
+            carbs = 50f,
+            fats = 15f,
+            vendorName = "Sushi Zen"
+        ),
+        Meal(
+            mealId = "4",
+            mealName = "Chicken Salad",
+            description = "Fresh greens with grilled chicken",
+            price = 9.99,
+            imageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&auto=format&fit=crop",
+            calories = 350,
+            proteins = 40f,
+            carbs = 15f,
+            fats = 12f,
+            vendorName = "Fresh Grill"
+        )
     )
 
-    val filteredItems = allItems.filter { it.name.contains(searchQuery, ignoreCase = true) }
+    val filteredItems = allItems.filter { it.mealName.contains(searchQuery, ignoreCase = true) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -57,7 +101,7 @@ fun SearchScreen(
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             items(filteredItems) { item ->
-                FoodItemRow(item = item, onClick = { onNavigateToDetails(item.id) })
+                MealRow(meal = item, onClick = { onNavigateToDetails(item.mealId) })
             }
             if (filteredItems.isEmpty()) {
                 item {

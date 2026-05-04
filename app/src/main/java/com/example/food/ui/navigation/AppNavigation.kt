@@ -19,7 +19,15 @@ import com.example.food.ui.screens.notifications.NotificationScreen
 import com.example.food.ui.screens.address.AddressScreen
 import com.example.food.ui.screens.orders.OrderHistoryScreen
 import com.example.food.ui.viewmodel.UserViewModel
+import com.example.food.ui.viewmodel.MealPlanViewModel
+import com.example.food.ui.viewmodel.CartViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.food.ui.screens.auth.PreferencesOnboardingScreen
+import com.example.food.ui.screens.menu.AIPlanGeneratorScreen
+import com.example.food.ui.screens.menu.CustomPlanCreatorScreen
+import com.example.food.ui.screens.cart.CheckoutScreen
+import com.example.food.ui.screens.cart.OrderSuccessScreen
+import com.example.food.ui.screens.details.MealPlanDetailsScreen
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -31,7 +39,9 @@ import com.example.food.ui.components.BottomNavBar
 @Composable
 fun AppNavigation(
     navController: NavHostController,
-    userViewModel: UserViewModel = viewModel()
+    userViewModel: UserViewModel = viewModel(),
+    mealPlanViewModel: MealPlanViewModel = viewModel(),
+    cartViewModel: CartViewModel = viewModel()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -67,121 +77,204 @@ fun AppNavigation(
             modifier = Modifier.padding(innerPadding)
         ) {
         
-        composable(route = Screen.Splash.route) {
-            SplashScreen(
-                onNavigateToHome = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+            composable(route = Screen.Splash.route) {
+                SplashScreen(
+                    onNavigateToHome = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToWelcome = {
+                        navController.navigate(Screen.Welcome.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
                     }
-                },
-                onNavigateToWelcome = {
-                    navController.navigate(Screen.Welcome.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+                )
+            }
+            
+            composable(route = Screen.Welcome.route) {
+                WelcomeScreen(
+                    onNavigateToLogin = { navController.navigate(Screen.Login.route) },
+                    onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) }
+                )
+            }
+            
+            composable(route = Screen.Login.route) {
+                LoginScreen(
+                    onNavigateToHome = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) }
+                )
+            }
+            
+            composable(route = Screen.SignUp.route) {
+                SignUpScreen(
+                    onNavigateToOnboarding = {
+                        navController.navigate(Screen.PreferencesOnboarding.route) {
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToLogin = { navController.navigate(Screen.Login.route) }
+                )
+            }
+            
+            composable(route = Screen.PreferencesOnboarding.route) {
+                PreferencesOnboardingScreen(
+                    onComplete = { goals, diets ->
+                        // Save to ViewModel and navigate home
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.PreferencesOnboarding.route) { inclusive = true }
+                        }
                     }
-                }
-            )
-        }
-        
-        composable(route = Screen.Welcome.route) {
-            WelcomeScreen(
-                onNavigateToLogin = { navController.navigate(Screen.Login.route) },
-                onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) }
-            )
-        }
-        
-        composable(route = Screen.Login.route) {
-            LoginScreen(
-                onNavigateToHome = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Welcome.route) { inclusive = true }
+                )
+            }
+            
+            composable(route = Screen.Home.route) {
+                HomeScreen(
+                    userViewModel = userViewModel,
+                    mealPlanViewModel = mealPlanViewModel,
+                    onNavigateToDetails = { productId ->
+                        navController.navigate(Screen.ProductDetails.createRoute(productId))
+                    },
+                    onNavigateToMealPlanDetails = { planId ->
+                        navController.navigate("meal_plan_details/$planId")
+                    },
+                    onNavigateToSearch = {
+                        navController.navigate(Screen.Search.route)
+                    },
+                    onNavigateToNotifications = {
+                        navController.navigate(Screen.Notifications.route)
                     }
-                },
-                onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) }
-            )
-        }
-        
-        composable(route = Screen.SignUp.route) {
-            SignUpScreen(
-                onNavigateToHome = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Welcome.route) { inclusive = true }
-                    }
-                },
-                onNavigateToLogin = { navController.navigate(Screen.Login.route) }
-            )
-        }
-        
-        composable(route = Screen.Home.route) {
-            HomeScreen(
-                userViewModel = userViewModel,
-                onNavigateToDetails = { productId ->
-                    navController.navigate(Screen.ProductDetails.createRoute(productId))
-                },
-                onNavigateToSearch = {
-                    navController.navigate(Screen.Search.route)
-                },
-                onNavigateToNotifications = {
-                    navController.navigate(Screen.Notifications.route)
-                }
-            )
-        }
-        
-        composable(route = Screen.Menu.route) {
-            MenuScreen()
-        }
-        
-        composable(route = Screen.Cart.route) {
-            CartScreen()
-        }
-        
-        composable(route = Screen.Profile.route) {
-            ProfileScreen(
-                userViewModel = userViewModel,
-                onLogout = {
-                    navController.navigate(Screen.Welcome.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                },
-                onNavigateToOrders = { navController.navigate(Screen.OrderHistory.route) },
-                onNavigateToAddresses = { navController.navigate(Screen.Addresses.route) },
-                onNavigateToSettings = { /* Add settings route if needed */ }
-            )
-        }
+                )
+            }
+            
+            composable(route = Screen.Menu.route) {
+                MenuScreen(
+                    onNavigateToAI = { navController.navigate(Screen.AIPlanGenerator.route) },
+                    onNavigateToCustom = { navController.navigate(Screen.CustomPlanCreator.route) },
+                    onNavigateToBrowse = { navController.navigate(Screen.Home.route) }
+                )
+            }
+            
+            composable(route = Screen.AIPlanGenerator.route) {
+                AIPlanGeneratorScreen(
+                    mealPlanViewModel = mealPlanViewModel,
+                    onPlanGenerated = { planId ->
+                        navController.navigate(Screen.MealPlanDetails.createRoute(planId)) {
+                            popUpTo(Screen.AIPlanGenerator.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
 
-        composable(route = Screen.Search.route) {
-            SearchScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToDetails = { productId ->
-                    navController.navigate(Screen.ProductDetails.createRoute(productId))
-                }
-            )
-        }
+            composable(route = Screen.CustomPlanCreator.route) {
+                CustomPlanCreatorScreen(
+                    mealPlanViewModel = mealPlanViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onPlanCreated = {
+                        navController.navigate(Screen.Cart.route) {
+                            popUpTo(Screen.CustomPlanCreator.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+            
+            composable(route = Screen.Cart.route) {
+                CartScreen(
+                    cartViewModel = cartViewModel,
+                    onNavigateToCheckout = { navController.navigate(Screen.Checkout.route) }
+                )
+            }
 
-        composable(route = Screen.Notifications.route) {
-            NotificationScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
+            composable(route = Screen.Checkout.route) {
+                CheckoutScreen(
+                    cartViewModel = cartViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onOrderSuccess = {
+                        navController.navigate(Screen.OrderSuccess.route) {
+                            popUpTo(Screen.Cart.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
 
-        composable(route = Screen.Addresses.route) {
-            AddressScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
+            composable(route = Screen.OrderSuccess.route) {
+                OrderSuccessScreen(
+                    onGoToHome = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    onViewOrders = {
+                        navController.navigate(Screen.OrderHistory.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                )
+            }
+            
+            composable(route = Screen.Profile.route) {
+                ProfileScreen(
+                    userViewModel = userViewModel,
+                    onLogout = {
+                        navController.navigate(Screen.Welcome.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    onNavigateToOrders = { navController.navigate(Screen.OrderHistory.route) },
+                    onNavigateToAddresses = { navController.navigate(Screen.Addresses.route) },
+                    onNavigateToSettings = { /* Add settings route if needed */ }
+                )
+            }
 
-        composable(route = Screen.OrderHistory.route) {
-            OrderHistoryScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-        
-        composable(route = Screen.ProductDetails.route) { backStackEntry ->
-            val productId = backStackEntry.arguments?.getString("productId") ?: ""
-            ProductDetailsScreen(
-                productId = productId,
-                onNavigateBack = { navController.popBackStack() }
-            )
+            composable(route = Screen.Search.route) {
+                SearchScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToDetails = { productId ->
+                        navController.navigate(Screen.ProductDetails.createRoute(productId))
+                    }
+                )
+            }
+
+            composable(route = Screen.Notifications.route) {
+                NotificationScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(route = Screen.Addresses.route) {
+                AddressScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(route = Screen.OrderHistory.route) {
+                OrderHistoryScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            
+            composable(route = Screen.ProductDetails.route) { backStackEntry ->
+                val productId = backStackEntry.arguments?.getString("productId") ?: ""
+                ProductDetailsScreen(
+                    productId = productId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(route = "meal_plan_details/{planId}") { backStackEntry ->
+                val planId = backStackEntry.arguments?.getString("planId") ?: ""
+                MealPlanDetailsScreen(
+                    planId = planId,
+                    mealPlanViewModel = mealPlanViewModel,
+                    cartViewModel = cartViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
     }
-}
 }

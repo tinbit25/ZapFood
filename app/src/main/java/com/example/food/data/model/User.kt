@@ -6,5 +6,7 @@ data class User(
     val email: String? = null,
     val photoUrl: String? = null,
     val favoriteCategories: List<String> = emptyList(),
-    val orderHistory: List<String> = emptyList()
+    val orderHistory: List<String> = emptyList(),
+    val healthGoals: List<String> = emptyList(),
+    val dietaryPreferences: List<String> = emptyList()
 )

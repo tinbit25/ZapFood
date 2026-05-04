@@ -47,7 +47,7 @@ import com.example.food.ui.components.TopNavBar
 
 @Composable
 fun SignUpScreen(
-    onNavigateToHome: () -> Unit,
+    onNavigateToOnboarding: () -> Unit,
     onNavigateToLogin: () -> Unit,
     viewModel: AuthViewModel = viewModel()
 ) {
@@ -56,7 +56,7 @@ fun SignUpScreen(
 
     LaunchedEffect(authState) {
         if (authState is AuthState.Success) {
-            onNavigateToHome()
+            onNavigateToOnboarding()
             viewModel.resetState()
         }
     }
@@ -153,7 +153,7 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(32.dp))
             PrimaryButton(
                 text = "Sign Up",
-                onClick = onNavigateToHome
+                onClick = onNavigateToOnboarding
             )
 
             Spacer(modifier = Modifier.height(16.dp))
