@@ -1,31 +1,20 @@
 package com.example.food.ui.screens.auth
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -33,14 +22,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.BorderStroke
+import com.example.food.data.model.UserRole
 import com.example.food.ui.components.CustomTextField
 import com.example.food.ui.components.PrimaryButton
 import com.example.food.ui.components.TopNavBar
@@ -51,34 +33,33 @@ fun SignUpScreen(
     onNavigateToLogin: () -> Unit,
     viewModel: AuthViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     val authState by viewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
-        if (authState is AuthState.Success) {
+        if (authState is AdvancedAuthState.Success) {
             onNavigateToOnboarding()
-            viewModel.resetState()
         }
     }
+
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var selectedRole by remember { mutableStateOf(UserRole.CUSTOMER) }
     var passwordVisible by remember { mutableStateOf(false) }
-    var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0F0F0F))
     ) {
-        TopNavBar(
-            title = "Sign Up",
-            onBackClick = onNavigateToLogin
-        )
+        TopNavBar(title = "Sign Up", onBackClick = onNavigateToLogin)
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(16.dp))
@@ -86,15 +67,39 @@ fun SignUpScreen(
                 text = "Create Account",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = Color.White
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Sign up to get started",
+                text = "Join Kravinz today",
                 fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.Gray
             )
+            
             Spacer(modifier = Modifier.height(32.dp))
+
+            // Role Selector
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF1A1A1A), RoundedCornerShape(12.dp))
+                    .padding(4.dp)
+            ) {
+                RoleTab(
+                    text = "Customer",
+                    isSelected = selectedRole == UserRole.CUSTOMER,
+                    onClick = { selectedRole = UserRole.CUSTOMER },
+                    modifier = Modifier.weight(1f)
+                )
+                RoleTab(
+                    text = "Vendor",
+                    isSelected = selectedRole == UserRole.VENDOR,
+                    onClick = { selectedRole = UserRole.VENDOR },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             CustomTextField(
                 value = fullName,
@@ -109,9 +114,7 @@ fun SignUpScreen(
                 onValueChange = { email = it },
                 placeholder = "Email Address",
                 leadingIcon = Icons.Default.Email,
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                    keyboardType = KeyboardType.Email
-                )
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -121,13 +124,11 @@ fun SignUpScreen(
                 placeholder = "Password",
                 leadingIcon = Icons.Default.Lock,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                    keyboardType = KeyboardType.Password
-                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
                     val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(imageVector = image, contentDescription = "Toggle password visibility")
+                        Icon(imageVector = image, contentDescription = "Toggle password visibility", tint = Color.Gray)
                     }
                 }
             )
@@ -138,70 +139,87 @@ fun SignUpScreen(
                 onValueChange = { confirmPassword = it },
                 placeholder = "Confirm Password",
                 leadingIcon = Icons.Default.Lock,
-                visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                    keyboardType = KeyboardType.Password
-                ),
-                trailingIcon = {
-                    val image = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
-                    IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                        Icon(imageVector = image, contentDescription = "Toggle password visibility")
-                    }
-                }
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
 
             Spacer(modifier = Modifier.height(32.dp))
+            
             PrimaryButton(
-                text = "Sign Up",
-                onClick = onNavigateToOnboarding
+                text = "Create Account",
+                onClick = { viewModel.register(fullName, email, password, selectedRole) },
+                enabled = email.isNotEmpty() && password == confirmPassword && authState !is AdvancedAuthState.Loading,
+                backgroundColor = Color(0xFFF16B24)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+            
+            val context = LocalContext.current
             OutlinedButton(
                 onClick = { viewModel.signInWithGoogle(context) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
-                )
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF16B24)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFF16B24))
             ) {
-                if (authState is AuthState.Loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.padding(end = 8.dp),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                Text(
-                    text = "Sign Up with Google",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                Icon(
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
                 )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(text = "Sign Up with Google", fontWeight = FontWeight.Bold)
             }
-            if (authState is AuthState.Error) {
+
+            if (authState is AdvancedAuthState.Loading) {
+                Spacer(modifier = Modifier.height(16.dp))
+                CircularProgressIndicator(color = Color(0xFFF16B24))
+            }
+
+            if (authState is AdvancedAuthState.Error) {
                 Text(
-                    text = (authState as AuthState.Error).message,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 8.dp)
+                    text = (authState as AdvancedAuthState.Error).message,
+                    color = Color(0xFFE57373),
+                    modifier = Modifier.padding(top = 16.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(32.dp))
             Row(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "Already have an account? ", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = "Already have an account? ", color = Color.Gray)
                 Text(
                     text = "Log In",
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Color(0xFFF16B24),
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.clickable { onNavigateToLogin() }
                 )
             }
             Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+fun RoleTab(text: String, isSelected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier
+            .height(48.dp)
+            .clickable { onClick() },
+        color = if (isSelected) Color(0xFFF16B24) else Color.Transparent,
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = text,
+                color = if (isSelected) Color.White else Color.Gray,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp
+            )
         }
     }
 }

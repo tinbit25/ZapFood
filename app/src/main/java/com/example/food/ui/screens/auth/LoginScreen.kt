@@ -1,30 +1,19 @@
 package com.example.food.ui.screens.auth
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -32,14 +21,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.BorderStroke
 import com.example.food.ui.components.CustomTextField
 import com.example.food.ui.components.PrimaryButton
 import com.example.food.ui.components.TopNavBar
@@ -48,15 +29,15 @@ import com.example.food.ui.components.TopNavBar
 fun LoginScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToSignUp: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit,
     viewModel: AuthViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     val authState by viewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
-        if (authState is AuthState.Success) {
+        if (authState is AdvancedAuthState.Success) {
             onNavigateToHome()
-            viewModel.resetState()
+            // viewModel.resetState() // Optionally reset or keep state
         }
     }
 
@@ -65,7 +46,9 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0F0F0F))
     ) {
         TopNavBar(title = "Log In")
 
@@ -80,13 +63,13 @@ fun LoginScreen(
                 text = "Welcome Back!",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = Color.White
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Please log in to your account",
                 fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.Gray
             )
             Spacer(modifier = Modifier.height(48.dp))
 
@@ -95,9 +78,7 @@ fun LoginScreen(
                 onValueChange = { email = it },
                 placeholder = "Email Address",
                 leadingIcon = Icons.Default.Email,
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                    keyboardType = KeyboardType.Email
-                )
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -107,13 +88,11 @@ fun LoginScreen(
                 placeholder = "Password",
                 leadingIcon = Icons.Default.Lock,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                    keyboardType = KeyboardType.Password
-                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
                     val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(imageVector = image, contentDescription = "Toggle password visibility")
+                        Icon(imageVector = image, contentDescription = "Toggle password visibility", tint = Color.Gray)
                     }
                 }
             )
@@ -125,47 +104,52 @@ fun LoginScreen(
             ) {
                 Text(
                     text = "Forgot Password?",
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Color(0xFFF16B24),
                     fontWeight = FontWeight.Medium,
-                    modifier = Modifier.clickable { /* Navigate to forgot password */ }
+                    modifier = Modifier.clickable { onNavigateToForgotPassword() }
                 )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+            
             PrimaryButton(
                 text = "Log In",
-                onClick = onNavigateToHome
+                onClick = { viewModel.login(email, password) },
+                enabled = authState !is AdvancedAuthState.Loading,
+                backgroundColor = Color(0xFFF16B24)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+            
+            val context = LocalContext.current
             OutlinedButton(
                 onClick = { viewModel.signInWithGoogle(context) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
-                )
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF16B24)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFF16B24))
             ) {
-                if (authState is AuthState.Loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.padding(end = 8.dp),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                Text(
-                    text = "Sign In with Google",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                Icon(
+                    imageVector = Icons.Default.AccountCircle, // Placeholder for Google Icon
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
                 )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(text = "Sign In with Google", fontWeight = FontWeight.Bold)
             }
-            if (authState is AuthState.Error) {
+
+            if (authState is AdvancedAuthState.Loading) {
+                Spacer(modifier = Modifier.height(16.dp))
+                CircularProgressIndicator(color = Color(0xFFF16B24))
+            }
+
+            if (authState is AdvancedAuthState.Error) {
                 Text(
-                    text = (authState as AuthState.Error).message,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 8.dp)
+                    text = (authState as AdvancedAuthState.Error).message,
+                    color = Color(0xFFE57373),
+                    modifier = Modifier.padding(top = 16.dp)
                 )
             }
 
@@ -174,10 +158,10 @@ fun LoginScreen(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "Don't have an account? ", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = "Don't have an account? ", color = Color.Gray)
                 Text(
                     text = "Sign Up",
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Color(0xFFF16B24),
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.clickable { onNavigateToSignUp() }
                 )

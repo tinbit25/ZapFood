@@ -9,11 +9,14 @@ import com.example.food.ui.screens.auth.LoginScreen
 import com.example.food.ui.screens.auth.SignUpScreen
 import com.example.food.ui.screens.auth.SplashScreen
 import com.example.food.ui.screens.auth.WelcomeScreen
+import com.example.food.ui.screens.auth.ForgotPasswordScreen
+import com.example.food.ui.screens.auth.ResetPasswordScreen
 import com.example.food.ui.screens.cart.CartScreen
 import com.example.food.ui.screens.details.ProductDetailsScreen
 import com.example.food.ui.screens.home.HomeScreen
 import com.example.food.ui.screens.menu.MenuScreen
 import com.example.food.ui.screens.profile.ProfileScreen
+import com.example.food.ui.screens.profile.ProfileEditScreen
 import com.example.food.ui.screens.search.SearchScreen
 import com.example.food.ui.screens.notifications.NotificationScreen
 import com.example.food.ui.screens.address.AddressScreen
@@ -107,7 +110,26 @@ fun AppNavigation(
                             popUpTo(Screen.Welcome.route) { inclusive = true }
                         }
                     },
-                    onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) }
+                    onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
+                    onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) }
+                )
+            }
+
+            composable(route = Screen.ForgotPassword.route) {
+                ForgotPasswordScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(route = Screen.ResetPassword.route) { backStackEntry ->
+                val token = backStackEntry.arguments?.getString("token") ?: ""
+                ResetPasswordScreen(
+                    token = token,
+                    onNavigateToLogin = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.ForgotPassword.route) { inclusive = true }
+                        }
+                    }
                 )
             }
             
@@ -226,9 +248,17 @@ fun AppNavigation(
                             popUpTo(0) { inclusive = true }
                         }
                     },
+                    onNavigateToEdit = { navController.navigate(Screen.ProfileEdit.route) },
                     onNavigateToOrders = { navController.navigate(Screen.OrderHistory.route) },
                     onNavigateToAddresses = { navController.navigate(Screen.Addresses.route) },
                     onNavigateToSettings = { /* Add settings route if needed */ }
+                )
+            }
+
+            composable(route = Screen.ProfileEdit.route) {
+                ProfileEditScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    userViewModel = userViewModel
                 )
             }
 

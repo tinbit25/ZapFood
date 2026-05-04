@@ -8,6 +8,9 @@ sealed class Screen(val route: String) {
     object SignUp : Screen("signup_screen")
     object PreferencesOnboarding : Screen("preferences_onboarding_screen")
     object ForgotPassword : Screen("forgot_password_screen")
+    object ResetPassword : Screen("reset_password_screen/{token}") {
+        fun createRoute(token: String) = "reset_password_screen/$token"
+    }
 
     // Main App Flow
     object Home : Screen("home_screen")
@@ -16,6 +19,7 @@ sealed class Screen(val route: String) {
     object Checkout : Screen("checkout_screen")
     object OrderSuccess : Screen("order_success_screen")
     object Profile : Screen("profile_screen")
+    object ProfileEdit : Screen("profile_edit_screen")
     object Search : Screen("search_screen")
     object Notifications : Screen("notifications_screen")
     object Addresses : Screen("addresses_screen")

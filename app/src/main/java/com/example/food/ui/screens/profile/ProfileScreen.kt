@@ -1,48 +1,37 @@
 package com.example.food.ui.screens.profile
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.food.ui.components.TopNavBar
 import com.example.food.ui.viewmodel.UserViewModel
 import com.example.food.ui.screens.auth.AuthViewModel
+import com.example.food.data.model.UserRole
 
 @Composable
 fun ProfileScreen(
     userViewModel: UserViewModel,
     onLogout: () -> Unit,
+    onNavigateToEdit: () -> Unit,
     onNavigateToOrders: () -> Unit,
     onNavigateToAddresses: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -50,12 +39,17 @@ fun ProfileScreen(
 ) {
     val user by userViewModel.user.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0F0F0F))
+    ) {
         TopNavBar(title = "Profile")
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -69,48 +63,60 @@ fun ProfileScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = user?.displayName ?: "Guest User",
+                text = user?.displayName ?: "Kengfack Sydney",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = Color.White
             )
             Text(
-                text = user?.email ?: "No email provided",
+                text = user?.email ?: "sydney@example.com",
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.Gray
             )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            Surface(
+                color = Color(0xFFF16B24).copy(alpha = 0.1f),
+                shape = CircleShape
+            ) {
+                Text(
+                    text = user?.role?.name ?: "CUSTOMER",
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    fontSize = 12.sp,
+                    color = Color(0xFFF16B24),
+                    fontWeight = FontWeight.Bold
+                )
+            }
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            ProfileMenuItem(
-                icon = Icons.Default.Receipt,
-                title = "My Orders",
-                onClick = onNavigateToOrders
-            )
-            ProfileMenuItem(
-                icon = Icons.Default.CreditCard,
-                title = "Payment Methods",
-                onClick = { /* Implement later */ }
-            )
-            ProfileMenuItem(
-                icon = Icons.Default.LocationOn,
-                title = "Delivery Addresses",
-                onClick = onNavigateToAddresses
-            )
-            ProfileMenuItem(
-                icon = Icons.Default.Settings,
-                title = "Settings",
-                onClick = onNavigateToSettings
-            )
+            ProfileMenuItem(icon = Icons.Default.Edit, title = "Edit Profile", onClick = onNavigateToEdit)
             
-            Spacer(modifier = Modifier.weight(1f))
+            // Common Items
+            ProfileMenuItem(icon = Icons.Default.Receipt, title = "My Orders", onClick = onNavigateToOrders)
+            ProfileMenuItem(icon = Icons.Default.LocationOn, title = "Delivery Addresses", onClick = onNavigateToAddresses)
+            
+            // Role-Specific Items
+            if (user?.role == UserRole.VENDOR) {
+                ProfileMenuItem(icon = Icons.Default.Store, title = "Business Dashboard", onClick = { /* Navigate to Dashboard */ })
+                ProfileMenuItem(icon = Icons.Default.RestaurantMenu, title = "Manage Menu", onClick = { /* Navigate to Menu Management */ })
+            }
+            
+            if (user?.role == UserRole.CUSTOMER) {
+                ProfileMenuItem(icon = Icons.Default.Favorite, title = "Favorite Meals", onClick = { /* Navigate to Favorites */ })
+                ProfileMenuItem(icon = Icons.Default.Stars, title = "Reward Points: ${user?.rewardPoints}", onClick = { /* Show points */ })
+            }
+
+            ProfileMenuItem(icon = Icons.Default.Settings, title = "Settings", onClick = onNavigateToSettings)
+            
+            Spacer(modifier = Modifier.height(32.dp))
             
             ProfileMenuItem(
                 icon = Icons.Default.ExitToApp,
                 title = "Log Out",
                 isDestructive = true,
                 onClick = {
-                    authViewModel.signOut()
+                    authViewModel.logout()
                     onLogout()
                 }
             )
@@ -134,24 +140,27 @@ fun ProfileMenuItem(
                 .clickable { onClick() },
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val color = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-            Icon(imageVector = icon, contentDescription = title, tint = color)
+            val color = if (isDestructive) Color(0xFFE57373) else Color.White
+            val iconColor = if (isDestructive) Color(0xFFE57373) else Color(0xFFF16B24)
+            
+            Icon(imageVector = icon, contentDescription = title, tint = iconColor, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = title,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                color = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
+                color = color,
                 modifier = Modifier.weight(1f)
             )
             if (!isDestructive) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = "Navigate",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = Color.Gray,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+        HorizontalDivider(color = Color.Gray.copy(alpha = 0.2f))
     }
 }
