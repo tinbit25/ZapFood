@@ -1,9 +1,11 @@
 package com.example.food.ui.screens.search
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
@@ -11,10 +13,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.food.ui.components.CustomTextField
 import com.example.food.data.model.Meal
-import com.example.food.ui.screens.home.MealRow
+import java.util.UUID
 
 @Composable
 fun SearchScreen(
@@ -23,61 +31,59 @@ fun SearchScreen(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     
+    val vendorId = UUID.randomUUID()
+    
     // Placeholder items for search
     val allItems = listOf(
         Meal(
-            mealId = "1",
-            mealName = "Classic Cheeseburger",
+            id = UUID.randomUUID(),
+            name = "Classic Cheeseburger",
             description = "Juicy beef patty with cheese",
             price = 8.99,
             imageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop",
             calories = 600,
-            proteins = 35f,
-            carbs = 45f,
-            fats = 30f,
+            vendorId = vendorId,
             vendorName = "Burger King"
         ),
         Meal(
-            mealId = "2",
-            mealName = "Pepperoni Pizza",
+            id = UUID.randomUUID(),
+            name = "Pepperoni Pizza",
             description = "Crispy crust with pepperoni",
             price = 12.99,
             imageUrl = "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&auto=format&fit=crop",
             calories = 800,
-            proteins = 25f,
-            carbs = 90f,
-            fats = 35f,
+            vendorId = vendorId,
             vendorName = "Pizza Hut"
         ),
         Meal(
-            mealId = "3",
-            mealName = "Spicy Tuna Roll",
+            id = UUID.randomUUID(),
+            name = "Spicy Tuna Roll",
             description = "Fresh tuna with spicy mayo",
             price = 10.50,
             imageUrl = "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=500&auto=format&fit=crop",
             calories = 450,
-            proteins = 20f,
-            carbs = 50f,
-            fats = 15f,
+            vendorId = vendorId,
             vendorName = "Sushi Zen"
         ),
         Meal(
-            mealId = "4",
-            mealName = "Chicken Salad",
+            id = UUID.randomUUID(),
+            name = "Chicken Salad",
             description = "Fresh greens with grilled chicken",
             price = 9.99,
             imageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&auto=format&fit=crop",
             calories = 350,
-            proteins = 40f,
-            carbs = 15f,
-            fats = 12f,
+            vendorId = vendorId,
             vendorName = "Fresh Grill"
         )
     )
 
-    val filteredItems = allItems.filter { it.mealName.contains(searchQuery, ignoreCase = true) }
+    val filteredItems = allItems.filter { it.name.contains(searchQuery, ignoreCase = true) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0F0F0F))
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -85,12 +91,12 @@ fun SearchScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onNavigateBack) {
-                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
             }
             CustomTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = "Search...",
+                placeholder = "Search meals...",
                 leadingIcon = Icons.Default.Search,
                 modifier = Modifier.weight(1f)
             )
@@ -98,18 +104,56 @@ fun SearchScreen(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 16.dp)
+            contentPadding = PaddingValues(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(filteredItems) { item ->
-                MealRow(meal = item, onClick = { onNavigateToDetails(item.mealId) })
+                MealSearchItem(meal = item, onClick = { onNavigateToDetails(item.id.toString()) })
             }
             if (filteredItems.isEmpty()) {
                 item {
                     Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(text = "No results found", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = "No results found", color = Color.Gray)
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun MealSearchItem(meal: Meal, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        color = Color(0xFF1A1A1A),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = meal.imageUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(70.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = meal.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = meal.vendorName, fontSize = 12.sp, color = Color.Gray)
+                Text(text = "${meal.calories} kcal", fontSize = 12.sp, color = Color(0xFFF16B24))
+            }
+            Text(
+                text = "RWF ${"%,.0f".format(meal.price * 1000)}",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
         }
     }
 }

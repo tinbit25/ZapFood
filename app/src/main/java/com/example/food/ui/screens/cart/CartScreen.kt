@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,15 +33,19 @@ fun CartScreen(
 ) {
     val cartState by cartViewModel.cartState.collectAsState()
     
-    val deliveryFee = 2.99
-    val total = cartState.subtotal + deliveryFee
+    val deliveryFee = 2000.0 // RWF
+    val total = (cartState.subtotal * 1000) + deliveryFee
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0F0F0F))
+    ) {
         TopNavBar(title = "My Cart")
 
         if (cartState.meals.isEmpty() && cartState.mealPlans.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "Your cart is empty", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = "Your cart is empty", fontSize = 18.sp, color = Color.Gray)
             }
         } else {
             LazyColumn(
@@ -50,36 +55,36 @@ fun CartScreen(
             ) {
                 items(cartState.mealPlans) { (plan, quantity) ->
                     CartItemRow(
-                        name = plan.mealPlanName,
+                        name = plan.name,
                         price = plan.price,
                         imageUrl = plan.imageUrl,
                         quantity = quantity,
                         onIncrease = { cartViewModel.addMealPlan(plan) },
-                        onDecrease = { /* Implement decrease in VM if needed */ }
+                        onDecrease = { /* Implement decrease in VM */ }
                     )
                 }
 
                 items(cartState.meals) { (meal, quantity) ->
                     CartItemRow(
-                        name = meal.mealName,
+                        name = meal.name,
                         price = meal.price,
                         imageUrl = meal.imageUrl,
                         quantity = quantity,
                         onIncrease = { cartViewModel.addMeal(meal) },
-                        onDecrease = { /* Implement decrease in VM if needed */ }
+                        onDecrease = { /* Implement decrease in VM */ }
                     )
                 }
 
                 item {
                     Spacer(modifier = Modifier.height(24.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                    HorizontalDivider(color = Color.Gray.copy(alpha = 0.3f))
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    ReceiptRow("Subtotal", "$${"%.2f".format(cartState.subtotal)}")
+                    ReceiptRow("Subtotal", "RWF ${"%,.0f".format(cartState.subtotal * 1000)}")
                     Spacer(modifier = Modifier.height(8.dp))
-                    ReceiptRow("Delivery Fee", "$${"%.2f".format(deliveryFee)}")
+                    ReceiptRow("Delivery Fee", "RWF ${"%,.0f".format(deliveryFee)}")
                     Spacer(modifier = Modifier.height(8.dp))
-                    ReceiptRow("Total", "$${"%.2f".format(total)}", isTotal = true)
+                    ReceiptRow("Total", "RWF ${"%,.0f".format(total)}", isTotal = true)
                     
                     Spacer(modifier = Modifier.height(32.dp))
                 }
@@ -87,8 +92,9 @@ fun CartScreen(
 
             Box(modifier = Modifier.padding(24.dp)) {
                 PrimaryButton(
-                    text = "Checkout ($${"%.2f".format(total)})",
-                    onClick = onNavigateToCheckout
+                    text = "Checkout | RWF ${"%,.0f".format(total)}",
+                    onClick = onNavigateToCheckout,
+                    backgroundColor = Color(0xFFF16B24)
                 )
             }
         }
@@ -104,11 +110,11 @@ fun CartItemRow(
     onIncrease: () -> Unit,
     onDecrease: () -> Unit
 ) {
-    Card(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        color = Color(0xFF1A1A1A),
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -122,22 +128,22 @@ fun CartItemRow(
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Text(text = "$${price}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text(text = name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = "RWF ${"%,.0f".format(price * 1000)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF16B24))
             }
             
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onDecrease, modifier = Modifier.size(32.dp)) {
-                    Icon(imageVector = Icons.Default.Remove, contentDescription = "Decrease")
+                    Icon(imageVector = Icons.Default.Remove, contentDescription = "Decrease", tint = Color.White)
                 }
-                Text(text = quantity.toString(), fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp))
+                Text(text = quantity.toString(), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(horizontal = 8.dp))
                 IconButton(
                     onClick = onIncrease,
                     modifier = Modifier
                         .size(32.dp)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape)
+                        .background(Color(0xFFF16B24), CircleShape)
                 ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Increase", tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Increase", tint = Color.White)
                 }
             }
         }
@@ -154,13 +160,13 @@ fun ReceiptRow(label: String, amount: String, isTotal: Boolean = false) {
             text = label,
             fontSize = if (isTotal) 18.sp else 14.sp,
             fontWeight = if (isTotal) FontWeight.Bold else FontWeight.Medium,
-            color = if (isTotal) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant
+            color = if (isTotal) Color.White else Color.Gray
         )
         Text(
             text = amount,
             fontSize = if (isTotal) 18.sp else 14.sp,
             fontWeight = if (isTotal) FontWeight.Bold else FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onBackground
+            color = if (isTotal) Color(0xFFF16B24) else Color.White
         )
     }
 }

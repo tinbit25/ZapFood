@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleLayer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -192,7 +191,7 @@ fun HottestPlanCard(plan: MealPlan, onClick: () -> Unit) {
                     .padding(16.dp)
             ) {
                 Text(text = plan.vendorName, fontSize = 10.sp, color = Color.LightGray)
-                Text(text = plan.mealPlanName, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = plan.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(text = "🍳 ${plan.meals.size} meals", fontSize = 10.sp, color = Color.White)
@@ -253,7 +252,7 @@ fun LargePlanCard(plan: MealPlan, onClick: () -> Unit) {
                     .padding(20.dp)
             ) {
                 Text(text = plan.vendorName, fontSize = 12.sp, color = Color.LightGray)
-                Text(text = plan.mealPlanName, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = plan.name, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(text = "🍳 ${plan.meals.size} meals", fontSize = 12.sp, color = Color.White)

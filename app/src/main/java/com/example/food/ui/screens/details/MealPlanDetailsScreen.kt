@@ -1,8 +1,8 @@
 package com.example.food.ui.screens.details
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.BorderStroke
+import com.example.food.data.model.Meal
+import com.example.food.data.model.MealPlan
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -189,7 +191,7 @@ fun MealPlanDetailsScreen(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = androidx.compose.material.icons.filled.Share,
+                        imageVector = Icons.Default.Share,
                         contentDescription = "Share",
                         tint = Color.White
                     )

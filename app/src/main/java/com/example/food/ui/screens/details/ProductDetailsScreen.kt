@@ -1,17 +1,7 @@
 package com.example.food.ui.screens.details
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,18 +9,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,6 +23,7 @@ import coil.compose.AsyncImage
 import com.example.food.ui.components.PrimaryButton
 import com.example.food.ui.components.TopNavBar
 import com.example.food.data.model.Meal
+import java.util.UUID
 
 @Composable
 fun ProductDetailsScreen(
@@ -47,14 +32,13 @@ fun ProductDetailsScreen(
 ) {
     // Mock data for the specific product (In real app, fetch from ViewModel)
     val product = Meal(
-        mealId = productId,
-        mealName = "Classic Cheeseburger",
+        id = UUID.fromString(productId),
+        name = "Classic Cheeseburger",
+        description = "Juicy beef patty with cheese and premium ingredients.",
         price = 8.99,
         imageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop",
         calories = 650,
-        proteins = 35f,
-        carbs = 45f,
-        fats = 30f,
+        vendorId = UUID.randomUUID(),
         vendorName = "Burger King"
     )
 
@@ -63,10 +47,10 @@ fun ProductDetailsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Color(0xFF0F0F0F))
     ) {
         TopNavBar(
-            title = "Details",
+            title = "Meal Details",
             onBackClick = onNavigateBack
         )
 
@@ -77,7 +61,7 @@ fun ProductDetailsScreen(
         ) {
             AsyncImage(
                 model = product.imageUrl,
-                contentDescription = product.mealName,
+                contentDescription = product.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -92,17 +76,17 @@ fun ProductDetailsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = product.mealName,
+                        text = product.name,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        color = Color.White,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = "$${product.price}",
-                        fontSize = 24.sp,
+                        text = "RWF ${"%,.0f".format(product.price * 1000)}",
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = Color(0xFFF16B24)
                     )
                 }
                 
@@ -112,13 +96,13 @@ fun ProductDetailsScreen(
                     text = "Description",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = Color.White
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Delicious ${product.mealName} prepared by ${product.vendorName}. Contains ${product.calories} calories.",
+                    text = "Delicious ${product.name} prepared by ${product.vendorName}. Contains ${product.calories} calories and premium ingredients.",
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.Gray,
                     lineHeight = 20.sp
                 )
             }
@@ -135,38 +119,39 @@ fun ProductDetailsScreen(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
+                    .background(Color(0xFF1A1A1A), RoundedCornerShape(16.dp))
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 IconButton(
                     onClick = { if (quantity > 1) quantity-- },
                     modifier = Modifier.size(36.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.Remove, contentDescription = "Decrease", tint = MaterialTheme.colorScheme.onBackground)
+                    Icon(imageVector = Icons.Default.Remove, contentDescription = "Decrease", tint = Color.White)
                 }
                 Text(
                     text = quantity.toString(),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    color = Color.White,
                     modifier = Modifier.padding(horizontal = 12.dp)
                 )
                 IconButton(
                     onClick = { quantity++ },
                     modifier = Modifier
                         .size(36.dp)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape)
+                        .background(Color(0xFFF16B24), CircleShape)
                 ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Increase", tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Increase", tint = Color.White)
                 }
             }
             
             Spacer(modifier = Modifier.width(16.dp))
             
             PrimaryButton(
-                text = "Add to Cart | $${"%.2f".format(product.price * quantity)}",
+                text = "Add to Cart",
                 onClick = { /* Add to cart */ },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                backgroundColor = Color(0xFFF16B24)
             )
         }
     }
