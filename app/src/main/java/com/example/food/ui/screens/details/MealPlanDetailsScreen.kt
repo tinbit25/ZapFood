@@ -11,8 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.BorderStroke
-import com.example.food.data.model.Meal
-import com.example.food.data.model.MealPlan
+import com.example.food.data.model.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,21 +26,32 @@ import com.example.food.ui.components.PrimaryButton
 import com.example.food.ui.viewmodel.UserViewModel
 import com.example.food.ui.viewmodel.MealPlanViewModel
 import com.example.food.ui.viewmodel.CartViewModel
+import com.example.food.ui.viewmodel.MealViewModel
 import androidx.compose.material3.*
+import com.example.food.core.util.Resource
 
 @Composable
 fun MealPlanDetailsScreen(
     planId: String,
     mealPlanViewModel: MealPlanViewModel,
+    mealViewModel: MealViewModel,
     userViewModel: UserViewModel,
     cartViewModel: CartViewModel,
     onNavigateBack: () -> Unit
 ) {
-    val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
-    val plan = mealPlans.find { it.id == planId } ?: return
+    val discoverPlansState by mealPlanViewModel.discoverPlansState.collectAsState()
+    val myPlansState by mealPlanViewModel.myPlansState.collectAsState()
+    
+    val allPlans = mutableListOf<MealPlan>()
+    (discoverPlansState as? Resource.Success)?.data?.let { allPlans.addAll(it) }
+    (myPlansState as? Resource.Success)?.data?.let { allPlans.addAll(it) }
 
-    var selectedTab by remember { mutableStateOf("Lunch") }
-    val tabs = listOf("Overview", "Breakfast", "Lunch", "Dinner", "Extras")
+    val plan = allPlans.find { it.id == planId } ?: return
+
+    val mealsState by mealViewModel.mealsState.collectAsState()
+    val allAvailableMeals = (mealsState as? Resource.Success)?.data ?: emptyList()
+
+    var selectedDay by remember { mutableStateOf(Day.MONDAY) }
 
     Column(
         modifier = Modifier
@@ -56,7 +66,6 @@ fun MealPlanDetailsScreen(
                 modifier = Modifier.fillMaxSize()
             )
             
-            // Back Button
             IconButton(
                 onClick = onNavigateBack,
                 modifier = Modifier
@@ -66,28 +75,7 @@ fun MealPlanDetailsScreen(
             ) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
             }
-
-            // Vendor Logo Overlay
-            Surface(
-                modifier = Modifier
-                    .size(100.dp)
-                    .align(Alignment.BottomCenter)
-                    .offset(y = 50.dp),
-                shape = CircleShape,
-                color = Color.White,
-                border = BorderStroke(4.dp, Color(0xFF0F0F0F))
-            ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(8.dp)) {
-                    AsyncImage(
-                        model = "https://img.freepik.com/free-vector/chef-logo-template-design_23-2150702462.jpg", // Mock logo
-                        contentDescription = "Vendor Logo",
-                        contentScale = ContentScale.Fit
-                    )
-                }
-            }
         }
-
-        Spacer(modifier = Modifier.height(60.dp))
 
         Column(
             modifier = Modifier
@@ -96,9 +84,10 @@ fun MealPlanDetailsScreen(
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(24.dp))
             Text(text = plan.name, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Text(
-                text = "RWF ${"%,.0f".format(plan.price * 1000)}/month", // Assuming price is in 'k' units or adjusting for RWF
+                text = "RWF ${"%,.0f".format(plan.price * 1000)}/month",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color.White
@@ -112,28 +101,28 @@ fun MealPlanDetailsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatItem("🍳", "${plan.meals.size} meals")
+                val totalMealsCount = plan.meals.values.sumOf { it.size }
+                StatItem("🍳", "$totalMealsCount meals")
                 StatItem("🍱", "${plan.nutritionalSummary.totalCalories} kcal")
-                StatItem("🛒", "2.5k Orders")
                 StatItem("📑", "MP Code")
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Tabs
+            // Day Selector
             ScrollableTabRow(
-                selectedTabIndex = tabs.indexOf(selectedTab),
+                selectedTabIndex = Day.values().indexOf(selectedDay),
                 containerColor = Color.Transparent,
                 contentColor = Color(0xFFF16B24),
                 edgePadding = 0.dp,
                 divider = {},
                 indicator = {}
             ) {
-                tabs.forEach { tab ->
-                    val isSelected = selectedTab == tab
+                Day.values().forEach { day ->
+                    val isSelected = selectedDay == day
                     Tab(
                         selected = isSelected,
-                        onClick = { selectedTab = tab },
+                        onClick = { selectedDay = day },
                         text = {
                             Surface(
                                 color = if (isSelected) Color(0xFFF16B24) else Color(0xFF1A1A1A),
@@ -141,7 +130,7 @@ fun MealPlanDetailsScreen(
                                 modifier = Modifier.padding(vertical = 8.dp)
                             ) {
                                 Text(
-                                    text = tab,
+                                    text = day.name.lowercase().replaceFirstChar { it.uppercase() }.take(3),
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                     color = if (isSelected) Color.White else Color.Gray,
                                     fontSize = 14.sp
@@ -154,14 +143,22 @@ fun MealPlanDetailsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Meal List
-            plan.meals.forEach { meal ->
-                MealDetailItem(meal)
-                Divider(color = Color(0xFF1A1A1A), thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
+            // Meal List for Selected Day
+            val mealIds = plan.meals[selectedDay] ?: emptyList()
+            if (mealIds.isEmpty()) {
+                Text(text = "No meals planned for this day", color = Color.Gray, modifier = Modifier.padding(32.dp))
+            } else {
+                mealIds.forEach { mealId ->
+                    val meal = allAvailableMeals.find { it.id == mealId }
+                    if (meal != null) {
+                        MealDetailItem(meal)
+                        Divider(color = Color(0xFF1A1A1A), thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
+                    }
+                }
             }
         }
 
-        // Add to Cart and Share Row
+        // Action Buttons
         Row(
             modifier = Modifier.padding(20.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -177,12 +174,10 @@ fun MealPlanDetailsScreen(
                 )
             }
             
-            // Share Button
             Surface(
                 modifier = Modifier
                     .size(56.dp)
                     .clickable { 
-                        // Simulate sharing and reward points
                         userViewModel.updateRewardPoints(10)
                     },
                 shape = RoundedCornerShape(12.dp),
@@ -190,11 +185,7 @@ fun MealPlanDetailsScreen(
                 border = BorderStroke(1.dp, Color.Gray)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = "Share",
-                        tint = Color.White
-                    )
+                    Icon(imageVector = Icons.Default.Share, contentDescription = "Share", tint = Color.White)
                 }
             }
         }
@@ -224,12 +215,14 @@ fun MealDetailItem(meal: Meal) {
         Spacer(modifier = Modifier.width(16.dp))
         Column {
             Text(text = meal.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "${meal.calories} kcal | P: ${meal.protein}g | C: ${meal.carbs}g | F: ${meal.fats}g", fontSize = 11.sp, color = Color(0xFFF16B24))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+                text = meal.description,
                 fontSize = 12.sp,
                 color = Color.Gray,
-                lineHeight = 16.sp
+                lineHeight = 16.sp,
+                maxLines = 2
             )
         }
     }

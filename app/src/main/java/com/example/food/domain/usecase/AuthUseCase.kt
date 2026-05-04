@@ -22,12 +22,23 @@ class AuthUseCase(
     suspend fun register(fullName: String, email: String, password: String, role: UserRole): Flow<Resource<User>> = flow {
         emit(Resource.Loading())
         
-        if (!Validator.validateEmail(email)) {
-            emit(Resource.Error("Invalid email"))
+        val sanitizedName = Validator.sanitizeInput(fullName)
+        val sanitizedEmail = Validator.sanitizeInput(email)
+        
+        if (sanitizedName.isEmpty()) {
+            emit(Resource.Error("Full name is required"))
+            return@flow
+        }
+        if (!Validator.validateEmail(sanitizedEmail)) {
+            emit(Resource.Error("Invalid email address"))
+            return@flow
+        }
+        if (password.isEmpty()) {
+            emit(Resource.Error("Password is required"))
             return@flow
         }
         if (!Validator.validatePassword(password)) {
-            emit(Resource.Error("Password too weak"))
+            emit(Resource.Error("Password too weak (8+ chars, upper, lower, number, special)"))
             return@flow
         }
 
@@ -36,8 +47,8 @@ class AuthUseCase(
         val newUser = User(
             id = id,
             userId = id,
-            displayName = fullName,
-            email = email,
+            displayName = sanitizedName,
+            email = sanitizedEmail,
             role = role,
             passwordHash = passwordHash
         )
@@ -47,9 +58,16 @@ class AuthUseCase(
 
     suspend fun login(email: String, password: String): Flow<Resource<Pair<User, AuthToken>>> = flow {
         emit(Resource.Loading())
+        
+        val sanitizedEmail = Validator.sanitizeInput(email)
+        if (sanitizedEmail.isEmpty() || password.isEmpty()) {
+            emit(Resource.Error("Email and password are required"))
+            return@flow
+        }
+
         try {
             val authResult = com.google.firebase.auth.FirebaseAuth.getInstance()
-                .signInWithEmailAndPassword(email, password)
+                .signInWithEmailAndPassword(sanitizedEmail, password)
                 .await()
             val firebaseUid = authResult.user?.uid
                 ?: run { emit(Resource.Error("Login failed: no user returned")); return@flow }
@@ -60,12 +78,13 @@ class AuthUseCase(
             val user = doc.toObject(User::class.java)
                 ?: run { emit(Resource.Error("User profile not found")); return@flow }
 
+            // Access token (15 mins), Refresh token (7 days)
             val accessToken = securityManager.generateSimulatedToken(firebaseUid, user.role.name, 15)
             val refreshToken = securityManager.generateSimulatedToken(firebaseUid, user.role.name, 10080)
             val tokens = AuthToken(accessToken, refreshToken, System.currentTimeMillis() + (15 * 60 * 1000))
-            securityManager.saveTokens(tokens)
-
+            
             val session = AuthSession(userId = firebaseUid, expiryTimestamp = tokens.expiryTimestamp)
+            securityManager.saveTokens(tokens, session.sessionId)
             authRepository.saveSession(session)
 
             emit(Resource.Success(Pair(user, tokens)))
@@ -79,8 +98,46 @@ class AuthUseCase(
         return when (requiredRole) {
             UserRole.ADMIN -> user.role == UserRole.ADMIN
             UserRole.VENDOR -> user.role == UserRole.VENDOR || user.role == UserRole.ADMIN
-            UserRole.CUSTOMER -> true
+            UserRole.CUSTOMER -> true // Everyone can access customer features
         }
+    }
+
+    /**
+     * Refresh the access token using a valid refresh token.
+     */
+    suspend fun refreshAccessToken(): Flow<Resource<AuthToken>> = flow {
+        emit(Resource.Loading())
+        val tokens = securityManager.getTokens()
+        
+        if (tokens == null) {
+            emit(Resource.Error("No tokens found. Please login again."))
+            return@flow
+        }
+
+        if (securityManager.isTokenExpired(tokens.refreshToken)) {
+            emit(Resource.Error("Refresh token expired. Please login again."))
+            securityManager.clearTokens()
+            return@flow
+        }
+
+        val payload = securityManager.decodeSimulatedToken(tokens.refreshToken)
+        if (payload == null) {
+            emit(Resource.Error("Invalid refresh token."))
+            return@flow
+        }
+
+        val userId = payload["userId"]!!
+        val role = payload["role"]!!
+
+        // Generate new access token (15 mins) and keep same refresh token for now
+        val newAccessToken = securityManager.generateSimulatedToken(userId, role, 15)
+        val newTokens = tokens.copy(
+            accessToken = newAccessToken,
+            expiryTimestamp = System.currentTimeMillis() + (15 * 60 * 1000)
+        )
+        
+        securityManager.saveTokens(newTokens, securityManager.getSessionId())
+        emit(Resource.Success(newTokens))
     }
 
     /**
@@ -89,15 +146,27 @@ class AuthUseCase(
     fun canCreateMeal(user: User?): Boolean = isAuthorized(user, UserRole.VENDOR)
     fun canPlaceOrder(user: User?): Boolean = isAuthorized(user, UserRole.CUSTOMER)
     fun canApproveVendor(user: User?): Boolean = isAuthorized(user, UserRole.ADMIN)
+    fun canManageSystem(user: User?): Boolean = isAuthorized(user, UserRole.ADMIN)
 
     suspend fun requestPasswordReset(email: String): Flow<Resource<String>> = flow {
         emit(Resource.Loading())
-        // In real app, search for user by email first
+        
+        val user = authRepository.findUserByEmail(email)
+        if (user == null) {
+            emit(Resource.Error("No account found with this email"))
+            return@flow
+        }
+
         val token = UUID.randomUUID().toString()
-        val resetToken = ResetToken(token = token, userId = "unknown_yet", expiryTimestamp = System.currentTimeMillis() + 900000)
+        val resetToken = ResetToken(
+            token = token, 
+            userId = user.userId, 
+            expiryTimestamp = System.currentTimeMillis() + (15 * 60 * 1000) // 15 mins
+        )
         authRepository.saveResetToken(resetToken)
         
-        // Mock email sending
+        // In a production app, we would use Firebase Auth's sendPasswordResetEmail
+        // but since we are mirroring logic, we provide a custom token flow.
         emit(Resource.Success("Reset link sent to $email (Token: $token)"))
     }
 
@@ -125,7 +194,65 @@ class AuthUseCase(
         emit(result)
     }
 
-    fun logout() {
+    suspend fun changePassword(userId: String, oldPassword: String, newPassword: String): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        
+        try {
+            // 1. Fetch current profile to verify old password hash
+            val doc = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users").document(userId).get().await()
+            val user = doc.toObject(User::class.java)
+                ?: run { emit(Resource.Error("User profile not found")); return@flow }
+
+            // 2. Verify old password
+            if (!securityManager.verifyPassword(oldPassword, user.passwordHash)) {
+                emit(Resource.Error("Incorrect old password"))
+                return@flow
+            }
+
+            // 3. Validate new password strength
+            if (!Validator.validatePassword(newPassword)) {
+                emit(Resource.Error("New password too weak"))
+                return@flow
+            }
+
+            // 4. Update Firebase Auth password
+            val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+            if (firebaseUser != null && firebaseUser.uid == userId) {
+                firebaseUser.updatePassword(newPassword).await()
+            } else {
+                emit(Resource.Error("Session error: Please re-login"))
+                return@flow
+            }
+
+            // 5. Update Firestore hash
+            val newHash = securityManager.hashPassword(newPassword)
+            authRepository.updateUserPassword(userId, newHash)
+
+            emit(Resource.Success(Unit))
+        } catch (e: Exception) {
+            emit(Resource.Error(e.localizedMessage ?: "Password change failed"))
+        }
+    }
+
+    suspend fun logout(): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        val sessionId = securityManager.getSessionId()
+        if (sessionId != null) {
+            authRepository.removeSession(sessionId)
+        }
         securityManager.clearTokens()
+        com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+        emit(Resource.Success(Unit))
+    }
+
+    suspend fun logoutAllDevices(userId: String): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        val result = authRepository.removeAllUserSessions(userId)
+        if (result is Resource.Success) {
+            securityManager.clearTokens()
+            com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+        }
+        emit(result)
     }
 }

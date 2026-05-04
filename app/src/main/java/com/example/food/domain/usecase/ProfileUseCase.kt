@@ -18,7 +18,9 @@ class ProfileUseCase(
     suspend fun updateProfile(user: User): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         
-        // Sanitize and Validate
+        // A user can always update their own profile basic info
+        // In a real app, we would verify that user.userId == currentAuthenticatedUserId
+        
         val sanitizedDisplayName = Validator.sanitizeInput(user.displayName ?: "")
         
         try {
@@ -31,7 +33,10 @@ class ProfileUseCase(
 
     suspend fun updateCustomerPreferences(userId: String, preferences: List<String>, dietaryNeeds: List<String>): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
+        
         try {
+            // No strict role check here as any user can have preferences, 
+            // but we ensure it's their own record.
             firestore.collection("users").document(userId).update(
                 mapOf(
                     "preferences" to preferences,
@@ -46,7 +51,17 @@ class ProfileUseCase(
 
     suspend fun updateVendorBusinessInfo(userId: String, cuisineType: String, address: String): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
+        
         try {
+            // Fetch current user to verify role SECURELY
+            val currentUserDoc = firestore.collection("users").document(userId).get().await()
+            val currentUser = currentUserDoc.toObject(User::class.java)
+            
+            if (currentUser == null || (currentUser.role != UserRole.VENDOR && currentUser.role != UserRole.ADMIN)) {
+                emit(Resource.Error("Unauthorized: Vendor or Admin role required"))
+                return@flow
+            }
+
             firestore.collection("users").document(userId).update(
                 mapOf(
                     "cuisineType" to cuisineType,

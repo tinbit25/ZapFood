@@ -52,14 +52,17 @@ class SecurityManager(context: Context) {
         return System.currentTimeMillis() > expiry
     }
 
-    fun saveTokens(tokens: AuthToken) {
+    fun saveTokens(tokens: AuthToken, sessionId: String? = null) {
         prefs.edit().apply {
             putString("access_token", tokens.accessToken)
             putString("refresh_token", tokens.refreshToken)
             putLong("token_expiry", tokens.expiryTimestamp)
+            if (sessionId != null) putString("session_id", sessionId)
             apply()
         }
     }
+
+    fun getSessionId(): String? = prefs.getString("session_id", null)
 
     fun getTokens(): AuthToken? {
         val access = prefs.getString("access_token", null) ?: return null

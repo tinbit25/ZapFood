@@ -45,6 +45,7 @@ fun AppNavigation(
     navController: NavHostController,
     userViewModel: UserViewModel = viewModel(),
     mealPlanViewModel: MealPlanViewModel = viewModel(),
+    mealViewModel: com.example.food.ui.viewmodel.MealViewModel = viewModel(),
     cartViewModel: CartViewModel = viewModel()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -196,6 +197,7 @@ fun AppNavigation(
 
             composable(route = Screen.CustomPlanCreator.route) {
                 CustomPlanCreatorScreen(
+                    mealViewModel = mealViewModel,
                     mealPlanViewModel = mealPlanViewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onPlanCreated = {
@@ -302,6 +304,7 @@ fun AppNavigation(
                 MealPlanDetailsScreen(
                     planId = planId,
                     mealPlanViewModel = mealPlanViewModel,
+                    mealViewModel = mealViewModel,
                     userViewModel = userViewModel,
                     cartViewModel = cartViewModel,
                     onNavigateBack = { navController.popBackStack() }

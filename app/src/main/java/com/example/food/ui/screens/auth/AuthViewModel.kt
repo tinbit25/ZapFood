@@ -103,8 +103,23 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun logout() {
-        authUseCase.logout()
-        _authState.value = AdvancedAuthState.Idle
+        viewModelScope.launch {
+            authUseCase.logout().collect { resource ->
+                if (resource is Resource.Success) {
+                    _authState.value = AdvancedAuthState.Idle
+                }
+            }
+        }
+    }
+
+    fun logoutAllDevices(userId: String) {
+        viewModelScope.launch {
+            authUseCase.logoutAllDevices(userId).collect { resource ->
+                if (resource is Resource.Success) {
+                    _authState.value = AdvancedAuthState.Idle
+                }
+            }
+        }
     }
 
     private fun isRateLimited(): Boolean {

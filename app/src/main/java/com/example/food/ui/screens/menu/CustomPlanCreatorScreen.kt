@@ -27,12 +27,13 @@ import java.util.UUID
 
 @Composable
 fun CustomPlanCreatorScreen(
-    mealPlanViewModel: MealPlanViewModel,
+    mealViewModel: com.example.food.ui.viewmodel.MealViewModel,
+    mealPlanViewModel: com.example.food.ui.viewmodel.MealPlanViewModel,
     onNavigateBack: () -> Unit,
     onPlanCreated: () -> Unit
 ) {
-    val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
-    val availableMeals = mealPlans.flatMap { it.meals }.distinctBy { it.id }
+    val mealsState by mealViewModel.mealsState.collectAsState()
+    val availableMeals = (mealsState as? com.example.food.core.util.Resource.Success)?.data ?: emptyList()
     
     var selectedMeals by remember { mutableStateOf(setOf<String>()) }
 

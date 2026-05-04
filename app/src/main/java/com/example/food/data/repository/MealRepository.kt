@@ -1,81 +1,82 @@
 package com.example.food.data.repository
 
-import com.example.food.data.model.*
+import com.example.food.core.util.Resource
+import com.example.food.data.model.Meal
+import com.example.food.data.model.MealFilters
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
-import java.util.UUID
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 
 class MealRepository {
+    private val firestore = FirebaseFirestore.getInstance()
+    private val mealsCollection = firestore.collection("meals")
 
-    private val masterChefId = java.util.UUID.randomUUID().toString()
+    suspend fun saveMeal(meal: Meal): Resource<Unit> {
+        return try {
+            mealsCollection.document(meal.id).set(meal).await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Failed to save meal")
+        }
+    }
 
-    private val mockMeals = listOf(
-        Meal(
-            id = java.util.UUID.randomUUID().toString(),
-            name = "Butter Chicken",
-            description = "Rich and creamy butter chicken with basmati rice.",
-            imageUrl = "https://images.unsplash.com/photo-1603894527026-267daa770047?w=500&auto=format&fit=crop",
-            calories = 650,
-            price = 12.0,
-            vendorId = masterChefId,
-            vendorName = "Master Chef"
-        ),
-        Meal(
-            id = java.util.UUID.randomUUID().toString(),
-            name = "Chicken Briyani",
-            description = "Fragrant rice with spiced chicken.",
-            imageUrl = "https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?w=500&auto=format&fit=crop",
-            calories = 550,
-            price = 14.0,
-            vendorId = masterChefId,
-            vendorName = "Master Chef"
-        ),
-        Meal(
-            id = java.util.UUID.randomUUID().toString(),
-            name = "Spaghetti Bolognese",
-            description = "Classic Italian pasta with beef sauce.",
-            imageUrl = "https://images.unsplash.com/photo-1622973536968-3ead9e780960?w=500&auto=format&fit=crop",
-            calories = 500,
-            price = 15.0,
-            vendorId = masterChefId,
-            vendorName = "Master Chef"
-        )
-    )
+    suspend fun getMealById(id: String): Meal? {
+        return try {
+            val doc = mealsCollection.document(id).get().await()
+            doc.toObject(Meal::class.java)
+        } catch (e: Exception) {
+            null
+        }
+    }
 
-    private val mockMealPlans = listOf(
-        MealPlan(
-            id = java.util.UUID.randomUUID().toString(),
-            name = "Bachelors Safe Haven",
-            description = "Perfect plan for busy individuals.",
-            imageUrl = "https://images.unsplash.com/photo-1543332164-6e82f355bab7?w=800&auto=format&fit=crop",
-            type = MealPlanType.MONTHLY,
-            price = 350.0,
-            vendorId = masterChefId,
-            vendorName = "Master Chef",
-            meals = mockMeals,
-            nutritionalSummary = NutritionalSummary(1500, 200f, 150f, 80f),
-            mpcode = "KR-BACH-99"
-        ),
-        MealPlan(
-            id = java.util.UUID.randomUUID().toString(),
-            name = "Maseba's Table",
-            description = "Traditional local delicacies.",
-            imageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&auto=format&fit=crop",
-            type = MealPlanType.WEEKLY,
-            price = 85.0,
-            vendorId = java.util.UUID.randomUUID().toString(),
-            vendorName = "Abiye Briggs",
-            meals = mockMeals.take(2),
-            nutritionalSummary = NutritionalSummary(1800, 180f, 140f, 70f),
-            mpcode = "KR-MASE-01"
-        )
-    )
+    fun getFilteredMeals(filters: MealFilters): Flow<Resource<List<Meal>>> = callbackFlow {
+        trySend(Resource.Loading())
 
-    fun getMeals(): Flow<List<Meal>> = flowOf(mockMeals)
-    
-    fun getMealPlans(): Flow<List<MealPlan>> = flowOf(mockMealPlans)
-    
-    fun getMealPlanById(id: String): MealPlan? {
-        return mockMealPlans.find { it.id == id }
+        var query: Query = mealsCollection
+
+        filters.category?.let {
+            query = query.whereEqualTo("category", it)
+        }
+        filters.vendorId?.let {
+            query = query.whereEqualTo("vendorId", it)
+        }
+        filters.minCalories?.let {
+            query = query.whereGreaterThanOrEqualTo("calories", it)
+        }
+        filters.maxCalories?.let {
+            query = query.whereLessThanOrEqualTo("calories", it)
+        }
+        
+        // Note: Querying by name prefix for search
+        filters.query?.let {
+            if (it.isNotEmpty()) {
+                query = query.whereGreaterThanOrEqualTo("name", it)
+                    .whereLessThanOrEqualTo("name", it + "\uf8ff")
+            }
+        }
+
+        val listener = query.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                trySend(Resource.Error(error.localizedMessage ?: "Query failed"))
+                return@addSnapshotListener
+            }
+
+            val meals = snapshot?.documents?.mapNotNull { it.toObject(Meal::class.java) } ?: emptyList()
+            trySend(Resource.Success(meals))
+        }
+
+        awaitClose { listener.remove() }
+    }
+
+    suspend fun deleteMeal(id: String): Resource<Unit> {
+        return try {
+            mealsCollection.document(id).delete().await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Failed to delete meal")
+        }
     }
 }

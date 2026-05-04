@@ -90,4 +90,18 @@ class AuthRepository {
             Resource.Error(e.localizedMessage ?: "Failed to update password")
         }
     }
+
+    suspend fun findUserByEmail(email: String): User? {
+        return try {
+            val snapshot = firestore.collection("users")
+                .whereEqualTo("email", email)
+                .get()
+                .await()
+            if (!snapshot.isEmpty) {
+                snapshot.documents[0].toObject(User::class.java)
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+    }
 }

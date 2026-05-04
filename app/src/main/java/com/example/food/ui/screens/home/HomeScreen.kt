@@ -38,7 +38,8 @@ fun HomeScreen(
     onNavigateToNotifications: () -> Unit
 ) {
     val user by userViewModel.user.collectAsState()
-    val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
+    val discoverPlansState by mealPlanViewModel.discoverPlansState.collectAsState()
+    val mealPlans = (discoverPlansState as? com.example.food.core.util.Resource.Success)?.data ?: emptyList()
     
     val exploreCategories = listOf(
         ExploreItem("Restaurants", "🍟"),
@@ -46,6 +47,10 @@ fun HomeScreen(
         ExploreItem("Chefs", "👩‍🍳"),
         ExploreItem("Cafes", "☕")
     )
+
+    LaunchedEffect(Unit) {
+        mealPlanViewModel.fetchDiscoverPlans()
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -65,6 +70,9 @@ fun HomeScreen(
         // Hottest Plans
         item {
             SectionTitle("Hottest Plans")
+            if (discoverPlansState is com.example.food.core.util.Resource.Loading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp), color = Color(0xFFF16B24))
+            }
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -160,6 +168,7 @@ fun HomeHeader(
 
 @Composable
 fun HottestPlanCard(plan: MealPlan, onClick: () -> Unit) {
+    val totalMeals = plan.meals.values.sumOf { it.size }
     Card(
         modifier = Modifier
             .width(260.dp)
@@ -194,7 +203,7 @@ fun HottestPlanCard(plan: MealPlan, onClick: () -> Unit) {
                 Text(text = plan.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "🍳 ${plan.meals.size} meals", fontSize = 10.sp, color = Color.White)
+                    Text(text = "🍳 $totalMeals meals", fontSize = 10.sp, color = Color.White)
                 }
             }
         }
@@ -220,6 +229,7 @@ fun ExploreCategoryItem(item: ExploreItem) {
 
 @Composable
 fun LargePlanCard(plan: MealPlan, onClick: () -> Unit) {
+    val totalMeals = plan.meals.values.sumOf { it.size }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -255,7 +265,7 @@ fun LargePlanCard(plan: MealPlan, onClick: () -> Unit) {
                 Text(text = plan.name, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "🍳 ${plan.meals.size} meals", fontSize = 12.sp, color = Color.White)
+                    Text(text = "🍳 $totalMeals meals", fontSize = 12.sp, color = Color.White)
                 }
             }
         }
