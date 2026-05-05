@@ -20,6 +20,10 @@ class AIPlanUseCase(
             // 2. Batch fetch all available meals for mapping
             val allMealsResource = mealRepository.getFilteredMeals(MealFilters()).first()
             val availableMeals = (allMealsResource as? Resource.Success)?.data ?: emptyList()
+            
+            if (availableMeals.isEmpty()) {
+                return Resource.Error("No meals available in the system. Please add meals first.")
+            }
 
             // 3. Map suggestions to real Meal entities
             val mappedPlan = mutableMapOf<Day, List<String>>()

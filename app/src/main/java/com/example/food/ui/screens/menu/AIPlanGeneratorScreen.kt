@@ -31,10 +31,13 @@ fun AIPlanGeneratorScreen(
     onPlanGenerated: (String) -> Unit,
     onNavigateBack: () -> Unit,
     aiViewModel: AIViewModel = viewModel(),
-    mealPlanViewModel: MealPlanViewModel
+    mealPlanViewModel: MealPlanViewModel,
+    userViewModel: com.example.food.ui.viewmodel.UserViewModel = viewModel()
 ) {
     val aiPlanState by aiViewModel.aiPlanState.collectAsState()
+    val user by userViewModel.user.collectAsState()
     var currentStep by remember { mutableIntStateOf(1) } // 1: Form, 2: Loading/Result
+    var isSaving by remember { mutableStateOf(false) }
     
     // Form State
     var dietaryPref by remember { mutableStateOf("") }
@@ -67,7 +70,7 @@ fun AIPlanGeneratorScreen(
                 onMealsChange = { mealsPerDay = it },
                 onGenerate = {
                     val prefs = AIPreference(
-                        userId = "current_user", // Should get from UserViewModel
+                        userId = user?.userId ?: "guest",
                         dietaryPreferences = listOf(dietaryPref).filter { it.isNotEmpty() },
                         allergies = emptyList(),
                         calorieTarget = calorieTarget.toIntOrNull() ?: 2000,
@@ -82,10 +85,18 @@ fun AIPlanGeneratorScreen(
         } else {
             AIResultView(
                 aiPlanState = aiPlanState,
+                isSaving = isSaving,
                 onSave = { plan ->
-                    mealPlanViewModel.selectPlan(plan)
-                    // In real app, call repository.saveMealPlan
-                    onPlanGenerated(plan.id)
+                    user?.let { currentUser ->
+                        isSaving = true
+                        mealPlanViewModel.selectPlan(plan)
+                        mealPlanViewModel.savePlan(currentUser) { result ->
+                            isSaving = false
+                            if (result is Resource.Success) {
+                                onPlanGenerated(plan.id)
+                            }
+                        }
+                    }
                 }
             )
         }
@@ -178,6 +189,7 @@ fun AIPreferenceForm(
 @Composable
 fun AIResultView(
     aiPlanState: Resource<MealPlan>,
+    isSaving: Boolean,
     onSave: (MealPlan) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -232,8 +244,9 @@ fun AIResultView(
                         }
 
                         PrimaryButton(
-                            text = "Save & Open Plan",
+                            text = if (isSaving) "Saving..." else "Save & Open Plan",
                             onClick = { onSave(plan) },
+                            enabled = !isSaving,
                             backgroundColor = Color(0xFFF16B24)
                         )
                     }
