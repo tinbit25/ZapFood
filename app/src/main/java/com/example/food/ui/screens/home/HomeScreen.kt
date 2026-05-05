@@ -8,8 +8,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -67,6 +67,11 @@ fun HomeScreen(
             )
         }
 
+        // Search Bar
+        item {
+            HomeSearchBar(onSearchClick = onNavigateToSearch)
+        }
+
         // Hottest Plans
         item {
             SectionTitle("Hottest Plans")
@@ -112,6 +117,37 @@ fun HomeScreen(
 data class ExploreItem(val name: String, val icon: String)
 
 @Composable
+fun HomeSearchBar(onSearchClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .height(56.dp)
+            .clickable { onSearchClick() },
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xFF1A1A1A)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = androidx.compose.material.icons.Icons.Default.Search,
+                contentDescription = null,
+                tint = Color.Gray,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "Search for food or restaurants",
+                color = Color.Gray,
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+@Composable
 fun HomeHeader(
     userName: String,
     userPhotoUrl: String?,
@@ -126,24 +162,29 @@ fun HomeHeader(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
-                model = userPhotoUrl ?: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500&auto=format&fit=crop",
+                model = userPhotoUrl ?: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500&auto=format&fit=crop",
                 contentDescription = "Profile",
                 modifier = Modifier
-                    .size(45.dp)
+                    .size(50.dp)
                     .clip(CircleShape),
                 contentScale = ContentScale.Crop
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(text = "Deliver to", fontSize = 12.sp, color = Color.Gray)
-                Text(text = userName, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = "Deliver to", fontSize = 11.sp, color = Color.Gray)
+                Text(
+                    text = userName, 
+                    fontSize = 16.sp, 
+                    fontWeight = FontWeight.Bold, 
+                    color = Color.White
+                )
             }
         }
         
         Box {
             IconButton(onClick = onNotificationClick) {
                 Icon(
-                    imageVector = Icons.Outlined.Notifications,
+                    imageVector = androidx.compose.material.icons.Icons.Outlined.Notifications,
                     contentDescription = "Notifications",
                     tint = Color.White,
                     modifier = Modifier.size(28.dp)
@@ -171,10 +212,10 @@ fun HottestPlanCard(plan: MealPlan, onClick: () -> Unit) {
     val totalMeals = plan.meals.values.sumOf { it.size }
     Card(
         modifier = Modifier
-            .width(260.dp)
-            .height(160.dp)
+            .width(280.dp)
+            .height(180.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(20.dp)
+        shape = RoundedCornerShape(24.dp)
     ) {
         Box {
             AsyncImage(
@@ -189,7 +230,7 @@ fun HottestPlanCard(plan: MealPlan, onClick: () -> Unit) {
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)),
                             startY = 100f
                         )
                     )
@@ -199,12 +240,25 @@ fun HottestPlanCard(plan: MealPlan, onClick: () -> Unit) {
                     .align(Alignment.BottomStart)
                     .padding(16.dp)
             ) {
-                Text(text = plan.vendorName, fontSize = 10.sp, color = Color.LightGray)
-                Text(text = plan.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "🍳 $totalMeals meals", fontSize = 10.sp, color = Color.White)
-                }
+                Text(text = plan.vendorName, fontSize = 11.sp, color = Color.LightGray)
+                Text(text = plan.name, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+            }
+            
+            // Badge at bottom right
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Default.Notifications, // Placeholder for meal icon
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = "$totalMeals meals", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -234,9 +288,9 @@ fun LargePlanCard(plan: MealPlan, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 10.dp)
-            .height(200.dp)
+            .height(220.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(24.dp)
+        shape = RoundedCornerShape(28.dp)
     ) {
         Box {
             AsyncImage(
@@ -251,8 +305,8 @@ fun LargePlanCard(plan: MealPlan, onClick: () -> Unit) {
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
-                            startY = 200f
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.9f)),
+                            startY = 250f
                         )
                     )
             )
@@ -261,12 +315,18 @@ fun LargePlanCard(plan: MealPlan, onClick: () -> Unit) {
                     .align(Alignment.BottomStart)
                     .padding(20.dp)
             ) {
-                Text(text = plan.vendorName, fontSize = 12.sp, color = Color.LightGray)
-                Text(text = plan.name, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "🍳 $totalMeals meals", fontSize = 12.sp, color = Color.White)
-                }
+                Text(text = plan.vendorName, fontSize = 13.sp, color = Color.LightGray)
+                Text(text = plan.name, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+            }
+            
+            // Badge at bottom right
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "🍳 $totalMeals meals", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
     }
