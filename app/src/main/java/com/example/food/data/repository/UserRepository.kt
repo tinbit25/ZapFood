@@ -1,6 +1,7 @@
 package com.example.food.data.repository
 
 import com.example.food.data.model.User
+import com.example.food.data.model.UserRole
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -17,25 +18,33 @@ class UserRepository {
 
         // Listen to Auth State changes (Login/Logout)
         val authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-            val userId = firebaseAuth.currentUser?.uid
+            val firebaseUser = firebaseAuth.currentUser
+            val userId = firebaseUser?.uid
             
             // If user changes, remove old listener
             snapshotListener?.remove()
 
             if (userId != null) {
                 // If logged in, listen to Firestore document changes
-                snapshotListener = firestore.collection("users")
-                    .document(userId)
-                    .addSnapshotListener { snapshot, error ->
-                        if (error != null) {
-                            return@addSnapshotListener
-                        }
+                val userDocRef = firestore.collection("users").document(userId)
+                
+                snapshotListener = userDocRef.addSnapshotListener { snapshot, error ->
+                        if (error != null) return@addSnapshotListener
 
                         if (snapshot != null && snapshot.exists()) {
                             val user = snapshot.toObject(User::class.java)
                             trySend(user)
                         } else {
-                            trySend(null)
+                            // Document doesn't exist — Create it from Firebase Auth info
+                            val newUser = User(
+                                userId = userId,
+                                displayName = firebaseUser.displayName,
+                                email = firebaseUser.email ?: "",
+                                photoUrl = firebaseUser.photoUrl?.toString(),
+                                role = UserRole.CUSTOMER // Default role
+                            )
+                            userDocRef.set(newUser)
+                            trySend(newUser)
                         }
                     }
             } else {

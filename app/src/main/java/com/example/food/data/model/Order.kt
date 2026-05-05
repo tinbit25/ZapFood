@@ -1,31 +1,40 @@
 package com.example.food.data.model
 
-import java.util.Date
+import java.util.UUID
 
 enum class OrderStatus {
-    PENDING, CONFIRMED, PREPARING, OUT_FOR_DELIVERY, DELIVERED, CANCELLED
+    PENDING,
+    ACCEPTED,
+    PREPARING,
+    READY,
+    OUT_FOR_DELIVERY,
+    DELIVERED,
+    CANCELLED
 }
 
-data class Order(
-    val orderId: String = "",
-    val userId: String = "",
-    val mealPlanId: String? = null,
-    val mealId: String? = null, // For single meal orders
-    val status: OrderStatus = OrderStatus.PENDING,
-    val totalAmount: Double = 0.0,
-    val timestamp: Long = System.currentTimeMillis(),
-    val deliveryAddress: String = ""
+// Enums are now managed in Payment.kt to maintain a single source of truth for the payment domain
+
+data class OrderItem(
+    val mealId: String,
+    val name: String,
+    val price: Double,
+    val quantity: Int = 1
 )
 
-enum class PaymentStatus {
-    PENDING, SUCCESS, FAILED, REFUNDED
-}
-
-data class Payment(
-    val paymentId: String = "",
-    val orderId: String = "",
-    val amount: Double = 0.0,
-    val paymentMethod: String = "",
-    val status: PaymentStatus = PaymentStatus.PENDING,
-    val timestamp: Long = System.currentTimeMillis()
+data class Order(
+    val orderId: String = UUID.randomUUID().toString(),
+    val customerId: String = "",
+    val customerName: String = "",
+    val vendorId: String = "",
+    val vendorName: String = "",
+    val mealPlanId: String? = null,
+    val items: List<OrderItem> = emptyList(),
+    val totalAmount: Double = 0.0,
+    val deliveryFee: Double = 0.0,
+    val status: OrderStatus = OrderStatus.PENDING,
+    val paymentStatus: PaymentStatus = PaymentStatus.INITIATED,
+    val paymentMethod: PaymentMethod = PaymentMethod.CARD,
+    val deliveryTrackingId: String = "",
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
 )

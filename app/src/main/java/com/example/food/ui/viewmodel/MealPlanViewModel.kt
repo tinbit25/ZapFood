@@ -20,6 +20,9 @@ class MealPlanViewModel(
     private val _discoverPlansState = MutableStateFlow<Resource<List<MealPlan>>>(Resource.Loading())
     val discoverPlansState: StateFlow<Resource<List<MealPlan>>> = _discoverPlansState.asStateFlow()
 
+    private val _selectedPlanState = MutableStateFlow<Resource<MealPlan>>(Resource.Loading())
+    val selectedPlanState: StateFlow<Resource<MealPlan>> = _selectedPlanState.asStateFlow()
+
     private val _currentPlan = MutableStateFlow<MealPlan?>(null)
     val currentPlan: StateFlow<MealPlan?> = _currentPlan.asStateFlow()
 
@@ -39,8 +42,16 @@ class MealPlanViewModel(
         }
     }
 
+    fun fetchPlanById(planId: String) {
+        viewModelScope.launch {
+            _selectedPlanState.value = Resource.Loading()
+            _selectedPlanState.value = mealPlanUseCase.getMealPlanById(planId)
+        }
+    }
+
     fun selectPlan(plan: MealPlan) {
         _currentPlan.value = plan
+        _selectedPlanState.value = Resource.Success(plan)
     }
 
     fun addMealToCurrentPlan(day: Day, mealId: String) {

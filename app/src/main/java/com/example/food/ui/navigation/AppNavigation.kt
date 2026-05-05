@@ -2,8 +2,10 @@ package com.example.food.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.food.ui.screens.*
 import com.example.food.ui.screens.auth.LoginScreen
 import com.example.food.ui.screens.auth.SignUpScreen
@@ -46,6 +48,7 @@ fun AppNavigation(
     userViewModel: UserViewModel = viewModel(),
     mealPlanViewModel: MealPlanViewModel = viewModel(),
     mealViewModel: com.example.food.ui.viewmodel.MealViewModel = viewModel(),
+    orderViewModel: com.example.food.ui.viewmodel.OrderViewModel = viewModel(),
     cartViewModel: CartViewModel = viewModel()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -164,7 +167,7 @@ fun AppNavigation(
                         navController.navigate(Screen.ProductDetails.createRoute(productId))
                     },
                     onNavigateToMealPlanDetails = { planId ->
-                        navController.navigate("meal_plan_details/$planId")
+                        navController.navigate(Screen.MealPlanDetails.createRoute(planId))
                     },
                     onNavigateToSearch = {
                         navController.navigate(Screen.Search.route)
@@ -217,6 +220,8 @@ fun AppNavigation(
 
             composable(route = Screen.Checkout.route) {
                 CheckoutScreen(
+                    userViewModel = userViewModel,
+                    orderViewModel = orderViewModel,
                     cartViewModel = cartViewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onOrderSuccess = {
@@ -287,6 +292,8 @@ fun AppNavigation(
 
             composable(route = Screen.OrderHistory.route) {
                 OrderHistoryScreen(
+                    userViewModel = userViewModel,
+                    orderViewModel = orderViewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
@@ -299,7 +306,10 @@ fun AppNavigation(
                 )
             }
 
-            composable(route = "meal_plan_details/{planId}") { backStackEntry ->
+            composable(
+                route = Screen.MealPlanDetails.route,
+                arguments = listOf(navArgument("planId") { type = NavType.StringType })
+            ) { backStackEntry ->
                 val planId = backStackEntry.arguments?.getString("planId") ?: ""
                 MealPlanDetailsScreen(
                     planId = planId,
@@ -313,6 +323,8 @@ fun AppNavigation(
 
             composable(route = Screen.VendorDashboard.route) {
                 VendorDashboardScreen(
+                    userViewModel = userViewModel,
+                    orderViewModel = orderViewModel,
                     onLogout = {
                         navController.navigate(Screen.Welcome.route) {
                             popUpTo(0) { inclusive = true }

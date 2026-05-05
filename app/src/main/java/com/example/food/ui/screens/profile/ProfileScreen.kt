@@ -60,16 +60,17 @@ fun ProfileScreen(
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
+                    .background(Color.Gray.copy(alpha = 0.2f))
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = user?.displayName ?: "Kengfack Sydney",
+                text = user?.displayName ?: "User Name",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
             Text(
-                text = user?.email ?: "sydney@example.com",
+                text = user?.email ?: "Email not available",
                 fontSize = 14.sp,
                 color = Color.Gray
             )

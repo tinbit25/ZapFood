@@ -61,7 +61,7 @@ fun HomeScreen(
         // Top Header
         item {
             HomeHeader(
-                userName = user?.displayName ?: "Kengfack Sydney",
+                userName = user?.displayName ?: "User Name",
                 userPhotoUrl = user?.photoUrl,
                 onNotificationClick = onNavigateToNotifications
             )
@@ -126,7 +126,7 @@ fun HomeHeader(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
-                model = userPhotoUrl ?: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop",
+                model = userPhotoUrl ?: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500&auto=format&fit=crop",
                 contentDescription = "Profile",
                 modifier = Modifier
                     .size(45.dp)

@@ -7,10 +7,17 @@ import androidx.lifecycle.viewModelScope
 import com.example.food.core.util.Resource
 import com.example.food.data.model.*
 import com.example.food.domain.usecase.AuthUseCase
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.FirebaseAuth
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 sealed class AdvancedAuthState {
     object Idle : AdvancedAuthState()
@@ -95,10 +102,55 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun signInWithGoogle(context: Context) {
         viewModelScope.launch {
             _authState.value = AdvancedAuthState.Loading
-            // Simulate Google Sign-In
-            // In a real app, this would use the Credential Manager or Google Sign-In API
-            kotlinx.coroutines.delay(1000)
-            _authState.value = AdvancedAuthState.Success("google_user_id", UserRole.CUSTOMER)
+            try {
+                val credentialManager = CredentialManager.create(context)
+                
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId("11912048812-qstohuc1b0mmq3l5sb3bnd7s23r0eurf.apps.googleusercontent.com")
+                    .setAutoSelectEnabled(true)
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                val result = credentialManager.getCredential(context, request)
+                val credential = result.credential
+                
+                when (credential) {
+                    is GoogleIdTokenCredential -> {
+                        val googleIdToken = credential.idToken
+                        val firebaseCredential = GoogleAuthProvider.getCredential(googleIdToken, null)
+                        val authResult = FirebaseAuth.getInstance().signInWithCredential(firebaseCredential).await()
+                        val user = authResult.user
+                        if (user != null) {
+                            _authState.value = AdvancedAuthState.Success(user.uid, UserRole.CUSTOMER)
+                        } else {
+                            _authState.value = AdvancedAuthState.Error("Google Sign-In failed: No user returned")
+                        }
+                    }
+                    else -> {
+                        // Sometimes it comes back as a CustomCredential with the Google ID Token type
+                        try {
+                            val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                            val googleIdToken = googleIdTokenCredential.idToken
+                            val firebaseCredential = GoogleAuthProvider.getCredential(googleIdToken, null)
+                            val authResult = FirebaseAuth.getInstance().signInWithCredential(firebaseCredential).await()
+                            val user = authResult.user
+                            if (user != null) {
+                                _authState.value = AdvancedAuthState.Success(user.uid, UserRole.CUSTOMER)
+                            } else {
+                                _authState.value = AdvancedAuthState.Error("Google Sign-In failed: No user returned")
+                            }
+                        } catch (e: Exception) {
+                            _authState.value = AdvancedAuthState.Error("Unexpected credential type: ${credential.type}")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _authState.value = AdvancedAuthState.Error(e.localizedMessage ?: "Google Sign-In failed")
+            }
         }
     }
 

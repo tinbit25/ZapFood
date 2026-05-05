@@ -1,5 +1,6 @@
 package com.example.food.domain.usecase
 
+import com.example.food.core.util.NutritionCalculator
 import com.example.food.core.util.Resource
 import com.example.food.data.model.*
 import com.example.food.data.repository.MealPlanRepository
@@ -11,6 +12,11 @@ class MealPlanUseCase(
     private val mealPlanRepository: MealPlanRepository = MealPlanRepository(),
     private val mealRepository: MealRepository = MealRepository()
 ) {
+    suspend fun getMealPlanById(id: String): Resource<MealPlan> {
+        val plan = mealPlanRepository.getMealPlanById(id)
+        return if (plan != null) Resource.Success(plan) else Resource.Error("Meal plan not found")
+    }
+
     suspend fun createMealPlan(user: User, plan: MealPlan): Resource<Unit> {
         // 1. Validate rules
         if (plan.name.isBlank()) return Resource.Error("Meal plan name required")
@@ -43,30 +49,11 @@ class MealPlanUseCase(
     }
 
     suspend fun recalculateNutrition(plan: MealPlan): MealPlan {
-        var totalCals = 0
-        var totalProt = 0f
-        var totalCarbs = 0f
-        var totalFats = 0f
-
-        for (mealIds in plan.meals.values) {
-            for (mealId in mealIds) {
-                val meal = mealRepository.getMealById(mealId)
-                if (meal != null) {
-                    totalCals += meal.calories
-                    totalProt += meal.protein
-                    totalCarbs += meal.carbs
-                    totalFats += meal.fats
-                }
-            }
-        }
-
+        val allMealIds = plan.meals.values.flatten()
+        val meals = allMealIds.mapNotNull { mealRepository.getMealById(it) }
+        
         return plan.copy(
-            nutritionalSummary = NutritionalSummary(
-                totalCalories = totalCals,
-                totalProtein = totalProt,
-                totalCarbs = totalCarbs,
-                totalFats = totalFats
-            )
+            nutritionalSummary = NutritionCalculator.calculateSummary(meals)
         )
     }
 

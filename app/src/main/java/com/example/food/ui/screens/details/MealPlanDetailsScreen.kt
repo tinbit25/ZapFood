@@ -39,153 +39,165 @@ fun MealPlanDetailsScreen(
     cartViewModel: CartViewModel,
     onNavigateBack: () -> Unit
 ) {
-    val discoverPlansState by mealPlanViewModel.discoverPlansState.collectAsState()
-    val myPlansState by mealPlanViewModel.myPlansState.collectAsState()
-    
-    val allPlans = mutableListOf<MealPlan>()
-    (discoverPlansState as? Resource.Success)?.data?.let { allPlans.addAll(it) }
-    (myPlansState as? Resource.Success)?.data?.let { allPlans.addAll(it) }
-
-    val plan = allPlans.find { it.id == planId } ?: return
-
+    val selectedPlanState by mealPlanViewModel.selectedPlanState.collectAsState()
     val mealsState by mealViewModel.mealsState.collectAsState()
     val allAvailableMeals = (mealsState as? Resource.Success)?.data ?: emptyList()
 
     var selectedDay by remember { mutableStateOf(Day.MONDAY) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF0F0F0F))
-    ) {
-        Box(modifier = Modifier.fillMaxWidth().height(300.dp)) {
-            AsyncImage(
-                model = plan.imageUrl,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-            
-            IconButton(
-                onClick = onNavigateBack,
-                modifier = Modifier
-                    .padding(16.dp)
-                    .align(Alignment.TopStart)
-                    .background(Color.Black.copy(alpha = 0.3f), CircleShape)
-            ) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+    LaunchedEffect(planId) {
+        mealPlanViewModel.fetchPlanById(planId)
+    }
+
+    when (val state = selectedPlanState) {
+        is Resource.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Color(0xFFF16B24))
             }
         }
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(text = plan.name, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            Text(
-                text = "RWF ${"%,.0f".format(plan.price * 1000)}/month",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White
-            )
-            Text(text = "by ${plan.vendorName}", fontSize = 14.sp, color = Color.Gray)
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Stats Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                val totalMealsCount = plan.meals.values.sumOf { it.size }
-                StatItem("🍳", "$totalMealsCount meals")
-                StatItem("🍱", "${plan.nutritionalSummary.totalCalories} kcal")
-                StatItem("📑", "MP Code")
+        is Resource.Error -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = state.message ?: "Failed to load meal plan", color = Color.Red)
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Day Selector
-            ScrollableTabRow(
-                selectedTabIndex = Day.values().indexOf(selectedDay),
-                containerColor = Color.Transparent,
-                contentColor = Color(0xFFF16B24),
-                edgePadding = 0.dp,
-                divider = {},
-                indicator = {}
+        }
+        is Resource.Success -> {
+            val plan = state.data!!
+            
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF0F0F0F))
             ) {
-                Day.values().forEach { day ->
-                    val isSelected = selectedDay == day
-                    Tab(
-                        selected = isSelected,
-                        onClick = { selectedDay = day },
-                        text = {
-                            Surface(
-                                color = if (isSelected) Color(0xFFF16B24) else Color(0xFF1A1A1A),
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            ) {
-                                Text(
-                                    text = day.name.lowercase().replaceFirstChar { it.uppercase() }.take(3),
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                    color = if (isSelected) Color.White else Color.Gray,
-                                    fontSize = 14.sp
-                                )
-                            }
-                        }
+                Box(modifier = Modifier.fillMaxWidth().height(300.dp)) {
+                    AsyncImage(
+                        model = plan.imageUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
                     )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Meal List for Selected Day
-            val mealIds = plan.meals[selectedDay] ?: emptyList()
-            if (mealIds.isEmpty()) {
-                Text(text = "No meals planned for this day", color = Color.Gray, modifier = Modifier.padding(32.dp))
-            } else {
-                mealIds.forEach { mealId ->
-                    val meal = allAvailableMeals.find { it.id == mealId }
-                    if (meal != null) {
-                        MealDetailItem(meal)
-                        Divider(color = Color(0xFF1A1A1A), thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
+                    
+                    IconButton(
+                        onClick = onNavigateBack,
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .align(Alignment.TopStart)
+                            .background(Color.Black.copy(alpha = 0.3f), CircleShape)
+                    ) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
                 }
-            }
-        }
 
-        // Action Buttons
-        Row(
-            modifier = Modifier.padding(20.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(modifier = Modifier.weight(1f)) {
-                PrimaryButton(
-                    text = "Add to Cart",
-                    onClick = { 
-                        cartViewModel.addMealPlan(plan)
-                        onNavigateBack()
-                    },
-                    backgroundColor = Color(0xFFF16B24)
-                )
-            }
-            
-            Surface(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clickable { 
-                        userViewModel.updateRewardPoints(10)
-                    },
-                shape = RoundedCornerShape(12.dp),
-                color = Color(0xFF1A1A1A),
-                border = BorderStroke(1.dp, Color.Gray)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(imageVector = Icons.Default.Share, contentDescription = "Share", tint = Color.White)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(text = plan.name, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(
+                        text = "RWF ${"%,.0f".format(plan.price * 1000)}/month",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White
+                    )
+                    Text(text = "by ${plan.vendorName}", fontSize = 14.sp, color = Color.Gray)
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Stats Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        val totalMealsCount = plan.meals.values.sumOf { it.size }
+                        StatItem("🍳", "$totalMealsCount meals")
+                        StatItem("🍱", "${plan.nutritionalSummary.totalCalories} kcal")
+                        StatItem("📑", "MP Code")
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Day Selector
+                    ScrollableTabRow(
+                        selectedTabIndex = Day.entries.indexOf(selectedDay),
+                        containerColor = Color.Transparent,
+                        contentColor = Color(0xFFF16B24),
+                        edgePadding = 0.dp,
+                        divider = {},
+                        indicator = {}
+                    ) {
+                        Day.entries.forEach { day ->
+                            val isSelected = selectedDay == day
+                            Tab(
+                                selected = isSelected,
+                                onClick = { selectedDay = day },
+                                text = {
+                                    Surface(
+                                        color = if (isSelected) Color(0xFFF16B24) else Color(0xFF1A1A1A),
+                                        shape = RoundedCornerShape(8.dp),
+                                        modifier = Modifier.padding(vertical = 8.dp)
+                                    ) {
+                                        Text(
+                                            text = day.name.lowercase().replaceFirstChar { it.uppercase() }.take(3),
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                            color = if (isSelected) Color.White else Color.Gray,
+                                            fontSize = 14.sp
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Meal List for Selected Day
+                    val mealIds = plan.meals[selectedDay] ?: emptyList()
+                    if (mealIds.isEmpty()) {
+                        Text(text = "No meals planned for this day", color = Color.Gray, modifier = Modifier.padding(32.dp))
+                    } else {
+                        mealIds.forEach { mealId ->
+                            val meal = allAvailableMeals.find { it.id == mealId }
+                            if (meal != null) {
+                                MealDetailItem(meal)
+                                Divider(color = Color(0xFF1A1A1A), thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
+                            }
+                        }
+                    }
+                }
+
+                // Action Buttons
+                Row(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        PrimaryButton(
+                            text = "Add to Cart",
+                            onClick = { 
+                                cartViewModel.addMealPlan(plan)
+                                onNavigateBack()
+                            },
+                            backgroundColor = Color(0xFFF16B24)
+                        )
+                    }
+                    
+                    Surface(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clickable { 
+                                userViewModel.updateRewardPoints(10)
+                            },
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xFF1A1A1A),
+                        border = BorderStroke(1.dp, Color.Gray)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(imageVector = Icons.Default.Share, contentDescription = "Share", tint = Color.White)
+                        }
+                    }
                 }
             }
         }
