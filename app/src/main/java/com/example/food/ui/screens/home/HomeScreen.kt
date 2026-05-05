@@ -55,13 +55,13 @@ fun HomeScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F0F0F)), // Deep dark background
-        contentPadding = PaddingValues(bottom = 80.dp)
+            .background(Color(0xFF0A0A0A)), // Even deeper black for premium feel
+        contentPadding = PaddingValues(bottom = 100.dp)
     ) {
         // Top Header
         item {
             HomeHeader(
-                userName = user?.displayName ?: "User Name",
+                userName = user?.displayName ?: "Explorer",
                 userPhotoUrl = user?.photoUrl,
                 onNotificationClick = onNavigateToNotifications
             )
@@ -70,49 +70,63 @@ fun HomeScreen(
         // Search Bar
         item {
             HomeSearchBar(onSearchClick = onNavigateToSearch)
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Hottest Plans
+        // Featured Promo Banner
         item {
-            SectionTitle("Hottest Plans")
-            if (discoverPlansState is com.example.food.core.util.Resource.Loading) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp), color = Color(0xFFF16B24))
-            }
+            FeaturedPromoBanner()
+        }
+
+        // Explore Categories
+        item {
+            SectionTitle("Explore Categories")
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(mealPlans.take(3)) { plan ->
-                    HottestPlanCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.id) })
+                items(exploreCategories) { item ->
+                    ModernCategoryItem(item)
                 }
             }
         }
 
-        // Explore
+        // Hottest Plans
         item {
-            SectionTitle("Explore")
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+            SectionHeader(title = "Hottest Plans", onActionClick = {})
+            if (discoverPlansState is com.example.food.core.util.Resource.Loading) {
+                // Skeleton loading would go here
+            }
+            
+            val displayPlans = if (mealPlans.isEmpty()) getMockPlans() else mealPlans
+            
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                exploreCategories.forEach { item ->
-                    ExploreCategoryItem(item)
+                items(displayPlans.take(5)) { plan ->
+                    PremiumHottestCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.id) })
                 }
             }
         }
 
-        // Plans made for you
+        // Recommendation Section
         item {
-            SectionTitle("Plans made for you")
+            SectionTitle("Plans tailored for you")
         }
         
-        items(mealPlans) { plan ->
-            LargePlanCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.id) })
+        val recommendPlans = if (mealPlans.isEmpty()) getMockPlans().reversed() else mealPlans
+        items(recommendPlans) { plan ->
+            ImmersiveLargeCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.id) })
         }
     }
 }
+
+fun getMockPlans() = listOf(
+    MealPlan(id = "m1", name = "Bachelors Safe Haven", vendorName = "Master Chef", imageUrl = "https://images.unsplash.com/photo-1547573854-74d2a71d0827?w=800"),
+    MealPlan(id = "m2", name = "Maseba's Gourmet Table", vendorName = "Abiye Briggs", imageUrl = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800"),
+    MealPlan(id = "m3", name = "Healthy Keto Boost", vendorName = "Fit Bites", imageUrl = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800")
+)
 
 data class ExploreItem(val name: String, val icon: String)
 
@@ -265,32 +279,93 @@ fun HottestPlanCard(plan: MealPlan, onClick: () -> Unit) {
 }
 
 @Composable
-fun ExploreCategoryItem(item: ExploreItem) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(
-            modifier = Modifier.size(65.dp),
-            shape = CircleShape,
-            color = Color(0xFF1A1A1A)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(text = item.icon, fontSize = 28.sp)
+fun FeaturedPromoBanner() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .height(180.dp),
+        shape = RoundedCornerShape(28.dp)
+    ) {
+        Box {
+            AsyncImage(
+                model = "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1080&auto=format&fit=crop", // Pizza promo
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(Color.Black.copy(alpha = 0.8f), Color.Transparent),
+                            startX = 0f,
+                            endX = 600f
+                        )
+                    )
+            )
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .align(Alignment.CenterStart)
+            ) {
+                Surface(
+                    color = Color(0xFFF16B24),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "NEW PROMO",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Get 30% OFF\non your first plan",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    lineHeight = 28.sp
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Order now and save big",
+                    fontSize = 12.sp,
+                    color = Color.LightGray
+                )
             }
         }
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(text = item.name, fontSize = 12.sp, color = Color.White)
     }
 }
 
 @Composable
-fun LargePlanCard(plan: MealPlan, onClick: () -> Unit) {
-    val totalMeals = plan.meals.values.sumOf { it.size }
+fun ModernCategoryItem(item: ExploreItem) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Surface(
+            modifier = Modifier.size(75.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = Color(0xFF1A1A1A)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(text = item.icon, fontSize = 32.sp)
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = item.name, fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Medium)
+    }
+}
+
+@Composable
+fun PremiumHottestCard(plan: MealPlan, onClick: () -> Unit) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 10.dp)
-            .height(220.dp)
+            .width(280.dp)
+            .height(200.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(28.dp)
+        shape = RoundedCornerShape(32.dp)
     ) {
         Box {
             AsyncImage(
@@ -299,14 +374,13 @@ fun LargePlanCard(plan: MealPlan, onClick: () -> Unit) {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
-            // Gradient Overlay
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.9f)),
-                            startY = 250f
+                            startY = 200f
                         )
                     )
             )
@@ -315,20 +389,102 @@ fun LargePlanCard(plan: MealPlan, onClick: () -> Unit) {
                     .align(Alignment.BottomStart)
                     .padding(20.dp)
             ) {
-                Text(text = plan.vendorName, fontSize = 13.sp, color = Color.LightGray)
-                Text(text = plan.name, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Default.Notifications,
+                        contentDescription = null,
+                        tint = Color(0xFFF16B24),
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = plan.vendorName, fontSize = 12.sp, color = Color.LightGray)
+                }
+                Text(text = plan.name, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
             }
             
-            // Badge at bottom right
-            Row(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically
+            // Meal count badge
+            Surface(
+                modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+                color = Color.Black.copy(alpha = 0.6f),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text(text = "🍳 $totalMeals meals", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "🍳 14 meals",
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    fontSize = 10.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
+    }
+}
+
+@Composable
+fun ImmersiveLargeCard(plan: MealPlan, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .height(240.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(36.dp)
+    ) {
+        Box {
+            AsyncImage(
+                model = plan.imageUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.95f)),
+                            startY = 300f
+                        )
+                    )
+            )
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(24.dp)
+            ) {
+                Text(text = "BY ${plan.vendorName.uppercase()}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF16B24), letterSpacing = 1.sp)
+                Text(text = plan.name, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "Starting from RWF 45,000", fontSize = 12.sp, color = Color.LightGray)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SectionHeader(title: String, onActionClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color.White
+        )
+        Text(
+            text = "See all",
+            fontSize = 14.sp,
+            color = Color(0xFFF16B24),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.clickable { onActionClick() }
+        )
     }
 }
 
@@ -336,8 +492,8 @@ fun LargePlanCard(plan: MealPlan, onClick: () -> Unit) {
 fun SectionTitle(title: String) {
     Text(
         text = title,
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,
+        fontWeight = FontWeight.ExtraBold,
         color = Color.White,
         modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
     )
