@@ -35,62 +35,85 @@ fun WelcomeScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
         AsyncImage(
-            model = "https://images.unsplash.com/photo-1547573854-74d2a71d0827?q=80&w=1080&auto=format&fit=crop", // Warm dinner atmosphere
+            model = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1080&auto=format&fit=crop", // Darker, rustic food image
             contentDescription = "Welcome Background",
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
 
-        // Dark Gradient Overlay for button readability
+        // Dark Gradient Overlay for readability
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
-                        startY = 500f
+                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.9f)),
+                        startY = 300f
                     )
                 )
         )
 
-        // Buttons at the bottom
+        // Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(24.dp),
             verticalArrangement = Arrangement.Bottom,
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.Start
         ) {
-            // Get Started Button (Outlined)
+            Text(
+                text = "Welcome to",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Light,
+                color = Color.White
+            )
+            Text(
+                text = "Kravinz",
+                fontSize = 48.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(0xFFF16B24)
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Text(
+                text = "Discover the best food around you and get it delivered to your doorstep.",
+                fontSize = 16.sp,
+                color = Color.LightGray.copy(alpha = 0.8f),
+                lineHeight = 22.sp
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Log in Button (Solid Orange)
+            PrimaryButton(
+                text = "Log In",
+                onClick = onNavigateToLogin,
+                backgroundColor = Color(0xFFF16B24)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Sign Up Button (Outlined)
             OutlinedButton(
                 onClick = onNavigateToSignUp,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, Color.White),
+                border = BorderStroke(1.dp, Color(0xFFF16B24)),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.Black.copy(alpha = 0.3f),
-                    contentColor = Color.White
+                    contentColor = Color(0xFFF16B24)
                 )
             ) {
                 Text(
-                    text = "Get Started",
+                    text = "Sign Up",
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Bold
                 )
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Log in Button (Solid Orange)
-            PrimaryButton(
-                text = "Log in",
-                onClick = onNavigateToLogin,
-                backgroundColor = Color(0xFFF16B24) // Brand Orange
-            )
             
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(48.dp))
         }
     }
 }
