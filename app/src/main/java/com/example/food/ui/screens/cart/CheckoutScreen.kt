@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Payment
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,17 +36,23 @@ fun CheckoutScreen(
     userViewModel: UserViewModel,
     orderViewModel: OrderViewModel,
     cartViewModel: CartViewModel,
+    rewardViewModel: com.example.food.ui.viewmodel.RewardViewModel,
     paymentViewModel: PaymentViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onNavigateBack: () -> Unit,
     onOrderSuccess: () -> Unit
 ) {
     val user by userViewModel.user.collectAsState()
     val cartState by cartViewModel.cartState.collectAsState()
+    val pointsBalance by rewardViewModel.pointsBalance.collectAsState()
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     
+    var pointsToRedeem by remember { mutableIntStateOf(0) }
+    val rewardDiscount = (pointsToRedeem / 10) * 100.0 // 10 points = 100 RWF
+    
     val deliveryFee = 2000.0 // RWF
-    val total = (cartState.subtotal * 1000) + deliveryFee
+    val subtotal = cartState.subtotal * 1000
+    val total = subtotal + deliveryFee - rewardDiscount
 
     val paymentState by paymentViewModel.paymentState.collectAsState()
     
@@ -53,8 +60,15 @@ fun CheckoutScreen(
     var selectedMethod by remember { mutableStateOf(PaymentMethod.CARD) }
     var isPlacingOrder by remember { mutableStateOf(false) }
 
+    LaunchedEffect(user) {
+        user?.let { rewardViewModel.fetchBalance(it.userId) }
+    }
+
     LaunchedEffect(paymentState) {
         if (paymentState is PaymentState.Success) {
+            if (pointsToRedeem > 0) {
+                user?.let { rewardViewModel.redeemPoints(it.userId, pointsToRedeem) }
+            }
             cartViewModel.clearCart()
             paymentViewModel.resetState()
             onOrderSuccess()
@@ -87,6 +101,35 @@ fun CheckoutScreen(
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
+
+                // Reward Points Section
+                if (pointsBalance > 0) {
+                    Text(text = "Reward Points", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFF1A1A1A)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFD700))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = "You have $pointsBalance points", color = Color.White, fontSize = 14.sp)
+                                Spacer(modifier = Modifier.weight(1f))
+                                TextButton(onClick = { 
+                                    pointsToRedeem = if (pointsToRedeem > 0) 0 else pointsBalance 
+                                }) {
+                                    Text(text = if (pointsToRedeem > 0) "Remove" else "Redeem All", color = Color(0xFFF16B24))
+                                }
+                            }
+                            if (pointsToRedeem > 0) {
+                                Text(text = "- RWF ${rewardDiscount.toInt()} discount applied", color = Color(0xFF4CAF50), fontSize = 12.sp)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
 
                 Text(text = "Payment Method", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 Spacer(modifier = Modifier.height(12.dp))
@@ -132,8 +175,11 @@ fun CheckoutScreen(
                     
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.Gray.copy(alpha = 0.3f))
                     
-                    SummaryRow("Subtotal", "", "RWF ${"%,.0f".format(cartState.subtotal * 1000)}")
+                    SummaryRow("Subtotal", "", "RWF ${"%,.0f".format(subtotal)}")
                     SummaryRow("Delivery Fee", "", "RWF ${"%,.0f".format(deliveryFee)}")
+                    if (rewardDiscount > 0) {
+                        SummaryRow("Reward Discount", "", "- RWF ${"%,.0f".format(rewardDiscount)}")
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     SummaryRow("Total", "", "RWF ${"%,.0f".format(total)}", isBold = true)
                 }

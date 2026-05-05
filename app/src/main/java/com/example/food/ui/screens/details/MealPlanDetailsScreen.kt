@@ -37,16 +37,55 @@ fun MealPlanDetailsScreen(
     mealViewModel: MealViewModel,
     userViewModel: UserViewModel,
     cartViewModel: CartViewModel,
+    rewardViewModel: com.example.food.ui.viewmodel.RewardViewModel,
     onNavigateBack: () -> Unit
 ) {
     val selectedPlanState by mealPlanViewModel.selectedPlanState.collectAsState()
     val mealsState by mealViewModel.mealsState.collectAsState()
+    val user by userViewModel.user.collectAsState()
+    val generatedCodeResource by rewardViewModel.generatedCode.collectAsState()
+    
     val allAvailableMeals = (mealsState as? Resource.Success)?.data ?: emptyList()
-
     var selectedDay by remember { mutableStateOf(Day.MONDAY) }
+    var showCodeDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(planId) {
         mealPlanViewModel.fetchPlanById(planId)
+    }
+
+    if (showCodeDialog && generatedCodeResource is Resource.Success) {
+        AlertDialog(
+            onDismissRequest = { showCodeDialog = false },
+            containerColor = Color(0xFF1A1A1A),
+            title = { Text("Share Plan", color = Color.White, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Share this code with friends! You'll earn 10 points when they import it.", color = Color.Gray, fontSize = 14.sp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color.Black,
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color(0xFFF16B24))
+                    ) {
+                        Text(
+                            text = (generatedCodeResource as Resource.Success<String>).data!!,
+                            modifier = Modifier.padding(16.dp),
+                            color = Color(0xFFF16B24),
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            letterSpacing = 4.sp
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCodeDialog = false }) {
+                    Text("Done", color = Color(0xFFF16B24))
+                }
+            }
+        )
     }
 
     when (val state = selectedPlanState) {
@@ -62,7 +101,8 @@ fun MealPlanDetailsScreen(
         }
         is Resource.Success -> {
             val plan = state.data!!
-            
+            val isOwner = user?.userId == plan.ownerId
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -114,7 +154,7 @@ fun MealPlanDetailsScreen(
                         val totalMealsCount = plan.meals.values.sumOf { it.size }
                         StatItem("🍳", "$totalMealsCount meals")
                         StatItem("🍱", "${plan.nutritionalSummary.totalCalories} kcal")
-                        StatItem("📑", "MP Code")
+                        StatItem("📑", if (plan.mpcode.isNotEmpty()) plan.mpcode else "No Code")
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))
@@ -184,18 +224,27 @@ fun MealPlanDetailsScreen(
                         )
                     }
                     
-                    Surface(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clickable { 
-                                userViewModel.updateRewardPoints(10)
-                            },
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFF1A1A1A),
-                        border = BorderStroke(1.dp, Color.Gray)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(imageVector = Icons.Default.Share, contentDescription = "Share", tint = Color.White)
+                    if (isOwner) {
+                        Surface(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clickable { 
+                                    user?.let {
+                                        rewardViewModel.generateCode(it, plan.id)
+                                        showCodeDialog = true
+                                    }
+                                },
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFF1A1A1A),
+                            border = BorderStroke(1.dp, Color.Gray)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                if (generatedCodeResource is Resource.Loading) {
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color(0xFFF16B24), strokeWidth = 2.dp)
+                                } else {
+                                    Icon(imageVector = Icons.Default.Share, contentDescription = "Share", tint = Color.White)
+                                }
+                            }
                         }
                     }
                 }

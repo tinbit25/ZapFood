@@ -7,7 +7,7 @@ enum class Day {
 }
 
 enum class PlanSourceType {
-    VENDOR, CUSTOMER
+    VENDOR, CUSTOMER, AI
 }
 
 data class NutritionalSummary(
@@ -30,6 +30,7 @@ data class MealPlan(
     val nutritionalSummary: NutritionalSummary = NutritionalSummary(),
     val price: Double = 0.0,
     val mpcode: String = "",
+    val isPublic: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

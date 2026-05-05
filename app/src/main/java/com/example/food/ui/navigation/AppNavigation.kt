@@ -219,10 +219,12 @@ fun AppNavigation(
             }
 
             composable(route = Screen.Checkout.route) {
+                val rewardViewModel: com.example.food.ui.viewmodel.RewardViewModel = viewModel()
                 CheckoutScreen(
                     userViewModel = userViewModel,
                     orderViewModel = orderViewModel,
                     cartViewModel = cartViewModel,
+                    rewardViewModel = rewardViewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onOrderSuccess = {
                         navController.navigate(Screen.OrderSuccess.route) {
@@ -248,8 +250,10 @@ fun AppNavigation(
             }
             
             composable(route = Screen.Profile.route) {
+                val rewardViewModel: com.example.food.ui.viewmodel.RewardViewModel = viewModel()
                 ProfileScreen(
                     userViewModel = userViewModel,
+                    rewardViewModel = rewardViewModel,
                     onLogout = {
                         navController.navigate(Screen.Welcome.route) {
                             popUpTo(0) { inclusive = true }
@@ -311,12 +315,14 @@ fun AppNavigation(
                 arguments = listOf(navArgument("planId") { type = NavType.StringType })
             ) { backStackEntry ->
                 val planId = backStackEntry.arguments?.getString("planId") ?: ""
+                val rewardViewModel: com.example.food.ui.viewmodel.RewardViewModel = viewModel()
                 MealPlanDetailsScreen(
                     planId = planId,
                     mealPlanViewModel = mealPlanViewModel,
                     mealViewModel = mealViewModel,
                     userViewModel = userViewModel,
                     cartViewModel = cartViewModel,
+                    rewardViewModel = rewardViewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

@@ -8,7 +8,10 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
@@ -76,6 +79,61 @@ fun HomeScreen(
         // Featured Promo Banner
         item {
             FeaturedPromoBanner()
+        }
+
+        // MPCode Import Section
+        item {
+            val rewardViewModel: com.example.food.ui.viewmodel.RewardViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+            val importState by rewardViewModel.importState.collectAsState()
+            var showImportDialog by remember { mutableStateOf(false) }
+
+            LaunchedEffect(importState) {
+                if (importState is com.example.food.core.util.Resource.Success) {
+                    onNavigateToMealPlanDetails((importState as com.example.food.core.util.Resource.Success).data!!.id)
+                }
+            }
+
+            if (showImportDialog) {
+                MPCodeDialog(
+                    onDismiss = { showImportDialog = false },
+                    onConfirm = { code -> 
+                        user?.let { rewardViewModel.importPlan(it, code) }
+                    },
+                    isLoading = importState is com.example.food.core.util.Resource.Loading,
+                    errorMessage = (importState as? com.example.food.core.util.Resource.Error)?.message
+                )
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .clickable { showImportDialog = true },
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
+            ) {
+                Row(
+                    modifier = Modifier.padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        modifier = Modifier.size(48.dp),
+                        shape = CircleShape,
+                        color = Color(0xFFF16B24).copy(alpha = 0.1f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color(0xFFF16B24))
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(text = "Have a share code?", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(text = "Import a meal plan using MPCode", fontSize = 12.sp, color = Color.Gray)
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color.Gray)
+                }
+            }
         }
 
         // Explore Categories
@@ -146,7 +204,7 @@ fun HomeSearchBar(onSearchClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = androidx.compose.material.icons.Icons.Default.Search,
+                imageVector = Icons.Default.Search,
                 contentDescription = null,
                 tint = Color.Gray,
                 modifier = Modifier.size(24.dp)

@@ -30,6 +30,7 @@ import com.example.food.data.model.UserRole
 @Composable
 fun ProfileScreen(
     userViewModel: UserViewModel,
+    rewardViewModel: com.example.food.ui.viewmodel.RewardViewModel,
     onLogout: () -> Unit,
     onNavigateToEdit: () -> Unit,
     onNavigateToOrders: () -> Unit,
@@ -38,6 +39,11 @@ fun ProfileScreen(
     authViewModel: AuthViewModel = viewModel()
 ) {
     val user by userViewModel.user.collectAsState()
+    val pointsBalance by rewardViewModel.pointsBalance.collectAsState()
+
+    LaunchedEffect(user) {
+        user?.let { rewardViewModel.fetchBalance(it.userId) }
+    }
 
     Column(
         modifier = Modifier
@@ -105,7 +111,7 @@ fun ProfileScreen(
             
             if (user?.role == UserRole.CUSTOMER) {
                 ProfileMenuItem(icon = Icons.Default.Favorite, title = "Favorite Meals", onClick = { /* Navigate to Favorites */ })
-                ProfileMenuItem(icon = Icons.Default.Stars, title = "Reward Points: ${user?.rewardPoints}", onClick = { /* Show points */ })
+                ProfileMenuItem(icon = Icons.Default.Stars, title = "Reward Points: $pointsBalance", onClick = { /* Show points details */ })
             }
 
             ProfileMenuItem(icon = Icons.Default.Settings, title = "Settings", onClick = onNavigateToSettings)
