@@ -53,4 +53,14 @@ class MealViewModel(
             onResult(result)
         }
     }
+
+    fun seedMeals(onResult: (Resource<Unit>) -> Unit) {
+        viewModelScope.launch {
+            val result = mealUseCase.seedMeals()
+            if (result is Resource.Success) {
+                fetchMeals()
+            }
+            onResult(result)
+        }
+    }
 }

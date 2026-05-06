@@ -24,6 +24,7 @@ import com.example.food.core.util.Resource
 import com.example.food.data.model.*
 import com.example.food.ui.components.TopNavBar
 import com.example.food.ui.viewmodel.AdminViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun AdminDashboardScreen(
@@ -31,12 +32,16 @@ fun AdminDashboardScreen(
     onNavigateToVendors: () -> Unit,
     onNavigateToOrders: () -> Unit,
     onNavigateBack: () -> Unit,
-    viewModel: AdminViewModel = viewModel()
+    viewModel: AdminViewModel = viewModel(),
+    mealViewModel: com.example.food.ui.viewmodel.MealViewModel = viewModel()
 ) {
     val dashboardData by viewModel.dashboardState.collectAsState()
     val health by viewModel.systemHealth.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = Color(0xFF0A0A0A)
     ) { padding ->
         Column(
@@ -113,6 +118,14 @@ fun AdminDashboardScreen(
                 QuickLinkItem(Icons.Default.Group, "User Management", "Verify, activate, or suspend users", onNavigateToUsers)
                 QuickLinkItem(Icons.Default.Storefront, "Vendor Approvals", "Review and approve new vendor partners", onNavigateToVendors)
                 QuickLinkItem(Icons.Default.History, "Order Monitoring", "Track all active and past transactions", onNavigateToOrders)
+                QuickLinkItem(Icons.Default.CloudDownload, "Seed System Data", "Populate app with initial meals and data", {
+                    mealViewModel.seedMeals { result ->
+                        val message = if (result is Resource.Success) "Data seeded successfully!" else "Seeding failed: ${result.message}"
+                        scope.launch {
+                            snackbarHostState.showSnackbar(message)
+                        }
+                    }
+                })
 
                 Spacer(modifier = Modifier.height(32.dp))
 

@@ -19,31 +19,38 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.food.ui.components.PrimaryButton
 import com.example.food.ui.components.TopNavBar
 import com.example.food.data.model.Meal
-import java.util.UUID
+import com.example.food.ui.viewmodel.CartViewModel
+import com.example.food.ui.viewmodel.MealViewModel
+import com.example.food.core.util.Resource
 
 @Composable
 fun ProductDetailsScreen(
     productId: String,
-    onNavigateBack: () -> Unit
+    cartViewModel: CartViewModel,
+    onNavigateBack: () -> Unit,
+    mealViewModel: MealViewModel = viewModel()
 ) {
-    // Mock data for the specific product (In real app, fetch from ViewModel)
-    val product = Meal(
+    val mealsState by mealViewModel.mealsState.collectAsState()
+    var quantity by remember { mutableIntStateOf(1) }
+    
+    // In a real app, we would have a fetchMealById in ViewModel
+    // For now, we find it in the current list or fallback to mock if list is empty
+    val product = (mealsState as? Resource.Success)?.data?.find { it.id == productId } ?: Meal(
         id = productId,
         name = "Classic Cheeseburger",
         description = "Juicy beef patty with cheese and premium ingredients.",
         price = 8.99,
         imageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop",
         calories = 650,
-        vendorId = java.util.UUID.randomUUID().toString(),
+        vendorId = "mock-vendor",
         vendorName = "Burger King"
     )
 
-    var quantity by remember { mutableIntStateOf(1) }
-    
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -149,7 +156,12 @@ fun ProductDetailsScreen(
             
             PrimaryButton(
                 text = "Add to Cart",
-                onClick = { /* Add to cart */ },
+                onClick = { 
+                    repeat(quantity) {
+                        cartViewModel.addMeal(product) 
+                    }
+                    onNavigateBack()
+                },
                 modifier = Modifier.weight(1f),
                 backgroundColor = Color(0xFFF16B24)
             )

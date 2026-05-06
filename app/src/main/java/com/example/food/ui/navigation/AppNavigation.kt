@@ -309,6 +309,7 @@ fun AppNavigation(
                 val productId = backStackEntry.arguments?.getString("productId") ?: ""
                 ProductDetailsScreen(
                     productId = productId,
+                    cartViewModel = cartViewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

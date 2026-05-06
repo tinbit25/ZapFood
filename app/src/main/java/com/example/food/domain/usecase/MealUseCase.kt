@@ -44,4 +44,8 @@ class MealUseCase(
     suspend fun getMealDetails(id: String): Meal? {
         return mealRepository.getMealById(id)
     }
+
+    suspend fun seedMeals(): Resource<Unit> {
+        return mealRepository.seedMeals()
+    }
 }

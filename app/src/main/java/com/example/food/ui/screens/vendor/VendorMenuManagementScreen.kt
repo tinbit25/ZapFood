@@ -31,6 +31,7 @@ fun VendorMenuManagementScreen(
 ) {
     val user by userViewModel.user.collectAsState()
     val mealsState by mealViewModel.mealsState.collectAsState()
+    var showAddDialog by remember { mutableStateOf(false) }
     
     LaunchedEffect(user) {
         user?.let {
@@ -48,7 +49,7 @@ fun VendorMenuManagementScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* Implement Add Meal logic */ },
+                onClick = { showAddDialog = true },
                 containerColor = Color(0xFFF16B24),
                 contentColor = Color.White
             ) {
@@ -89,6 +90,93 @@ fun VendorMenuManagementScreen(
             }
         }
     }
+
+    if (showAddDialog) {
+        AddMealDialog(
+            onDismiss = { showAddDialog = false },
+            onConfirm = { name, price, category ->
+                user?.let { vendor ->
+                    val newMeal = com.example.food.data.model.Meal(
+                        name = name,
+                        price = price,
+                        category = category,
+                        vendorId = vendor.userId,
+                        vendorName = vendor.displayName ?: "Vendor",
+                        imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop"
+                    )
+                    mealViewModel.createMeal(vendor, newMeal) {
+                        showAddDialog = false
+                        mealViewModel.fetchMeals() // Refresh
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun AddMealDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, Double, String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var price by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("Main Course") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add New Meal", color = Color.White) },
+        containerColor = Color(0xFF1A1A1A),
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Meal Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color.Gray,
+                        focusedBorderColor = Color(0xFFF16B24)
+                    )
+                )
+                OutlinedTextField(
+                    value = price,
+                    onValueChange = { price = it },
+                    label = { Text("Price (in thousands RWF)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color.Gray,
+                        focusedBorderColor = Color(0xFFF16B24)
+                    )
+                )
+                OutlinedTextField(
+                    value = category,
+                    onValueChange = { category = it },
+                    label = { Text("Category") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color.Gray,
+                        focusedBorderColor = Color(0xFFF16B24)
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val priceVal = price.toDoubleOrNull() ?: 0.0
+                    onConfirm(name, priceVal, category)
+                }
+            ) {
+                Text("Add", color = Color(0xFFF16B24))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = Color.Gray)
+            }
+        }
+    )
 }
 
 @Composable

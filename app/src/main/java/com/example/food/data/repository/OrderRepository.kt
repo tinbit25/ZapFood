@@ -36,14 +36,15 @@ class OrderRepository {
         trySend(Resource.Loading())
         val listener = ordersCollection
             .whereEqualTo("customerId", userId)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     trySend(Resource.Error(error.localizedMessage ?: "Query failed"))
                     return@addSnapshotListener
                 }
                 val orders = snapshot?.documents?.mapNotNull { it.toObject(Order::class.java) } ?: emptyList()
-                trySend(Resource.Success(orders))
+                // Sort in memory to avoid index requirements
+                val sortedOrders = orders.sortedByDescending { it.createdAt }
+                trySend(Resource.Success(sortedOrders))
             }
         awaitClose { listener.remove() }
     }
@@ -52,14 +53,15 @@ class OrderRepository {
         trySend(Resource.Loading())
         val listener = ordersCollection
             .whereEqualTo("vendorId", vendorId)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     trySend(Resource.Error(error.localizedMessage ?: "Query failed"))
                     return@addSnapshotListener
                 }
                 val orders = snapshot?.documents?.mapNotNull { it.toObject(Order::class.java) } ?: emptyList()
-                trySend(Resource.Success(orders))
+                // Sort in memory to avoid index requirements
+                val sortedOrders = orders.sortedByDescending { it.createdAt }
+                trySend(Resource.Success(sortedOrders))
             }
         awaitClose { listener.remove() }
     }

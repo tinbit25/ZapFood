@@ -79,4 +79,21 @@ class MealRepository {
             Resource.Error(e.localizedMessage ?: "Failed to delete meal")
         }
     }
+
+    suspend fun seedMeals(): Resource<Unit> {
+        val seedList = listOf(
+            Meal(name = "Classic Cheeseburger", price = 8.99, category = "Main Course", calories = 650, vendorName = "Burger King", imageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500"),
+            Meal(name = "Grilled Chicken Salad", price = 6.50, category = "Salad", calories = 350, vendorName = "Healthy Bites", imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500"),
+            Meal(name = "Mushroom Risotto", price = 12.00, category = "Main Course", calories = 550, vendorName = "Italiano", imageUrl = "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=500"),
+            Meal(name = "Avocado Toast", price = 5.99, category = "Breakfast", calories = 300, vendorName = "Coffee House", imageUrl = "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500")
+        )
+        return try {
+            seedList.forEach { meal ->
+                mealsCollection.document(meal.id).set(meal).await()
+            }
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Seeding failed")
+        }
+    }
 }
