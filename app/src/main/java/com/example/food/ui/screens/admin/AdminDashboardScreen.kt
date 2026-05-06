@@ -33,12 +33,18 @@ fun AdminDashboardScreen(
     onNavigateToOrders: () -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: AdminViewModel = viewModel(),
-    mealViewModel: com.example.food.ui.viewmodel.MealViewModel = viewModel()
+    mealViewModel: com.example.food.ui.viewmodel.MealViewModel = viewModel(),
+    mealPlanViewModel: com.example.food.ui.viewmodel.MealPlanViewModel = viewModel()
 ) {
     val dashboardData by viewModel.dashboardState.collectAsState()
+    val vendorsState by viewModel.vendorsState.collectAsState()
     val health by viewModel.systemHealth.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchUsers(role = UserRole.VENDOR)
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -119,10 +125,24 @@ fun AdminDashboardScreen(
                 QuickLinkItem(Icons.Default.Storefront, "Vendor Approvals", "Review and approve new vendor partners", onNavigateToVendors)
                 QuickLinkItem(Icons.Default.History, "Order Monitoring", "Track all active and past transactions", onNavigateToOrders)
                 QuickLinkItem(Icons.Default.CloudDownload, "Seed System Data", "Populate app with initial meals and data", {
-                    mealViewModel.seedMeals { result ->
-                        val message = if (result is Resource.Success) "Data seeded successfully!" else "Seeding failed: ${result.message}"
-                        scope.launch {
-                            snackbarHostState.showSnackbar(message)
+                    val vendors = (vendorsState as? Resource.Success)?.data ?: emptyList()
+                    if (vendors.isEmpty()) {
+                        scope.launch { snackbarHostState.showSnackbar("No vendors found. Please create vendor accounts first.") }
+                        return@QuickLinkItem
+                    }
+                    
+                    mealViewModel.seedMeals(vendors.map { it.userId }) { mResult ->
+                        if (mResult is Resource.Success) {
+                            // After meals are seeded, fetch them to get IDs for plan seeding
+                            val seededMeals = (mealViewModel.mealsState.value as? Resource.Success)?.data ?: emptyList()
+                            val mealIds = seededMeals.map { it.id }
+                            
+                            mealPlanViewModel.seedPlans(vendors.map { it.userId }, mealIds) { pResult ->
+                                val message = if (pResult is Resource.Success) "System seeded with meals and plans!" else "Meal seeding OK, but plan seeding failed."
+                                scope.launch { snackbarHostState.showSnackbar(message) }
+                            }
+                        } else {
+                            scope.launch { snackbarHostState.showSnackbar("Seeding failed: ${mResult.message}") }
                         }
                     }
                 })

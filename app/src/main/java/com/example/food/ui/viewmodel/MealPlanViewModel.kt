@@ -88,4 +88,14 @@ class MealPlanViewModel(
             onResult(result)
         }
     }
+
+    fun seedPlans(vendorIds: List<String>, mealIds: List<String>, onResult: (Resource<Unit>) -> Unit) {
+        viewModelScope.launch {
+            val result = mealPlanUseCase.seedPlans(vendorIds, mealIds)
+            if (result is Resource.Success) {
+                fetchDiscoverPlans()
+            }
+            onResult(result)
+        }
+    }
 }

@@ -110,4 +110,8 @@ class MealPlanUseCase(
     fun getDiscoverPlans(): Flow<Resource<List<MealPlan>>> {
         return mealPlanRepository.getVendorPlans()
     }
+
+    suspend fun seedPlans(vendorIds: List<String>, mealIds: List<String>): Resource<Unit> {
+        return mealPlanRepository.seedPlans(vendorIds, mealIds)
+    }
 }

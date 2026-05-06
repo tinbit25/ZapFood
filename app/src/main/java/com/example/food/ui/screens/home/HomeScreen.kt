@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Search
@@ -28,13 +27,17 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.food.ui.viewmodel.UserViewModel
 import com.example.food.ui.viewmodel.MealPlanViewModel
+import com.example.food.ui.viewmodel.MealViewModel
 import com.example.food.data.model.MealPlan
+import com.example.food.data.model.Meal
 import com.example.food.ui.components.MPCodeDialog
+import com.example.food.core.util.Resource
 
 @Composable
 fun HomeScreen(
     userViewModel: UserViewModel,
     mealPlanViewModel: MealPlanViewModel,
+    mealViewModel: MealViewModel,
     onNavigateToDetails: (String) -> Unit,
     onNavigateToMealPlanDetails: (String) -> Unit,
     onNavigateToSearch: () -> Unit,
@@ -42,7 +45,10 @@ fun HomeScreen(
 ) {
     val user by userViewModel.user.collectAsState()
     val discoverPlansState by mealPlanViewModel.discoverPlansState.collectAsState()
-    val mealPlans = (discoverPlansState as? com.example.food.core.util.Resource.Success)?.data ?: emptyList()
+    val mealsState by mealViewModel.mealsState.collectAsState()
+    
+    val mealPlans = (discoverPlansState as? Resource.Success)?.data ?: emptyList()
+    val meals = (mealsState as? Resource.Success)?.data ?: emptyList()
     
     val exploreCategories = listOf(
         ExploreItem("Restaurants", "🍟"),
@@ -53,12 +59,13 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) {
         mealPlanViewModel.fetchDiscoverPlans()
+        mealViewModel.fetchMeals()
     }
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0A0A0A)), // Even deeper black for premium feel
+            .background(Color(0xFF0A0A0A)),
         contentPadding = PaddingValues(bottom = 100.dp)
     ) {
         // Top Header
@@ -88,8 +95,8 @@ fun HomeScreen(
             var showImportDialog by remember { mutableStateOf(false) }
 
             LaunchedEffect(importState) {
-                if (importState is com.example.food.core.util.Resource.Success) {
-                    onNavigateToMealPlanDetails((importState as com.example.food.core.util.Resource.Success).data!!.id)
+                if (importState is Resource.Success) {
+                    onNavigateToMealPlanDetails((importState as Resource.Success).data!!.id)
                 }
             }
 
@@ -99,8 +106,8 @@ fun HomeScreen(
                     onConfirm = { code -> 
                         user?.let { rewardViewModel.importPlan(it, code) }
                     },
-                    isLoading = importState is com.example.food.core.util.Resource.Loading,
-                    errorMessage = (importState as? com.example.food.core.util.Resource.Error)?.message
+                    isLoading = importState is Resource.Loading,
+                    errorMessage = (importState as? Resource.Error)?.message
                 )
             }
 
@@ -152,39 +159,91 @@ fun HomeScreen(
         // Hottest Plans
         item {
             SectionHeader(title = "Hottest Plans", onActionClick = {})
-            if (discoverPlansState is com.example.food.core.util.Resource.Loading) {
-                // Skeleton loading would go here
+            if (discoverPlansState is Resource.Loading) {
+                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color(0xFFF16B24))
+                }
+            } else if (mealPlans.isEmpty()) {
+                Text(
+                    text = "No plans available. Ask Admin to seed data!",
+                    modifier = Modifier.padding(24.dp),
+                    color = Color.Gray
+                )
+            } else {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(mealPlans) { plan ->
+                        PremiumHottestCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.id) })
+                    }
+                }
             }
-            
-            val displayPlans = if (mealPlans.isEmpty()) getMockPlans() else mealPlans
-            
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(displayPlans.take(5)) { plan ->
-                    PremiumHottestCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.id) })
+        }
+
+        // Popular Meals Section
+        item {
+            SectionHeader(title = "Popular Meals", onActionClick = {})
+            if (mealsState is Resource.Loading) {
+                Box(modifier = Modifier.fillMaxWidth().height(150.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color(0xFFF16B24))
+                }
+            } else if (meals.isEmpty()) {
+                Text(
+                    text = "No meals available.",
+                    modifier = Modifier.padding(24.dp),
+                    color = Color.Gray
+                )
+            } else {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(meals) { meal ->
+                        PopularMealCard(meal = meal, onClick = { onNavigateToDetails(meal.id) })
+                    }
                 }
             }
         }
 
         // Recommendation Section
         item {
-            SectionTitle("Plans tailored for you")
+            SectionTitle("Tailored for you")
         }
         
-        val recommendPlans = if (mealPlans.isEmpty()) getMockPlans().reversed() else mealPlans
-        items(recommendPlans) { plan ->
-            ImmersiveLargeCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.id) })
+        if (mealPlans.isNotEmpty()) {
+            items(mealPlans.reversed()) { plan ->
+                ImmersiveLargeCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.id) })
+            }
         }
     }
 }
 
-fun getMockPlans() = listOf(
-    MealPlan(id = "m1", name = "Bachelors Safe Haven", vendorName = "Master Chef", imageUrl = "https://images.unsplash.com/photo-1547573854-74d2a71d0827?w=800"),
-    MealPlan(id = "m2", name = "Maseba's Gourmet Table", vendorName = "Abiye Briggs", imageUrl = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800"),
-    MealPlan(id = "m3", name = "Healthy Keto Boost", vendorName = "Fit Bites", imageUrl = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800")
-)
+@Composable
+fun PopularMealCard(meal: Meal, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .width(160.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
+    ) {
+        Column {
+            AsyncImage(
+                model = meal.imageUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+            )
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(text = meal.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1)
+                Text(text = "RWF ${"%,.0f".format(meal.price * 1000)}", fontSize = 12.sp, color = Color(0xFFF16B24))
+            }
+        }
+    }
+}
 
 data class ExploreItem(val name: String, val icon: String)
 
@@ -256,7 +315,7 @@ fun HomeHeader(
         Box {
             IconButton(onClick = onNotificationClick) {
                 Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Outlined.Notifications,
+                    imageVector = Icons.Outlined.Notifications,
                     contentDescription = "Notifications",
                     tint = Color.White,
                     modifier = Modifier.size(28.dp)
@@ -280,63 +339,6 @@ fun HomeHeader(
 }
 
 @Composable
-fun HottestPlanCard(plan: MealPlan, onClick: () -> Unit) {
-    val totalMeals = plan.meals.values.sumOf { it.size }
-    Card(
-        modifier = Modifier
-            .width(280.dp)
-            .height(180.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(24.dp)
-    ) {
-        Box {
-            AsyncImage(
-                model = plan.imageUrl,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-            // Gradient Overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)),
-                            startY = 100f
-                        )
-                    )
-            )
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(16.dp)
-            ) {
-                Text(text = plan.vendorName, fontSize = 11.sp, color = Color.LightGray)
-                Text(text = plan.name, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
-            }
-            
-            // Badge at bottom right
-            Row(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Default.Notifications, // Placeholder for meal icon
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(text = "$totalMeals meals", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-}
-
-@Composable
 fun FeaturedPromoBanner() {
     Card(
         modifier = Modifier
@@ -347,7 +349,7 @@ fun FeaturedPromoBanner() {
     ) {
         Box {
             AsyncImage(
-                model = "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1080&auto=format&fit=crop", // Pizza promo
+                model = "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1080&auto=format&fit=crop",
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
@@ -449,7 +451,7 @@ fun PremiumHottestCard(plan: MealPlan, onClick: () -> Unit) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = androidx.compose.material.icons.Icons.Default.Notifications,
+                        imageVector = Icons.Default.Restaurant,
                         contentDescription = null,
                         tint = Color(0xFFF16B24),
                         modifier = Modifier.size(14.dp)
@@ -458,21 +460,6 @@ fun PremiumHottestCard(plan: MealPlan, onClick: () -> Unit) {
                     Text(text = plan.vendorName, fontSize = 12.sp, color = Color.LightGray)
                 }
                 Text(text = plan.name, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
-            }
-            
-            // Meal count badge
-            Surface(
-                modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
-                color = Color.Black.copy(alpha = 0.6f),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(
-                    text = "🍳 14 meals",
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    fontSize = 10.sp,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
             }
         }
     }

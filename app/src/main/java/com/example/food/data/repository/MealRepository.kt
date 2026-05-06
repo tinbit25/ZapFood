@@ -80,15 +80,32 @@ class MealRepository {
         }
     }
 
-    suspend fun seedMeals(): Resource<Unit> {
-        val seedList = listOf(
-            Meal(name = "Classic Cheeseburger", price = 8.99, category = "Main Course", calories = 650, vendorName = "Burger King", imageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500"),
-            Meal(name = "Grilled Chicken Salad", price = 6.50, category = "Salad", calories = 350, vendorName = "Healthy Bites", imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500"),
-            Meal(name = "Mushroom Risotto", price = 12.00, category = "Main Course", calories = 550, vendorName = "Italiano", imageUrl = "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=500"),
-            Meal(name = "Avocado Toast", price = 5.99, category = "Breakfast", calories = 300, vendorName = "Coffee House", imageUrl = "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500")
+    suspend fun seedMeals(vendorIds: List<String>): Resource<Unit> {
+        if (vendorIds.isEmpty()) return Resource.Error("No vendors found to assign meals to")
+        
+        val seedData = listOf(
+            Triple("Classic Cheeseburger", 8.99, "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800"),
+            Triple("Crispy Chicken Sandwich", 7.50, "https://images.unsplash.com/photo-1626700051175-656868edfab9?w=800"),
+            Triple("Vegetarian Garden Salad", 6.00, "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800"),
+            Triple("Spicy Tuna Roll", 12.00, "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800"),
+            Triple("Margarita Pizza", 15.00, "https://images.unsplash.com/photo-1574071318508-1cdbad80ad50?w=800"),
+            Triple("Berry Smoothie Bowl", 9.50, "https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?w=800")
         )
+
         return try {
-            seedList.forEach { meal ->
+            seedData.forEachIndexed { index, data ->
+                val vendorId = vendorIds[index % vendorIds.size]
+                val meal = Meal(
+                    id = java.util.UUID.randomUUID().toString(),
+                    name = data.first,
+                    price = data.second,
+                    imageUrl = data.third,
+                    vendorId = vendorId,
+                    vendorName = "Demo Vendor ${index + 1}",
+                    category = if (index % 2 == 0) "Main Course" else "Healthy",
+                    calories = 300 + (index * 50),
+                    isAvailable = true
+                )
                 mealsCollection.document(meal.id).set(meal).await()
             }
             Resource.Success(Unit)

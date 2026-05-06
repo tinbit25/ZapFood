@@ -163,6 +163,7 @@ fun AppNavigation(
                 HomeScreen(
                     userViewModel = userViewModel,
                     mealPlanViewModel = mealPlanViewModel,
+                    mealViewModel = mealViewModel,
                     onNavigateToDetails = { productId ->
                         navController.navigate(Screen.ProductDetails.createRoute(productId))
                     },
@@ -359,7 +360,9 @@ fun AppNavigation(
                     onNavigateToVendors = { navController.navigate(Screen.AdminVendorManagement.route) },
                     onNavigateToOrders = { navController.navigate(Screen.AdminOrderMonitoring.route) },
                     onNavigateBack = { navController.popBackStack() },
-                    viewModel = adminViewModel
+                    viewModel = adminViewModel,
+                    mealViewModel = mealViewModel,
+                    mealPlanViewModel = mealPlanViewModel
                 )
             }
 
