@@ -41,7 +41,7 @@ class AIPlanUseCase(
             // 4. Create the MealPlan object
             val mealPlan = MealPlan(
                 id = UUID.randomUUID().toString(),
-                name = "AI ${preferences.goal.name.lowercase().capitalize()} Plan",
+                name = "AI ${preferences.goal.name.lowercase().replaceFirstChar { it.uppercase() }} Plan",
                 description = "Personalized plan generated for your ${preferences.goal.name} goal.",
                 ownerId = preferences.userId,
                 imageUrl = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800",
@@ -66,12 +66,12 @@ class AIPlanUseCase(
         // Priority 2: Category + Closest Calories
         val categoryMeals = meals.filter { it.category.equals(suggestion.category, ignoreCase = true) && isSafe(it, dietaryPrefs) }
         if (categoryMeals.isNotEmpty()) {
-            return categoryMeals.minByOrNull { Math.abs(it.calories - suggestion.targetCalories) }!!
+            return categoryMeals.minByOrNull { kotlin.math.abs(it.calories - suggestion.targetCalories) }!!
         }
 
         // Priority 3: Any safe meal closest to target calories
         return meals.filter { isSafe(it, dietaryPrefs) }
-            .minByOrNull { Math.abs(it.calories - suggestion.targetCalories) }
+            .minByOrNull { kotlin.math.abs(it.calories - suggestion.targetCalories) }
             ?: meals.first() // Fallback to any meal if nothing fits (should not happen with good data)
     }
 

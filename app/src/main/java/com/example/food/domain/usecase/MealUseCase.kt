@@ -12,7 +12,10 @@ class MealUseCase(
     private val mealRepository: MealRepository = MealRepository()
 ) {
     suspend fun createMeal(user: User, meal: Meal): Resource<Unit> {
-        // 1. Check user role = VENDOR
+        // 1. Check user role = VENDOR and status = APPROVED
+        if (user.role == UserRole.VENDOR && user.vendorStatus != com.example.food.data.model.VendorStatus.APPROVED) {
+            return Resource.Error("Your account is not approved to create meals yet. Status: ${user.vendorStatus}")
+        }
         if (user.role != UserRole.VENDOR && user.role != UserRole.ADMIN) {
             return Resource.Error("Unauthorized: Only vendors can create meals")
         }

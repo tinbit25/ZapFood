@@ -9,11 +9,11 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-class UserRepository {
-    private val firestore = FirebaseFirestore.getInstance()
-    private val auth = FirebaseAuth.getInstance()
+open class UserRepository {
+    protected open val firestore by lazy { FirebaseFirestore.getInstance() }
+    protected open val auth by lazy { FirebaseAuth.getInstance() }
 
-    fun getUserProfile(): Flow<User?> = callbackFlow {
+    open fun getUserProfile(): Flow<User?> = callbackFlow {
         var snapshotListener: ListenerRegistration? = null
 
         // Listen to Auth State changes (Login/Logout)

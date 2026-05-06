@@ -78,6 +78,11 @@ class AuthUseCase(
             val user = doc.toObject(User::class.java)
                 ?: run { emit(Resource.Error("User profile not found")); return@flow }
 
+            if (!user.isActive) {
+                emit(Resource.Error("Your account has been deactivated. Please contact support."))
+                return@flow
+            }
+
             // Access token (15 mins), Refresh token (7 days)
             val accessToken = securityManager.generateSimulatedToken(firebaseUid, user.role.name, 15)
             val refreshToken = securityManager.generateSimulatedToken(firebaseUid, user.role.name, 10080)

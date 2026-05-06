@@ -36,6 +36,7 @@ fun ProfileScreen(
     onNavigateToOrders: () -> Unit,
     onNavigateToAddresses: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToAdmin: () -> Unit,
     authViewModel: AuthViewModel = viewModel()
 ) {
     val user by userViewModel.user.collectAsState()
@@ -104,6 +105,10 @@ fun ProfileScreen(
             ProfileMenuItem(icon = Icons.Default.LocationOn, title = "Delivery Addresses", onClick = onNavigateToAddresses)
             
             // Role-Specific Items
+            if (user?.role == UserRole.ADMIN) {
+                ProfileMenuItem(icon = Icons.Default.Security, title = "Admin Panel", onClick = onNavigateToAdmin)
+            }
+            
             if (user?.role == UserRole.VENDOR) {
                 ProfileMenuItem(icon = Icons.Default.Store, title = "Business Dashboard", onClick = { /* Navigate to Dashboard */ })
                 ProfileMenuItem(icon = Icons.Default.RestaurantMenu, title = "Manage Menu", onClick = { /* Navigate to Menu Management */ })

@@ -262,7 +262,8 @@ fun AppNavigation(
                     onNavigateToEdit = { navController.navigate(Screen.ProfileEdit.route) },
                     onNavigateToOrders = { navController.navigate(Screen.OrderHistory.route) },
                     onNavigateToAddresses = { navController.navigate(Screen.Addresses.route) },
-                    onNavigateToSettings = { /* Add settings route if needed */ }
+                    onNavigateToSettings = { /* Add settings route if needed */ },
+                    onNavigateToAdmin = { navController.navigate(Screen.AdminDashboard.route) }
                 )
             }
 
@@ -336,6 +337,41 @@ fun AppNavigation(
                             popUpTo(0) { inclusive = true }
                         }
                     }
+                )
+            }
+
+            composable(route = Screen.AdminDashboard.route) {
+                val adminViewModel: com.example.food.ui.viewmodel.AdminViewModel = viewModel()
+                com.example.food.ui.screens.admin.AdminDashboardScreen(
+                    onNavigateToUsers = { navController.navigate(Screen.AdminUserManagement.route) },
+                    onNavigateToVendors = { navController.navigate(Screen.AdminVendorManagement.route) },
+                    onNavigateToOrders = { navController.navigate(Screen.AdminOrderMonitoring.route) },
+                    onNavigateBack = { navController.popBackStack() },
+                    viewModel = adminViewModel
+                )
+            }
+
+            composable(route = Screen.AdminUserManagement.route) {
+                val adminViewModel: com.example.food.ui.viewmodel.AdminViewModel = viewModel()
+                com.example.food.ui.screens.admin.UserManagementScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    viewModel = adminViewModel
+                )
+            }
+
+            composable(route = Screen.AdminVendorManagement.route) {
+                val adminViewModel: com.example.food.ui.viewmodel.AdminViewModel = viewModel()
+                com.example.food.ui.screens.admin.VendorManagementScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    viewModel = adminViewModel
+                )
+            }
+
+            composable(route = Screen.AdminOrderMonitoring.route) {
+                val adminViewModel: com.example.food.ui.viewmodel.AdminViewModel = viewModel()
+                com.example.food.ui.screens.admin.AdminOrderMonitoringScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    viewModel = adminViewModel
                 )
             }
         }

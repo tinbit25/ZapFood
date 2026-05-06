@@ -3,7 +3,12 @@ package com.example.food.domain.usecase
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.example.food.core.util.Resource
+import com.example.food.data.model.User
 import com.example.food.data.model.UserRole
+import com.example.food.data.repository.AuthRepository
+import com.example.food.data.repository.UserRepository
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
@@ -21,8 +26,27 @@ class AuthUseCaseTest {
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
-        authUseCase = AuthUseCase(context)
+        
+        // We use fakes that don't trigger lazy Firebase initialization
+        val fakeAuthRepo = object : AuthRepository() {
+            override val firestore: FirebaseFirestore get() = throw IllegalStateException("Should not use firestore in fake")
+            override val auth: FirebaseAuth get() = throw IllegalStateException("Should not use auth in fake")
+            
+            override suspend fun findUserByEmail(email: String): User? = null
+            override suspend fun registerUser(user: User, password: String): Resource<User> {
+                return Resource.Success(user)
+            }
+        }
+        
+        val fakeUserRepo = object : UserRepository() {
+            override val firestore: FirebaseFirestore get() = throw IllegalStateException("Should not use firestore in fake")
+            override val auth: FirebaseAuth get() = throw IllegalStateException("Should not use auth in fake")
+        }
+        
+        authUseCase = AuthUseCase(context, fakeAuthRepo, fakeUserRepo)
     }
+
+
 
     @Test
     fun `register with empty fields should return error`() = runBlocking {

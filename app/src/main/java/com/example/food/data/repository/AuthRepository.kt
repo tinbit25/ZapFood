@@ -6,11 +6,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
-class AuthRepository {
-    private val firestore = FirebaseFirestore.getInstance()
-    private val auth = FirebaseAuth.getInstance()
+open class AuthRepository {
+    protected open val firestore by lazy { FirebaseFirestore.getInstance() }
+    protected open val auth by lazy { FirebaseAuth.getInstance() }
 
-    suspend fun registerUser(user: User, password: String): Resource<User> {
+    open suspend fun registerUser(user: User, password: String): Resource<User> {
         return try {
             // Step 1: Create Firebase Auth account — this logs in the new user automatically
             val authResult = auth.createUserWithEmailAndPassword(user.email, password).await()
@@ -28,7 +28,7 @@ class AuthRepository {
         }
     }
 
-    suspend fun saveSession(session: AuthSession): Resource<Unit> {
+    open suspend fun saveSession(session: AuthSession): Resource<Unit> {
         return try {
             firestore.collection("sessions").document(session.sessionId).set(session).await()
             Resource.Success(Unit)
@@ -37,7 +37,7 @@ class AuthRepository {
         }
     }
 
-    suspend fun removeSession(sessionId: String): Resource<Unit> {
+    open suspend fun removeSession(sessionId: String): Resource<Unit> {
         return try {
             firestore.collection("sessions").document(sessionId).delete().await()
             Resource.Success(Unit)
@@ -46,7 +46,7 @@ class AuthRepository {
         }
     }
 
-    suspend fun removeAllUserSessions(userId: String): Resource<Unit> {
+    open suspend fun removeAllUserSessions(userId: String): Resource<Unit> {
         return try {
             val sessions = firestore.collection("sessions")
                 .whereEqualTo("userId", userId)
@@ -64,7 +64,7 @@ class AuthRepository {
         }
     }
 
-    suspend fun saveResetToken(resetToken: ResetToken): Resource<Unit> {
+    open suspend fun saveResetToken(resetToken: ResetToken): Resource<Unit> {
         return try {
             firestore.collection("reset_tokens").document(resetToken.token).set(resetToken).await()
             Resource.Success(Unit)
@@ -73,7 +73,7 @@ class AuthRepository {
         }
     }
 
-    suspend fun getResetToken(token: String): ResetToken? {
+    open suspend fun getResetToken(token: String): ResetToken? {
         return try {
             val doc = firestore.collection("reset_tokens").document(token).get().await()
             doc.toObject(ResetToken::class.java)
@@ -82,7 +82,7 @@ class AuthRepository {
         }
     }
 
-    suspend fun updateUserPassword(userId: String, passwordHash: String): Resource<Unit> {
+    open suspend fun updateUserPassword(userId: String, passwordHash: String): Resource<Unit> {
         return try {
             firestore.collection("users").document(userId).update("passwordHash", passwordHash).await()
             Resource.Success(Unit)
@@ -91,7 +91,7 @@ class AuthRepository {
         }
     }
 
-    suspend fun findUserByEmail(email: String): User? {
+    open suspend fun findUserByEmail(email: String): User? {
         return try {
             val snapshot = firestore.collection("users")
                 .whereEqualTo("email", email)

@@ -7,11 +7,9 @@ plugins {
 }
 android {
     namespace = "com.example.food"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
+
+
 
     defaultConfig {
         applicationId = "com.example.food"
@@ -42,7 +40,13 @@ android {
     room {
         schemaDirectory("$projectDir/schemas")
     }
+
+    tasks.withType<Test> {
+        // Fix for corrupted system PATH (stray double quotes)
+        environment("PATH", System.getenv("PATH").replace("\"", ""))
+    }
 }
+
 
 dependencies {
     implementation(libs.androidx.core.ktx)
