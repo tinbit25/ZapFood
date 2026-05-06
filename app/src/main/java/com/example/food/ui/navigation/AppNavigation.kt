@@ -263,7 +263,9 @@ fun AppNavigation(
                     onNavigateToOrders = { navController.navigate(Screen.OrderHistory.route) },
                     onNavigateToAddresses = { navController.navigate(Screen.Addresses.route) },
                     onNavigateToSettings = { /* Add settings route if needed */ },
-                    onNavigateToAdmin = { navController.navigate(Screen.AdminDashboard.route) }
+                    onNavigateToAdmin = { navController.navigate(Screen.AdminDashboard.route) },
+                    onNavigateToVendorDashboard = { navController.navigate(Screen.VendorDashboard.route) },
+                    onNavigateToVendorMenu = { navController.navigate(Screen.VendorMenuManagement.route) }
                 )
             }
 
@@ -337,6 +339,15 @@ fun AppNavigation(
                             popUpTo(0) { inclusive = true }
                         }
                     }
+                )
+            }
+
+            composable(route = Screen.VendorMenuManagement.route) {
+                // For now, navigating to a placeholder or a screen we will create
+                com.example.food.ui.screens.vendor.VendorMenuManagementScreen(
+                    userViewModel = userViewModel,
+                    mealViewModel = mealViewModel,
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 

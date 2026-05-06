@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -37,6 +38,8 @@ fun ProfileScreen(
     onNavigateToAddresses: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToAdmin: () -> Unit,
+    onNavigateToVendorDashboard: () -> Unit,
+    onNavigateToVendorMenu: () -> Unit,
     authViewModel: AuthViewModel = viewModel()
 ) {
     val user by userViewModel.user.collectAsState()
@@ -110,8 +113,8 @@ fun ProfileScreen(
             }
             
             if (user?.role == UserRole.VENDOR) {
-                ProfileMenuItem(icon = Icons.Default.Store, title = "Business Dashboard", onClick = { /* Navigate to Dashboard */ })
-                ProfileMenuItem(icon = Icons.Default.RestaurantMenu, title = "Manage Menu", onClick = { /* Navigate to Menu Management */ })
+                ProfileMenuItem(icon = Icons.Default.Store, title = "Business Dashboard", onClick = onNavigateToVendorDashboard)
+                ProfileMenuItem(icon = Icons.Default.RestaurantMenu, title = "Manage Menu", onClick = onNavigateToVendorMenu)
             }
             
             if (user?.role == UserRole.CUSTOMER) {
@@ -124,7 +127,7 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(32.dp))
             
             ProfileMenuItem(
-                icon = Icons.Default.ExitToApp,
+                icon = Icons.AutoMirrored.Filled.ExitToApp,
                 title = "Log Out",
                 isDestructive = true,
                 onClick = {

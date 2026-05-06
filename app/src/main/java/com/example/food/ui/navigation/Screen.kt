@@ -37,7 +37,9 @@ sealed class Screen(val route: String) {
 
     // Role-based Dashboards
     object VendorDashboard : Screen("vendor_dashboard_screen")
+    object VendorMenuManagement : Screen("vendor_menu_management_screen")
     object AdminDashboard : Screen("admin_dashboard_screen")
+
     object AdminUserManagement : Screen("admin_user_management_screen")
     object AdminVendorManagement : Screen("admin_vendor_management_screen")
     object AdminOrderMonitoring : Screen("admin_order_monitoring_screen")
