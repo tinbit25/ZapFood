@@ -34,7 +34,9 @@ import com.example.food.ui.screens.cart.CheckoutScreen
 import com.example.food.ui.screens.cart.OrderSuccessScreen
 import com.example.food.ui.screens.details.MealPlanDetailsScreen
 import com.example.food.ui.screens.vendor.VendorDashboardScreen
-
+import com.example.food.ui.screens.support.SupportTicketScreen
+import com.example.food.ui.screens.admin.AdminSupportDashboardScreen
+import com.example.food.ui.screens.feedback.FeedbackScreen
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
@@ -266,7 +268,9 @@ fun AppNavigation(
                     onNavigateToSettings = { /* Add settings route if needed */ },
                     onNavigateToAdmin = { navController.navigate(Screen.AdminDashboard.route) },
                     onNavigateToVendorDashboard = { navController.navigate(Screen.VendorDashboard.route) },
-                    onNavigateToVendorMenu = { navController.navigate(Screen.VendorMenuManagement.route) }
+                    onNavigateToVendorMenu = { navController.navigate(Screen.VendorMenuManagement.route) },
+                    onNavigateToSupportTickets = { navController.navigate(Screen.SupportTickets.route) },
+                    onNavigateToAdminSupport = { navController.navigate(Screen.AdminSupportDashboard.route) }
                 )
             }
 
@@ -302,7 +306,10 @@ fun AppNavigation(
                 OrderHistoryScreen(
                     userViewModel = userViewModel,
                     orderViewModel = orderViewModel,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToFeedback = { orderId ->
+                        navController.navigate(Screen.Feedback.createRoute(orderId))
+                    }
                 )
             }
             
@@ -387,6 +394,32 @@ fun AppNavigation(
                 com.example.food.ui.screens.admin.AdminOrderMonitoringScreen(
                     onNavigateBack = { navController.popBackStack() },
                     viewModel = adminViewModel
+                )
+            }
+
+            composable(route = Screen.SupportTickets.route) {
+                SupportTicketScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    userViewModel = userViewModel
+                )
+            }
+
+            composable(route = Screen.AdminSupportDashboard.route) {
+                AdminSupportDashboardScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    userViewModel = userViewModel
+                )
+            }
+
+            composable(
+                route = Screen.Feedback.route,
+                arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val orderId = backStackEntry.arguments?.getString("orderId")?.takeIf { it != "none" }
+                FeedbackScreen(
+                    orderId = orderId,
+                    onNavigateBack = { navController.popBackStack() },
+                    userViewModel = userViewModel
                 )
             }
         }

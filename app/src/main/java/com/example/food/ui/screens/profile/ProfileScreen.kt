@@ -40,6 +40,8 @@ fun ProfileScreen(
     onNavigateToAdmin: () -> Unit,
     onNavigateToVendorDashboard: () -> Unit,
     onNavigateToVendorMenu: () -> Unit,
+    onNavigateToSupportTickets: () -> Unit,
+    onNavigateToAdminSupport: () -> Unit,
     authViewModel: AuthViewModel = viewModel()
 ) {
     val user by userViewModel.user.collectAsState()
@@ -106,10 +108,12 @@ fun ProfileScreen(
             // Common Items
             ProfileMenuItem(icon = Icons.Default.Receipt, title = "My Orders", onClick = onNavigateToOrders)
             ProfileMenuItem(icon = Icons.Default.LocationOn, title = "Delivery Addresses", onClick = onNavigateToAddresses)
+            ProfileMenuItem(icon = Icons.Default.Support, title = "Help & Support", onClick = onNavigateToSupportTickets)
             
             // Role-Specific Items
             if (user?.role == UserRole.ADMIN) {
                 ProfileMenuItem(icon = Icons.Default.Security, title = "Admin Panel", onClick = onNavigateToAdmin)
+                ProfileMenuItem(icon = Icons.Default.SupportAgent, title = "Support Dashboard", onClick = onNavigateToAdminSupport)
             }
             
             if (user?.role == UserRole.VENDOR) {

@@ -33,7 +33,8 @@ fun OrderHistoryScreen(
     userViewModel: UserViewModel,
     orderViewModel: OrderViewModel,
     paymentViewModel: PaymentViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToFeedback: (String) -> Unit
 ) {
     val user by userViewModel.user.collectAsState()
     val ordersState by orderViewModel.userOrders.collectAsState()
@@ -92,6 +93,9 @@ fun OrderHistoryScreen(
                                             method = order.paymentMethod
                                         )
                                     }
+                                },
+                                onLeaveFeedback = {
+                                    onNavigateToFeedback(order.orderId)
                                 }
                             )
                         }
@@ -107,7 +111,8 @@ fun OrderHistoryCard(
     order: Order, 
     dateFormat: SimpleDateFormat, 
     onCancel: () -> Unit,
-    onRetryPayment: () -> Unit
+    onRetryPayment: () -> Unit,
+    onLeaveFeedback: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -184,6 +189,18 @@ fun OrderHistoryCard(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("Cancel Order", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            
+            if (order.status == OrderStatus.DELIVERED) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onLeaveFeedback,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF32CD32)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Leave Feedback", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
         }

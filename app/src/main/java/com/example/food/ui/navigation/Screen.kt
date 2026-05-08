@@ -43,4 +43,11 @@ sealed class Screen(val route: String) {
     object AdminUserManagement : Screen("admin_user_management_screen")
     object AdminVendorManagement : Screen("admin_vendor_management_screen")
     object AdminOrderMonitoring : Screen("admin_order_monitoring_screen")
+
+    // Support and Feedback
+    object SupportTickets : Screen("support_tickets_screen")
+    object Feedback : Screen("feedback_screen/{orderId}") {
+        fun createRoute(orderId: String?) = if (orderId != null) "feedback_screen/$orderId" else "feedback_screen/none"
+    }
+    object AdminSupportDashboard : Screen("admin_support_dashboard_screen")
 }
