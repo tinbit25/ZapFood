@@ -24,6 +24,7 @@ data class User(
     val passwordHash: String = "",
     val activeSessionIds: List<String> = emptyList(),
     val isActive: Boolean = true,
+    val fcmToken: String? = null,
 
     // Role-specific extensions
     val preferences: List<String> = emptyList(), // For Customer

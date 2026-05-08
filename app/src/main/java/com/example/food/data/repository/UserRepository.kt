@@ -8,6 +8,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 
 open class UserRepository {
     protected open val firestore by lazy { FirebaseFirestore.getInstance() }
@@ -57,6 +58,17 @@ open class UserRepository {
         awaitClose {
             auth.removeAuthStateListener(authListener)
             snapshotListener?.remove()
+        }
+    }
+    
+    suspend fun updateFcmToken(userId: String, token: String?): Boolean {
+        return try {
+            firestore.collection("users").document(userId)
+                .update("fcmToken", token)
+                .await()
+            true
+        } catch (e: Exception) {
+            false
         }
     }
 }
