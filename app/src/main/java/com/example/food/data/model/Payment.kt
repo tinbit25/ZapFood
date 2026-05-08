@@ -20,10 +20,13 @@ data class Payment(
     val paymentId: String = UUID.randomUUID().toString(),
     val orderId: String = "",
     val userId: String = "",
-    val amount: Long = 0, // In smallest currency unit (e.g., RWF)
+    val amount: Long = 0, // In smallest currency unit (santim for ETB)
+    val currency: String = "ETB",
     val method: PaymentMethod = PaymentMethod.CARD,
     val status: PaymentStatus = PaymentStatus.INITIATED,
     val transactionRef: String? = null,
+    val chapaRef: String? = null, // Chapa's internal reference ID
+    val checkoutUrl: String? = null, // Chapa hosted checkout page URL
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

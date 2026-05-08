@@ -1,5 +1,8 @@
 package com.example.food.ui.screens.cart
 
+import android.content.Context
+import android.net.Uri
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,13 +11,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,17 +49,18 @@ fun CheckoutScreen(
     val pointsBalance by rewardViewModel.pointsBalance.collectAsState()
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     
     var pointsToRedeem by remember { mutableIntStateOf(0) }
-    val rewardDiscount = (pointsToRedeem / 10) * 100.0 // 10 points = 100 RWF
+    val rewardDiscount = (pointsToRedeem / 10) * 100.0 // 10 points = 100 ETB
     
-    val deliveryFee = 2000.0 // RWF
-    val subtotal = cartState.subtotal * 1000
+    val deliveryFee = 50.0 // ETB
+    val subtotal = cartState.subtotal
     val total = subtotal + deliveryFee - rewardDiscount
 
     val paymentState by paymentViewModel.paymentState.collectAsState()
     
-    var selectedAddress by remember { mutableStateOf("123 Main St, Kigali, Rwanda") }
+    var selectedAddress by remember { mutableStateOf("Bole, Addis Ababa, Ethiopia") }
     var selectedMethod by remember { mutableStateOf(PaymentMethod.CARD) }
     var isPlacingOrder by remember { mutableStateOf(false) }
 
@@ -64,14 +68,37 @@ fun CheckoutScreen(
         user?.let { rewardViewModel.fetchBalance(it.userId) }
     }
 
+    // Auto-verify payment when user returns from Chapa checkout via deep link
     LaunchedEffect(paymentState) {
-        if (paymentState is PaymentState.Success) {
-            if (pointsToRedeem > 0) {
-                user?.let { rewardViewModel.redeemPoints(it.userId, pointsToRedeem) }
+        if (paymentState is PaymentState.CheckoutReady &&
+            com.example.food.MainActivity.pendingPaymentReturn
+        ) {
+            com.example.food.MainActivity.clearPaymentReturn()
+            paymentViewModel.verifyPayment()
+        }
+    }
+
+    // Handle payment state changes
+    LaunchedEffect(paymentState) {
+        when (paymentState) {
+            is PaymentState.CheckoutReady -> {
+                // Open Chapa checkout in Custom Tabs
+                val checkoutUrl = (paymentState as PaymentState.CheckoutReady).checkoutUrl
+                openCheckoutInBrowser(context, checkoutUrl)
             }
-            cartViewModel.clearCart()
-            paymentViewModel.resetState()
-            onOrderSuccess()
+            is PaymentState.Success -> {
+                if (pointsToRedeem > 0) {
+                    user?.let { rewardViewModel.redeemPoints(it.userId, pointsToRedeem) }
+                }
+                cartViewModel.clearCart()
+                paymentViewModel.resetState()
+                onOrderSuccess()
+            }
+            is PaymentState.Error -> {
+                val message = (paymentState as PaymentState.Error).message
+                scope.launch { snackbarHostState.showSnackbar(message) }
+            }
+            else -> {}
         }
     }
 
@@ -124,7 +151,7 @@ fun CheckoutScreen(
                                 }
                             }
                             if (pointsToRedeem > 0) {
-                                Text(text = "- RWF ${rewardDiscount.toInt()} discount applied", color = Color(0xFF4CAF50), fontSize = 12.sp)
+                                Text(text = "- ETB ${rewardDiscount.toInt()} discount applied", color = Color(0xFF4CAF50), fontSize = 12.sp)
                             }
                         }
                     }
@@ -165,88 +192,133 @@ fun CheckoutScreen(
                     for (pair in cartState.mealPlans) {
                         val plan = pair.first
                         val qty = pair.second
-                        SummaryRow(plan.name, "x$qty", "RWF ${"%,.0f".format(plan.price * qty * 1000)}")
+                        SummaryRow(plan.name, "x$qty", "ETB ${"%,.0f".format(plan.price * qty)}")
                     }
                     for (pair in cartState.meals) {
                         val meal = pair.first
                         val qty = pair.second
-                        SummaryRow(meal.name, "x$qty", "RWF ${"%,.0f".format(meal.price * qty * 1000)}")
+                        SummaryRow(meal.name, "x$qty", "ETB ${"%,.0f".format(meal.price * qty)}")
                     }
                     
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.Gray.copy(alpha = 0.3f))
                     
-                    SummaryRow("Subtotal", "", "RWF ${"%,.0f".format(subtotal)}")
-                    SummaryRow("Delivery Fee", "", "RWF ${"%,.0f".format(deliveryFee)}")
+                    SummaryRow("Subtotal", "", "ETB ${"%,.0f".format(subtotal)}")
+                    SummaryRow("Delivery Fee", "", "ETB ${"%,.0f".format(deliveryFee)}")
                     if (rewardDiscount > 0) {
-                        SummaryRow("Reward Discount", "", "- RWF ${"%,.0f".format(rewardDiscount)}")
+                        SummaryRow("Reward Discount", "", "- ETB ${"%,.0f".format(rewardDiscount)}")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    SummaryRow("Total", "", "RWF ${"%,.0f".format(total)}", isBold = true)
+                    SummaryRow("Total", "", "ETB ${"%,.0f".format(total)}", isBold = true)
                 }
             }
 
+            // Bottom action area
             Box(modifier = Modifier.padding(24.dp)) {
-                PrimaryButton(
-                    text = when {
-                        isPlacingOrder -> "Placing Order..."
-                        paymentState is PaymentState.Loading -> "Processing Payment..."
-                        else -> "Confirm Order"
-                    },
-                    enabled = !isPlacingOrder && paymentState !is PaymentState.Loading && (cartState.meals.isNotEmpty() || cartState.mealPlans.isNotEmpty()),
-                    onClick = {
-                        val currentUser = user
-                        if (currentUser == null) {
-                            scope.launch { snackbarHostState.showSnackbar("User not authenticated") }
-                            return@PrimaryButton
-                        }
-
-                        isPlacingOrder = true
-                        val allMealIds = mutableListOf<String>()
-                        for (pair in cartState.meals) {
-                            val meal = pair.first
-                            val qty = pair.second
-                            repeat(qty) { allMealIds.add(meal.id) }
-                        }
-                        val planId = cartState.mealPlans.firstOrNull()?.first?.id
-
-                        orderViewModel.placeOrder(currentUser, allMealIds, planId) { resource ->
-                            isPlacingOrder = false
-                            when (resource) {
-                                is Resource.Success -> {
-                                    val order = resource.data!!
-                                    if (selectedMethod == PaymentMethod.CASH) {
-                                        // Cash orders don't need digital initiation
-                                        cartViewModel.clearCart()
-                                        onOrderSuccess()
-                                    } else {
-                                        // Initiate digital payment
-                                        paymentViewModel.initiatePayment(
-                                            orderId = order.orderId,
-                                            userId = currentUser.userId,
-                                            amount = total,
-                                            method = selectedMethod
-                                        )
-                                    }
-                                }
-                                is Resource.Error -> {
-                                    scope.launch { snackbarHostState.showSnackbar(resource.message ?: "Failed to place order") }
-                                }
-                                else -> {}
+                Column {
+                    PrimaryButton(
+                        text = when (paymentState) {
+                            is PaymentState.Loading -> "Initializing Payment..."
+                            is PaymentState.Verifying -> "Verifying Payment..."
+                            is PaymentState.CheckoutReady -> "Opening Checkout..."
+                            else -> if (isPlacingOrder) "Placing Order..." else "Confirm Order"
+                        },
+                        enabled = !isPlacingOrder
+                                && paymentState !is PaymentState.Loading
+                                && paymentState !is PaymentState.Verifying
+                                && (cartState.meals.isNotEmpty() || cartState.mealPlans.isNotEmpty()),
+                        onClick = {
+                            val currentUser = user
+                            if (currentUser == null) {
+                                scope.launch { snackbarHostState.showSnackbar("User not authenticated") }
+                                return@PrimaryButton
                             }
-                        }
-                    },
-                    backgroundColor = Color(0xFFF16B24)
-                )
 
-                if (paymentState is PaymentState.Error) {
-                    Text(
-                        text = (paymentState as PaymentState.Error).message,
-                        color = Color.Red,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(top = 8.dp).align(Alignment.Center)
+                            // If we're in CheckoutReady, user came back — verify payment
+                            if (paymentState is PaymentState.CheckoutReady) {
+                                paymentViewModel.verifyPayment()
+                                return@PrimaryButton
+                            }
+
+                            isPlacingOrder = true
+                            val allMealIds = mutableListOf<String>()
+                            for (pair in cartState.meals) {
+                                val meal = pair.first
+                                val qty = pair.second
+                                repeat(qty) { allMealIds.add(meal.id) }
+                            }
+                            val planId = cartState.mealPlans.firstOrNull()?.first?.id
+
+                            orderViewModel.placeOrder(currentUser, allMealIds, planId) { resource ->
+                                isPlacingOrder = false
+                                when (resource) {
+                                    is Resource.Success -> {
+                                        val order = resource.data!!
+                                        if (selectedMethod == PaymentMethod.CASH) {
+                                            cartViewModel.clearCart()
+                                            onOrderSuccess()
+                                        } else {
+                                            // Initiate Chapa payment via backend
+                                            paymentViewModel.initiatePayment(
+                                                orderId = order.orderId,
+                                                userId = currentUser.userId,
+                                                amount = total,
+                                                method = selectedMethod
+                                            )
+                                        }
+                                    }
+                                    is Resource.Error -> {
+                                        scope.launch { snackbarHostState.showSnackbar(resource.message ?: "Failed to place order") }
+                                    }
+                                    else -> {}
+                                }
+                            }
+                        },
+                        backgroundColor = Color(0xFFF16B24)
                     )
+
+                    // Show "Verify Payment" button when user returns from checkout
+                    if (paymentState is PaymentState.CheckoutReady) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        PrimaryButton(
+                            text = "I've Completed Payment",
+                            enabled = true,
+                            onClick = { paymentViewModel.verifyPayment() },
+                            backgroundColor = Color(0xFF4CAF50)
+                        )
+                    }
+
+                    if (paymentState is PaymentState.Error) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = (paymentState as PaymentState.Error).message,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Opens the Chapa checkout URL in Chrome Custom Tabs.
+ * Falls back to regular browser if Custom Tabs is not available.
+ */
+private fun openCheckoutInBrowser(context: Context, url: String) {
+    try {
+        val customTabsIntent = CustomTabsIntent.Builder()
+            .setShowTitle(true)
+            .build()
+        customTabsIntent.launchUrl(context, Uri.parse(url))
+    } catch (e: Exception) {
+        // Fallback: open in default browser
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(url))
+            context.startActivity(intent)
+        } catch (e2: Exception) {
+            android.util.Log.e("CheckoutScreen", "Cannot open checkout URL", e2)
         }
     }
 }
@@ -297,6 +369,7 @@ fun SummaryRow(label: String, qty: String, price: String, isBold: Boolean = fals
         )
     }
 }
+
 @Composable
 fun PaymentMethodChip(method: PaymentMethod, isSelected: Boolean, onClick: () -> Unit) {
     Surface(

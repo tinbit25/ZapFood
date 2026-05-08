@@ -15,6 +15,7 @@ data class User(
     val userId: String = "", // Firebase UID — used for all Firestore identity
     val displayName: String? = null,
     val email: String = "",
+    val phoneNumber: String = "", // Required for Chapa payments (format: 09xxxxxxxx)
     val photoUrl: String? = null,
     val role: UserRole = UserRole.CUSTOMER,
     val rewardPoints: Int = 0,

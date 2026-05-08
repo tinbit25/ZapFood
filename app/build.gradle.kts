@@ -74,6 +74,13 @@ dependencies {
     implementation("androidx.credentials:credentials:1.2.2")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
+    // HTTP Client (Payment Backend API)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.google.code.gson:gson:2.11.0")
+
+    // Custom Tabs (Chapa Checkout)
+    implementation("androidx.browser:browser:1.8.0")
+
     testImplementation(libs.junit)
     testImplementation("androidx.test:core-ktx:1.5.0")
     testImplementation("org.robolectric:robolectric:4.11.1")
