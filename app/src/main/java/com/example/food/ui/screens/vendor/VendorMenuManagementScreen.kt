@@ -22,6 +22,12 @@ import com.example.food.data.model.MealFilters
 import com.example.food.ui.components.TopNavBar
 import com.example.food.ui.viewmodel.MealViewModel
 import com.example.food.ui.viewmodel.UserViewModel
+import com.example.food.data.model.SpiceLevel
+import com.example.food.data.model.ProteinLevel
+import com.example.food.data.model.MealTime
+import com.example.food.data.model.CuisineType
+import com.example.food.data.model.CarbLevel
+import com.example.food.data.model.OilLevel
 
 @Composable
 fun VendorMenuManagementScreen(
@@ -94,7 +100,7 @@ fun VendorMenuManagementScreen(
     if (showAddDialog) {
         AddMealDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { name, price, category ->
+            onConfirm = { name, price, category, fasting, vegan, spice, protein, mealTime, tags ->
                 user?.let { vendor ->
                     val newMeal = com.example.food.data.model.Meal(
                         name = name,
@@ -102,7 +108,13 @@ fun VendorMenuManagementScreen(
                         category = category,
                         vendorId = vendor.userId,
                         vendorName = vendor.displayName ?: "Vendor",
-                        imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop"
+                        imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop",
+                        fastingFriendly = fasting,
+                        veganFriendly = vegan,
+                        spiceLevel = spice,
+                        proteinLevel = protein,
+                        mealTime = listOf(mealTime),
+                        tags = tags.split(",").map { it.trim() }.filter { it.isNotEmpty() }
                     )
                     mealViewModel.createMeal(vendor, newMeal) {
                         showAddDialog = false
@@ -117,55 +129,142 @@ fun VendorMenuManagementScreen(
 @Composable
 fun AddMealDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, Double, String) -> Unit
+    onConfirm: (String, Double, String, Boolean, Boolean, SpiceLevel, ProteinLevel, MealTime, String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Main Course") }
+    
+    // AI Metadata State
+    var fastingFriendly by remember { mutableStateOf(false) }
+    var veganFriendly by remember { mutableStateOf(false) }
+    var spiceLevel by remember { mutableStateOf(SpiceLevel.MEDIUM) }
+    var proteinLevel by remember { mutableStateOf(ProteinLevel.MEDIUM) }
+    var mealTime by remember { mutableStateOf(MealTime.LUNCH) }
+    var tags by remember { mutableStateOf("") }
+    
+    // Dropdown expanded states
+    var spiceExpanded by remember { mutableStateOf(false) }
+    var proteinExpanded by remember { mutableStateOf(false) }
+    var timeExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add New Meal", color = Color.White) },
         containerColor = Color(0xFF1A1A1A),
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Meal Name") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.Gray,
-                        focusedBorderColor = Color(0xFFF16B24)
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                item {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Meal Name") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.Gray,
+                            focusedBorderColor = Color(0xFFF16B24)
+                        )
                     )
-                )
-                OutlinedTextField(
-                    value = price,
-                    onValueChange = { price = it },
-                    label = { Text("Price (in thousands RWF)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.Gray,
-                        focusedBorderColor = Color(0xFFF16B24)
+                    OutlinedTextField(
+                        value = price,
+                        onValueChange = { price = it },
+                        label = { Text("Price (in thousands RWF)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.Gray,
+                            focusedBorderColor = Color(0xFFF16B24)
+                        )
                     )
-                )
-                OutlinedTextField(
-                    value = category,
-                    onValueChange = { category = it },
-                    label = { Text("Category") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.Gray,
-                        focusedBorderColor = Color(0xFFF16B24)
+                    OutlinedTextField(
+                        value = category,
+                        onValueChange = { category = it },
+                        label = { Text("Category") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.Gray,
+                            focusedBorderColor = Color(0xFFF16B24)
+                        )
                     )
-                )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Dietary Info", color = Color.LightGray, fontWeight = FontWeight.Bold)
+                    
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = fastingFriendly, onCheckedChange = { fastingFriendly = it })
+                        Text("Fasting Friendly", color = Color.White)
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = veganFriendly, onCheckedChange = { veganFriendly = it })
+                        Text("Vegan", color = Color.White)
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Spice Level", color = Color.LightGray, fontWeight = FontWeight.Bold)
+                    Box {
+                        OutlinedButton(onClick = { spiceExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(spiceLevel.name, color = Color.White)
+                        }
+                        DropdownMenu(expanded = spiceExpanded, onDismissRequest = { spiceExpanded = false }) {
+                            SpiceLevel.values().forEach { level ->
+                                DropdownMenuItem(
+                                    text = { Text(level.name) },
+                                    onClick = { spiceLevel = level; spiceExpanded = false }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Protein Level", color = Color.LightGray, fontWeight = FontWeight.Bold)
+                    Box {
+                        OutlinedButton(onClick = { proteinExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(proteinLevel.name, color = Color.White)
+                        }
+                        DropdownMenu(expanded = proteinExpanded, onDismissRequest = { proteinExpanded = false }) {
+                            ProteinLevel.values().forEach { level ->
+                                DropdownMenuItem(
+                                    text = { Text(level.name) },
+                                    onClick = { proteinLevel = level; proteinExpanded = false }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Meal Time", color = Color.LightGray, fontWeight = FontWeight.Bold)
+                    Box {
+                        OutlinedButton(onClick = { timeExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(mealTime.name, color = Color.White)
+                        }
+                        DropdownMenu(expanded = timeExpanded, onDismissRequest = { timeExpanded = false }) {
+                            MealTime.values().forEach { time ->
+                                DropdownMenuItem(
+                                    text = { Text(time.name) },
+                                    onClick = { mealTime = time; timeExpanded = false }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = tags,
+                        onValueChange = { tags = it },
+                        label = { Text("Tags (comma separated)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.Gray,
+                            focusedBorderColor = Color(0xFFF16B24)
+                        )
+                    )
+                }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
                     val priceVal = price.toDoubleOrNull() ?: 0.0
-                    onConfirm(name, priceVal, category)
+                    onConfirm(name, priceVal, category, fastingFriendly, veganFriendly, spiceLevel, proteinLevel, mealTime, tags)
                 }
             ) {
                 Text("Add", color = Color(0xFFF16B24))
@@ -178,6 +277,7 @@ fun AddMealDialog(
         }
     )
 }
+
 
 @Composable
 fun VendorMealItem(meal: Meal) {

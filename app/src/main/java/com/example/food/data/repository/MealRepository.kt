@@ -15,6 +15,9 @@ class MealRepository {
     private val mealsCollection = firestore.collection("meals")
 
     suspend fun saveMeal(meal: Meal): Resource<Unit> {
+        if (!meal.isValid()) {
+            return Resource.Error("Invalid meal data: please check the name, price, vendor, and tags.")
+        }
         return try {
             mealsCollection.document(meal.id).set(meal).await()
             Resource.Success(Unit)
@@ -37,20 +40,27 @@ class MealRepository {
 
         var query: Query = mealsCollection
 
-        filters.category?.let {
-            query = query.whereEqualTo("category", it)
-        }
-        filters.vendorId?.let {
-            query = query.whereEqualTo("vendorId", it)
-        }
-        filters.minCalories?.let {
-            query = query.whereGreaterThanOrEqualTo("calories", it)
-        }
-        filters.maxCalories?.let {
-            query = query.whereLessThanOrEqualTo("calories", it)
-        }
+        filters.category?.let { query = query.whereEqualTo("category", it) }
+        filters.vendorId?.let { query = query.whereEqualTo("vendorId", it) }
         
-        // Note: Querying by name prefix for search
+        // Metadata Filters
+        filters.cuisineType?.let { query = query.whereEqualTo("cuisineType", it.name) }
+        filters.spiceLevel?.let { query = query.whereEqualTo("spiceLevel", it.name) }
+        filters.fastingFriendly?.let { query = query.whereEqualTo("fastingFriendly", it) }
+        filters.veganFriendly?.let { query = query.whereEqualTo("veganFriendly", it) }
+        filters.proteinLevel?.let { query = query.whereEqualTo("proteinLevel", it.name) }
+        filters.carbLevel?.let { query = query.whereEqualTo("carbLevel", it.name) }
+        filters.oilLevel?.let { query = query.whereEqualTo("oilLevel", it.name) }
+        
+        // List/Array filters
+        filters.mealTime?.let { query = query.whereArrayContains("mealTime", it.name) }
+        filters.tag?.let { query = query.whereArrayContains("tags", it) }
+
+        // Legacy/Range Filters
+        filters.minCalories?.let { query = query.whereGreaterThanOrEqualTo("calories", it) }
+        filters.maxCalories?.let { query = query.whereLessThanOrEqualTo("calories", it) }
+        
+        // Search
         filters.query?.let {
             if (it.isNotEmpty()) {
                 query = query.whereGreaterThanOrEqualTo("name", it)
@@ -70,6 +80,16 @@ class MealRepository {
 
         awaitClose { listener.remove() }
     }
+
+    // ── Search Preparation Queries ──────────────────────────
+
+    fun searchMealsByTag(tag: String) = getFilteredMeals(MealFilters(tag = tag))
+
+    fun getFastingMeals() = getFilteredMeals(MealFilters(fastingFriendly = true))
+
+    fun getBreakfastMeals() = getFilteredMeals(MealFilters(mealTime = com.example.food.data.model.MealTime.BREAKFAST))
+
+    fun getHighProteinMeals() = getFilteredMeals(MealFilters(proteinLevel = com.example.food.data.model.ProteinLevel.HIGH))
 
     suspend fun deleteMeal(id: String): Resource<Unit> {
         return try {
