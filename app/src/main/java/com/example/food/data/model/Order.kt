@@ -7,9 +7,16 @@ enum class OrderStatus {
     ACCEPTED,
     PREPARING,
     READY,
-    OUT_FOR_DELIVERY,
+    ON_THE_WAY,
     DELIVERED,
     CANCELLED
+}
+
+enum class DeliveryStatus {
+    IDLE,
+    PICKED_UP,
+    NEARBY,
+    DELIVERED
 }
 
 // Enums are now managed in Payment.kt to maintain a single source of truth for the payment domain
@@ -35,6 +42,8 @@ data class Order(
     val paymentStatus: PaymentStatus = PaymentStatus.INITIATED,
     val paymentMethod: PaymentMethod = PaymentMethod.CARD,
     val deliveryTrackingId: String = "",
+    val deliveryStatus: DeliveryStatus = DeliveryStatus.IDLE,
+    val statusHistory: List<OrderStatusHistory> = emptyList(),
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

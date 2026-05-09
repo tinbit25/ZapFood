@@ -17,7 +17,9 @@ sealed class Screen(val route: String) {
     object Menu : Screen("menu_screen")
     object Cart : Screen("cart_screen")
     object Checkout : Screen("checkout_screen")
-    object OrderSuccess : Screen("order_success_screen")
+    object OrderSuccess : Screen("order_success_screen/{orderId}") {
+        fun createRoute(orderId: String) = "order_success_screen/$orderId"
+    }
     object Profile : Screen("profile_screen")
     object ProfileEdit : Screen("profile_edit_screen")
     object Search : Screen("search_screen")
@@ -26,6 +28,9 @@ sealed class Screen(val route: String) {
     object OrderHistory : Screen("order_history_screen")
     object AIPlanGenerator : Screen("ai_plan_generator_screen")
     object CustomPlanCreator : Screen("custom_plan_creator_screen")
+    object OrderTracking : Screen("order_tracking_screen/{orderId}") {
+        fun createRoute(orderId: String) = "order_tracking_screen/$orderId"
+    }
     
     // Details
     object ProductDetails : Screen("product_details_screen/{productId}") {

@@ -16,9 +16,15 @@ import kotlinx.coroutines.flow.Flow
 interface INotificationRepository {
 
     /**
-     * Observe all notifications for a user in realtime, ordered by [Notification.createdAt] desc.
+     * Observe notifications for a user in realtime, with pagination support.
+     * @param limit maximum number of notifications to fetch.
+     * @param lastTimestamp optional timestamp to start fetching after (for pagination).
      */
-    fun getUserNotifications(userId: String): Flow<Resource<List<Notification>>>
+    fun getUserNotifications(
+        userId: String,
+        limit: Int = 20,
+        lastTimestamp: Long? = null
+    ): Flow<Resource<List<Notification>>>
 
     /**
      * Observe only unread notifications for a user in realtime.

@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.food.R
 import com.example.food.core.util.NotificationChannelManager
+import com.example.food.core.util.NotificationRenderer
 import com.example.food.data.model.Notification
 import com.example.food.data.remote.FCMTokenManager
 import com.example.food.domain.gateway.PushManager
@@ -47,21 +48,18 @@ class FcmPushManager(
     }
 
     override suspend fun showLocalNotification(notification: Notification) {
-        val channelId = when {
-            notification.isOrderNotification -> NotificationChannelManager.CHANNEL_ORDERS_ID
-            notification.type.name.contains("SUPPORT") -> NotificationChannelManager.CHANNEL_SUPPORT_ID
-            else -> NotificationChannelManager.CHANNEL_SYSTEM_ID
+        val type = when {
+            notification.isOrderNotification -> "ORDER"
+            notification.type.name.contains("SUPPORT") -> "SUPPORT"
+            else -> "SYSTEM"
         }
-
-        val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(notification.title)
-            .setContentText(notification.message)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(notification.id.hashCode(), builder.build())
+        
+        NotificationRenderer(context).render(
+            title = notification.title,
+            message = notification.message,
+            type = type,
+            payload = mapOf("notification_id" to notification.id)
+        )
     }
 
     override suspend fun isPushEnabled(): Boolean {

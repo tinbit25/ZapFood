@@ -14,8 +14,10 @@ import com.example.food.ui.components.PrimaryButton
 
 @Composable
 fun OrderSuccessScreen(
+    orderId: String,
     onGoToHome: () -> Unit,
-    onViewOrders: () -> Unit
+    onViewOrders: () -> Unit,
+    onTrackOrder: (String) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -36,7 +38,7 @@ fun OrderSuccessScreen(
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
         Text(
-            text = "Your meal plan is being prepared. You can track its status in your order history.",
+            text = "Your meal is being prepared. You can track its status in realtime.",
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -44,8 +46,16 @@ fun OrderSuccessScreen(
         )
 
         PrimaryButton(
+            text = "Track Order",
+            onClick = { onTrackOrder(orderId) },
+            backgroundColor = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        PrimaryButton(
             text = "Go to Home",
-            onClick = onGoToHome
+            onClick = onGoToHome,
+            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(16.dp))
         TextButton(onClick = onViewOrders) {

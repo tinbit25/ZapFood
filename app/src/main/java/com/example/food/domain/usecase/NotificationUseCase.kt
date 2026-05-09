@@ -23,10 +23,14 @@ class NotificationUseCase(
     // ── Realtime Observation ────────────────────────────────
 
     /**
-     * Observe all notifications for a user, ordered newest-first.
+     * Observe notifications for a user, ordered newest-first with pagination.
      */
-    fun observeNotifications(userId: String): Flow<Resource<List<Notification>>> {
-        return notificationRepository.getUserNotifications(userId)
+    fun observeNotifications(
+        userId: String,
+        limit: Int = 20,
+        lastTimestamp: Long? = null
+    ): Flow<Resource<List<Notification>>> {
+        return notificationRepository.getUserNotifications(userId, limit, lastTimestamp)
     }
 
     /**

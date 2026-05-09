@@ -189,14 +189,14 @@ fun VendorStatusActions(status: OrderStatus, onUpdateStatus: (OrderStatus) -> Un
         }
         OrderStatus.READY -> {
             Button(
-                onClick = { onUpdateStatus(OrderStatus.OUT_FOR_DELIVERY) },
+                onClick = { onUpdateStatus(OrderStatus.ON_THE_WAY) },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00BFFF)),
                 modifier = Modifier.height(32.dp)
             ) {
                 Text("Send for Delivery", fontSize = 12.sp)
             }
         }
-        OrderStatus.OUT_FOR_DELIVERY -> {
+        OrderStatus.ON_THE_WAY -> {
             Button(
                 onClick = { onUpdateStatus(OrderStatus.DELIVERED) },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF008000)),

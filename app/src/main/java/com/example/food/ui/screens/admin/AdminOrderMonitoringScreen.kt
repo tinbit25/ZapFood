@@ -132,7 +132,7 @@ fun OrderStatusBadge(status: OrderStatus) {
         OrderStatus.ACCEPTED -> Color(0xFF2196F3)
         OrderStatus.PREPARING -> Color(0xFF9C27B0)
         OrderStatus.READY -> Color(0xFF4CAF50)
-        OrderStatus.OUT_FOR_DELIVERY -> Color(0xFF03A9F4)
+        OrderStatus.ON_THE_WAY -> Color(0xFF03A9F4)
         OrderStatus.DELIVERED -> Color(0xFF4CAF50)
         OrderStatus.CANCELLED -> Color.Red
     }

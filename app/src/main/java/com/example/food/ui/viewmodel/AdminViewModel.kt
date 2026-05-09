@@ -30,15 +30,22 @@ class AdminViewModel(
     val systemHealth: StateFlow<SystemHealth> = _systemHealth.asStateFlow()
 
     init {
-        refreshDashboard()
+        observeDashboard()
+    }
+
+    private fun observeDashboard() {
+        viewModelScope.launch {
+            adminUseCase.observeDashboardData().collect {
+                _dashboardState.value = it
+                if (it is Resource.Success) {
+                    _systemHealth.value = analyticsUseCase.getSystemHealth()
+                }
+            }
+        }
     }
 
     fun refreshDashboard() {
-        viewModelScope.launch {
-            _dashboardState.value = Resource.Loading()
-            _dashboardState.value = adminUseCase.getDashboardData()
-            _systemHealth.value = analyticsUseCase.getSystemHealth()
-        }
+        // Now handled by realtime observation
     }
 
     fun fetchUsers(query: String = "", role: UserRole? = null) {

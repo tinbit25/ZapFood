@@ -3,10 +3,17 @@ package com.example.food.domain.usecase
 import com.example.food.core.util.Resource
 import com.example.food.data.model.*
 import com.example.food.data.repository.AdminRepository
+import kotlinx.coroutines.flow.Flow
 
 class AdminUseCase(
     private val adminRepository: AdminRepository = AdminRepository()
 ) {
+    // ... existing methods ...
+
+    fun observeDashboardData(): Flow<Resource<AdminDashboardData>> {
+        return adminRepository.observeAnalytics()
+    }
+
     suspend fun getUsers(searchQuery: String = "", roleFilter: UserRole? = null): Resource<List<User>> {
         val result = adminRepository.getAllUsers()
         if (result is Resource.Success) {

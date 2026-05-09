@@ -73,8 +73,8 @@ class OrderUseCase(
             OrderStatus.PENDING -> next == OrderStatus.ACCEPTED || next == OrderStatus.CANCELLED
             OrderStatus.ACCEPTED -> next == OrderStatus.PREPARING || next == OrderStatus.CANCELLED
             OrderStatus.PREPARING -> next == OrderStatus.READY
-            OrderStatus.READY -> next == OrderStatus.OUT_FOR_DELIVERY
-            OrderStatus.OUT_FOR_DELIVERY -> next == OrderStatus.DELIVERED
+            OrderStatus.READY -> next == OrderStatus.ON_THE_WAY
+            OrderStatus.ON_THE_WAY -> next == OrderStatus.DELIVERED
             OrderStatus.DELIVERED -> false // Terminal state
             OrderStatus.CANCELLED -> false // Terminal state
         }
@@ -120,7 +120,12 @@ class OrderUseCase(
             return Resource.Error("Invalid transition from ${order.status} to $nextStatus")
         }
 
-        return orderRepository.updateOrderStatus(orderId, nextStatus)
+        return orderRepository.updateOrderStatus(
+            orderId = orderId,
+            status = nextStatus,
+            actor = user.role.name,
+            actorName = user.displayName ?: user.userId
+        )
     }
 
     fun getMyOrders(userId: String): Flow<Resource<List<Order>>> {

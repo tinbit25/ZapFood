@@ -23,6 +23,7 @@ import com.example.food.ui.screens.search.SearchScreen
 import com.example.food.ui.screens.notifications.NotificationScreen
 import com.example.food.ui.screens.address.AddressScreen
 import com.example.food.ui.screens.orders.OrderHistoryScreen
+import com.example.food.ui.screens.orders.OrderTrackingScreen
 import com.example.food.ui.viewmodel.UserViewModel
 import com.example.food.ui.viewmodel.MealPlanViewModel
 import com.example.food.ui.viewmodel.CartViewModel
@@ -43,6 +44,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.food.ui.components.BottomNavBar
+import androidx.compose.runtime.LaunchedEffect
+import com.example.food.MainActivity
 
 @Composable
 fun AppNavigation(
@@ -51,7 +54,8 @@ fun AppNavigation(
     mealPlanViewModel: MealPlanViewModel = viewModel(),
     mealViewModel: com.example.food.ui.viewmodel.MealViewModel = viewModel(),
     orderViewModel: com.example.food.ui.viewmodel.OrderViewModel = viewModel(),
-    cartViewModel: CartViewModel = viewModel()
+    cartViewModel: CartViewModel = viewModel(),
+    paymentViewModel: com.example.food.ui.viewmodel.PaymentViewModel = viewModel()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -62,6 +66,19 @@ fun AppNavigation(
         Screen.Cart.route,
         Screen.Profile.route
     )
+
+    // Handle Notification Navigation
+    LaunchedEffect(MainActivity.pendingNotificationRoute) {
+        MainActivity.pendingNotificationRoute?.let { route ->
+            navController.navigate(route) {
+                // Ensure we don't build up a large stack
+                popUpTo(Screen.Home.route) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+            MainActivity.clearNotificationRoute()
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -228,26 +245,33 @@ fun AppNavigation(
                     orderViewModel = orderViewModel,
                     cartViewModel = cartViewModel,
                     rewardViewModel = rewardViewModel,
+                    paymentViewModel = paymentViewModel,
                     onNavigateBack = { navController.popBackStack() },
-                    onOrderSuccess = {
-                        navController.navigate(Screen.OrderSuccess.route) {
+                    onOrderSuccess = { orderId ->
+                        navController.navigate(Screen.OrderSuccess.createRoute(orderId)) {
                             popUpTo(Screen.Cart.route) { inclusive = true }
                         }
                     }
                 )
             }
 
-            composable(route = Screen.OrderSuccess.route) {
+            composable(
+                route = Screen.OrderSuccess.route,
+                arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
                 OrderSuccessScreen(
+                    orderId = orderId,
                     onGoToHome = {
                         navController.navigate(Screen.Home.route) {
-                            popUpTo(0) { inclusive = true }
+                            popUpTo(Screen.Home.route) { inclusive = true }
                         }
                     },
                     onViewOrders = {
-                        navController.navigate(Screen.OrderHistory.route) {
-                            popUpTo(0) { inclusive = true }
-                        }
+                        navController.navigate(Screen.OrderHistory.route)
+                    },
+                    onTrackOrder = { id ->
+                        navController.navigate(Screen.OrderTracking.createRoute(id))
                     }
                 )
             }
@@ -306,9 +330,13 @@ fun AppNavigation(
                 OrderHistoryScreen(
                     userViewModel = userViewModel,
                     orderViewModel = orderViewModel,
+                    paymentViewModel = paymentViewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToFeedback = { orderId ->
                         navController.navigate(Screen.Feedback.createRoute(orderId))
+                    },
+                    onNavigateToTracking = { orderId ->
+                        navController.navigate(Screen.OrderTracking.createRoute(orderId))
                     }
                 )
             }
@@ -420,6 +448,16 @@ fun AppNavigation(
                     orderId = orderId,
                     onNavigateBack = { navController.popBackStack() },
                     userViewModel = userViewModel
+                )
+            }
+            composable(
+                route = Screen.OrderTracking.route,
+                arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+                OrderTrackingScreen(
+                    orderId = orderId,
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
         }

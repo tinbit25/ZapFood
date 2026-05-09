@@ -10,6 +10,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
+import com.example.food.data.model.DeliveryStatus
+import com.example.food.data.model.OrderStatusHistory
+import com.example.food.data.model.OrderTimeline
+import com.google.firebase.firestore.FieldValue
+
 class OrderRepository {
     private val firestore = FirebaseFirestore.getInstance()
     private val ordersCollection = firestore.collection("orders")
@@ -30,6 +35,29 @@ class OrderRepository {
         } catch (e: Exception) {
             null
         }
+    }
+
+    fun observeOrderTimeline(orderId: String): Flow<Resource<OrderTimeline>> = callbackFlow {
+        trySend(Resource.Loading())
+        val listener = ordersCollection.document(orderId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(Resource.Error(error.localizedMessage ?: "Timeline fetch failed"))
+                    return@addSnapshotListener
+                }
+                val order = snapshot?.toObject(Order::class.java)
+                if (order != null) {
+                    val timeline = OrderTimeline(
+                        orderId = order.orderId,
+                        history = order.statusHistory,
+                        currentStatus = order.status
+                    )
+                    trySend(Resource.Success(timeline))
+                } else {
+                    trySend(Resource.Error("Order not found"))
+                }
+            }
+        awaitClose { listener.remove() }
     }
 
     fun getOrdersForUser(userId: String): Flow<Resource<List<Order>>> = callbackFlow {
@@ -66,15 +94,55 @@ class OrderRepository {
         awaitClose { listener.remove() }
     }
 
-    suspend fun updateOrderStatus(orderId: String, status: OrderStatus): Resource<Unit> {
+    suspend fun updateOrderStatus(
+        orderId: String, 
+        status: OrderStatus, 
+        actor: String = "SYSTEM",
+        actorName: String = "",
+        notes: String = ""
+    ): Resource<Unit> {
+        return try {
+            val docRef = ordersCollection.document(orderId)
+            
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(docRef)
+                val currentStatus = snapshot.getString("status")
+                
+                // Optional: Business logic check within transaction
+                if (currentStatus == OrderStatus.CANCELLED.name || currentStatus == OrderStatus.DELIVERED.name) {
+                    throw Exception("Cannot update status of a terminal order")
+                }
+
+                val historyEntry = OrderStatusHistory(
+                    status = status,
+                    actor = actor,
+                    actorName = actorName,
+                    notes = notes,
+                    timestamp = System.currentTimeMillis()
+                )
+                
+                transaction.update(docRef, "status", status)
+                transaction.update(docRef, "updatedAt", System.currentTimeMillis())
+                transaction.update(docRef, "statusHistory", FieldValue.arrayUnion(historyEntry))
+                
+                null
+            }.await()
+            
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Failed to update order status")
+        }
+    }
+
+    suspend fun updateDeliveryStatus(orderId: String, status: DeliveryStatus): Resource<Unit> {
         return try {
             ordersCollection.document(orderId).update(
-                "status", status,
+                "deliveryStatus", status,
                 "updatedAt", System.currentTimeMillis()
             ).await()
             Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Failed to update order status")
+            Resource.Error(e.localizedMessage ?: "Failed to update delivery status")
         }
     }
 

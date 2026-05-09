@@ -9,6 +9,7 @@ import androidx.core.app.NotificationCompat
 import com.example.food.MainActivity
 import com.example.food.R
 import com.example.food.core.util.NotificationChannelManager
+import com.example.food.core.util.NotificationRenderer
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
@@ -35,40 +36,12 @@ class AppFirebaseMessagingService : FirebaseMessagingService() {
 
         // Handle notification payload if present
         remoteMessage.notification?.let {
-            showNotification(
+            NotificationRenderer(this).render(
                 it.title ?: "Notification",
                 it.body ?: "",
-                remoteMessage.data["type"] ?: "SYSTEM"
+                remoteMessage.data["type"] ?: "SYSTEM",
+                remoteMessage.data
             )
         }
-    }
-
-    private fun showNotification(title: String, body: String, type: String) {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("notification_type", type)
-        }
-
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val channelId = when (type) {
-            "ORDER" -> NotificationChannelManager.CHANNEL_ORDERS_ID
-            "SUPPORT" -> NotificationChannelManager.CHANNEL_SUPPORT_ID
-            else -> NotificationChannelManager.CHANNEL_SYSTEM_ID
-        }
-
-        val builder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // Ensure this exists or use a generic one
-            .setContentTitle(title)
-            .setContentText(body)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
-
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(System.currentTimeMillis().toInt(), builder.build())
     }
 }

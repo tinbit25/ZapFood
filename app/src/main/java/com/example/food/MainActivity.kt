@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.food.core.util.NotificationChannelManager
 import com.example.food.data.remote.FCMTokenManager
 import com.example.food.ui.navigation.AppNavigation
+import com.example.food.ui.navigation.Screen
 import com.example.food.ui.theme.FoodTheme
 import android.Manifest
 import android.content.pm.PackageManager
@@ -32,8 +33,15 @@ class MainActivity : ComponentActivity() {
         var pendingPaymentReturn: Boolean = false
             private set
 
+        var pendingNotificationRoute: String? = null
+            private set
+
         fun clearPaymentReturn() {
             pendingPaymentReturn = false
+        }
+
+        fun clearNotificationRoute() {
+            pendingNotificationRoute = null
         }
     }
 
@@ -49,8 +57,8 @@ class MainActivity : ComponentActivity() {
         // Request Notification Permission (Android 13+)
         askNotificationPermission()
 
-        // Check if launched via deep link (zapfood://payment/return)
-        handleDeepLink(intent)
+        // Check if launched via notification or deep link
+        handleIntent(intent)
 
         setContent {
             FoodTheme {
@@ -67,19 +75,36 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // Handle deep link when app is already running
-        handleDeepLink(intent)
+        // Handle deep link or notification when app is already running
+        handleIntent(intent)
     }
 
-    private fun handleDeepLink(intent: Intent?) {
-        val uri = intent?.data ?: return
-        Log.i(TAG, "Deep link received: $uri")
+    private fun handleIntent(intent: Intent?) {
+        if (intent == null) return
+        
+        // Handle Notification Click
+        val type = intent.getStringExtra("notification_type")
+        if (type != null) {
+            Log.i(TAG, "Notification clicked: type=$type")
+            pendingNotificationRoute = when (type) {
+                "ORDER" -> Screen.OrderHistory.route
+                "SUPPORT" -> Screen.SupportTickets.route
+                "ADMIN" -> Screen.AdminDashboard.route
+                else -> Screen.Notifications.route
+            }
+        }
 
-        if (uri.scheme == "zapfood" && uri.host == "payment") {
-            Log.i(TAG, "Payment return deep link detected — flagging for auto-verify")
-            pendingPaymentReturn = true
+        // Handle Deep Link (zapfood://payment/return)
+        val uri = intent.data
+        if (uri != null) {
+            Log.i(TAG, "Deep link received: $uri")
+            if (uri.scheme == "zapfood" && uri.host == "payment") {
+                Log.i(TAG, "Payment return deep link detected — flagging for auto-verify")
+                pendingPaymentReturn = true
+            }
         }
     }
+
     private fun askNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=

@@ -40,9 +40,9 @@ fun CheckoutScreen(
     orderViewModel: OrderViewModel,
     cartViewModel: CartViewModel,
     rewardViewModel: com.example.food.ui.viewmodel.RewardViewModel,
-    paymentViewModel: PaymentViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    paymentViewModel: PaymentViewModel,
     onNavigateBack: () -> Unit,
-    onOrderSuccess: () -> Unit
+    onOrderSuccess: (String) -> Unit
 ) {
     val user by userViewModel.user.collectAsState()
     val cartState by cartViewModel.cartState.collectAsState()
@@ -91,8 +91,9 @@ fun CheckoutScreen(
                     user?.let { rewardViewModel.redeemPoints(it.userId, pointsToRedeem) }
                 }
                 cartViewModel.clearCart()
+                val orderId = (paymentState as PaymentState.Success).payment.orderId
                 paymentViewModel.resetState()
-                onOrderSuccess()
+                onOrderSuccess(orderId)
             }
             is PaymentState.Error -> {
                 val message = (paymentState as PaymentState.Error).message
@@ -255,7 +256,7 @@ fun CheckoutScreen(
                                         val order = resource.data!!
                                         if (selectedMethod == PaymentMethod.CASH) {
                                             cartViewModel.clearCart()
-                                            onOrderSuccess()
+                                            onOrderSuccess(order.orderId)
                                         } else {
                                             // Initiate Chapa payment via backend
                                             paymentViewModel.initiatePayment(

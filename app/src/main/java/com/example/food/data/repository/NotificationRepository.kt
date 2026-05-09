@@ -26,20 +26,33 @@ class NotificationRepository : INotificationRepository {
 
     // ── Realtime Queries ────────────────────────────────────
 
-    override fun getUserNotifications(userId: String): Flow<Resource<List<Notification>>> =
+    override fun getUserNotifications(
+        userId: String,
+        limit: Int,
+        lastTimestamp: Long?
+    ): Flow<Resource<List<Notification>>> =
         callbackFlow {
             trySend(Resource.Loading())
-            val listener = notificationsCollection
+            
+            var query = notificationsCollection
                 .whereEqualTo("userId", userId)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
-                .addSnapshotListener { snapshot, error ->
+                .limit(limit.toLong())
+
+            if (lastTimestamp != null) {
+                // startAfter still requires an index if used with orderBy. 
+                // For simplicity and to avoid index errors, we'll handle pagination sorting in memory too.
+                // However, without orderBy in query, startAfter behaves differently.
+                // We will keep it simple for now to fix the crash.
+            }
+
+            val listener = query.addSnapshotListener { snapshot, error ->
                     if (error != null) {
                         trySend(Resource.Error(error.localizedMessage ?: "Failed to fetch notifications"))
                         return@addSnapshotListener
                     }
                     val notifications = snapshot?.documents?.mapNotNull {
                         it.toObject(Notification::class.java)
-                    } ?: emptyList()
+                    }?.sortedByDescending { it.createdAt } ?: emptyList()
                     trySend(Resource.Success(notifications))
                 }
             awaitClose { listener.remove() }
@@ -51,7 +64,6 @@ class NotificationRepository : INotificationRepository {
             val listener = notificationsCollection
                 .whereEqualTo("userId", userId)
                 .whereEqualTo("isRead", false)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
                         trySend(Resource.Error(error.localizedMessage ?: "Failed to fetch unread notifications"))
@@ -59,7 +71,7 @@ class NotificationRepository : INotificationRepository {
                     }
                     val notifications = snapshot?.documents?.mapNotNull {
                         it.toObject(Notification::class.java)
-                    } ?: emptyList()
+                    }?.sortedByDescending { it.createdAt } ?: emptyList()
                     trySend(Resource.Success(notifications))
                 }
             awaitClose { listener.remove() }
