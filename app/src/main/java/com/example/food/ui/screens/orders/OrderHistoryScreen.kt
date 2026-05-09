@@ -39,8 +39,74 @@ fun OrderHistoryScreen(
     onNavigateToFeedback: (String) -> Unit,
     onNavigateToTracking: (String) -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
-        Text(text = "Absolute Minimal Screen", color = Color.White)
+    val user by userViewModel.user.collectAsState()
+    val ordersState by orderViewModel.userOrders.collectAsState()
+
+    LaunchedEffect(user) {
+        user?.let { orderViewModel.fetchUserOrders(it.userId) }
+    }
+
+    val dateFormat = remember { SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0F0F0F))
+    ) {
+        TopNavBar(title = "Order History", onBackClick = onNavigateBack)
+
+        when (val state = ordersState) {
+            is Resource.Loading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color(0xFFF16B24))
+                }
+            }
+            is Resource.Error -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = state.message ?: "An error occurred", color = Color.Red)
+                }
+            }
+            is Resource.Success -> {
+                val orders = state.data ?: emptyList()
+                if (orders.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(text = "No orders found", color = Color.Gray)
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(orders) { order ->
+                            OrderHistoryCard(
+                                order = order, 
+                                dateFormat = dateFormat,
+                                onCancel = {
+                                    user?.let { u ->
+                                        orderViewModel.cancelOrder(u, order.orderId) { /* Handle result */ }
+                                    }
+                                },
+                                onRetryPayment = {
+                                    user?.let { u ->
+                                        paymentViewModel.retryPayment(
+                                            orderId = order.orderId,
+                                            userId = u.userId,
+                                            amount = order.totalAmount,
+                                            method = order.paymentMethod
+                                        )
+                                    }
+                                },
+                                onLeaveFeedback = {
+                                    onNavigateToFeedback(order.orderId)
+                                },
+                                onNavigateToTracking = onNavigateToTracking
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -100,11 +166,65 @@ fun OrderHistoryCard(
                 }
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    PaymentBadge(status = order.paymentStatus)
+                    Spacer(modifier = Modifier.width(8.dp))
                     StatusBadge(status = order.status)
                 }
             }
 
-            // Temporarily removed buttons for debugging
+            if (order.paymentStatus == PaymentStatus.FAILED && order.status == OrderStatus.PENDING) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onRetryPayment,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Retry Payment", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            if (order.status == OrderStatus.PENDING) {
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.Red.copy(alpha = 0.5f)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Cancel Order", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            
+            if (order.status == OrderStatus.PENDING || order.status == OrderStatus.ACCEPTED || 
+                order.status == OrderStatus.PREPARING || order.status == OrderStatus.READY || 
+                order.status == OrderStatus.ON_THE_WAY) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(
+                    onClick = { onNavigateToTracking(order.orderId) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00BFFF).copy(alpha = 0.1f), contentColor = Color(0xFF00BFFF)),
+                    shape = RoundedCornerShape(12.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF00BFFF).copy(alpha = 0.3f))
+                ) {
+                    Icon(Icons.Default.Place, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Track Order", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            if (order.status == OrderStatus.DELIVERED) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onLeaveFeedback,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF32CD32)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Leave Feedback", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
         }
     }
 }

@@ -22,9 +22,9 @@ enum class DeliveryStatus {
 // Enums are now managed in Payment.kt to maintain a single source of truth for the payment domain
 
 data class OrderItem(
-    val mealId: String,
-    val name: String,
-    val price: Double,
+    val mealId: String = "",
+    val name: String = "",
+    val price: Double = 0.0,
     val quantity: Int = 1
 )
 

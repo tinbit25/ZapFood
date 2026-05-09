@@ -69,7 +69,13 @@ class OrderRepository {
                     trySend(Resource.Error(error.localizedMessage ?: "Query failed"))
                     return@addSnapshotListener
                 }
-                val orders = snapshot?.documents?.mapNotNull { it.toObject(Order::class.java) } ?: emptyList()
+                val orders = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        doc.toObject(Order::class.java)
+                    } catch (e: Exception) {
+                        null
+                    }
+                } ?: emptyList()
                 // Sort in memory to avoid index requirements
                 val sortedOrders = orders.sortedByDescending { it.createdAt }
                 trySend(Resource.Success(sortedOrders))
@@ -86,7 +92,13 @@ class OrderRepository {
                     trySend(Resource.Error(error.localizedMessage ?: "Query failed"))
                     return@addSnapshotListener
                 }
-                val orders = snapshot?.documents?.mapNotNull { it.toObject(Order::class.java) } ?: emptyList()
+                val orders = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        doc.toObject(Order::class.java)
+                    } catch (e: Exception) {
+                        null
+                    }
+                } ?: emptyList()
                 // Sort in memory to avoid index requirements
                 val sortedOrders = orders.sortedByDescending { it.createdAt }
                 trySend(Resource.Success(sortedOrders))
