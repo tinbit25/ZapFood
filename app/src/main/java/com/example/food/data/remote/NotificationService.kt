@@ -132,7 +132,13 @@ class NotificationService(
                 "On the Way! 🚗" to "Your order #$shortId is on its way."
 
             NotificationType.ORDER_DELIVERED ->
-                "Delivered! 🎉" to "Your order #$shortId has arrived. Enjoy!"
+                "Delivered! 🎉" to "Your order #$shortId has been arrived. Enjoy!"
+
+            NotificationType.ORDER_READY ->
+                "Order Ready! 🍽️" to "Your order #$shortId is ready for pickup/delivery."
+
+            NotificationType.ORDER_CANCELLED ->
+                "Order Cancelled" to "Your order #$shortId has been cancelled."
 
             else -> "Order Update" to "Update for order #$shortId."
         }

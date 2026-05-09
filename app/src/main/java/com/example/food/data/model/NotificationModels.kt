@@ -11,8 +11,11 @@ import java.util.UUID
 enum class NotificationType {
     ORDER_ACCEPTED,
     MEAL_PREPARING,
+    ORDER_READY,
     DELIVERY_ON_THE_WAY,
     ORDER_DELIVERED,
+    ORDER_CANCELLED,
+    ORDER_STATUS_UPDATE,
     SUPPORT_UPDATE,
     ADMIN_ANNOUNCEMENT,
     VENDOR_UPDATE
@@ -54,7 +57,9 @@ data class Notification(
         get() = type in listOf(
             NotificationType.ORDER_ACCEPTED,
             NotificationType.MEAL_PREPARING,
+            NotificationType.ORDER_READY,
             NotificationType.DELIVERY_ON_THE_WAY,
-            NotificationType.ORDER_DELIVERED
+            NotificationType.ORDER_DELIVERED,
+            NotificationType.ORDER_CANCELLED
         )
 }

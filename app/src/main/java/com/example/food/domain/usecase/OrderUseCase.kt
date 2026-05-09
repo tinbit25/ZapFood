@@ -4,13 +4,15 @@ import com.example.food.core.util.Resource
 import com.example.food.data.model.*
 import com.example.food.data.repository.OrderRepository
 import com.example.food.data.repository.MealRepository
+import com.example.food.data.remote.NotificationService
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
 class OrderUseCase(
     private val orderRepository: OrderRepository = OrderRepository(),
     private val mealRepository: MealRepository = MealRepository(),
-    private val paymentUseCase: PaymentUseCase = PaymentUseCase()
+    private val paymentUseCase: PaymentUseCase = PaymentUseCase(),
+    private val notificationService: NotificationService = NotificationService()
 ) {
     /**
      * Customer places an order for a list of meals.
@@ -120,12 +122,33 @@ class OrderUseCase(
             return Resource.Error("Invalid transition from ${order.status} to $nextStatus")
         }
 
-        return orderRepository.updateOrderStatus(
+        val result = orderRepository.updateOrderStatus(
             orderId = orderId,
             status = nextStatus,
             actor = user.role.name,
             actorName = user.displayName ?: user.userId
         )
+
+        if (result is Resource.Success) {
+            val notificationType = when (nextStatus) {
+                OrderStatus.ACCEPTED -> NotificationType.ORDER_ACCEPTED
+                OrderStatus.PREPARING -> NotificationType.MEAL_PREPARING
+                OrderStatus.READY -> NotificationType.ORDER_READY
+                OrderStatus.ON_THE_WAY -> NotificationType.DELIVERY_ON_THE_WAY
+                OrderStatus.DELIVERED -> NotificationType.ORDER_DELIVERED
+                OrderStatus.CANCELLED -> NotificationType.ORDER_CANCELLED
+                else -> NotificationType.ORDER_STATUS_UPDATE
+            }
+            
+            // Notify the customer about the status update
+            notificationService.notifyOrderUpdate(
+                userId = order.customerId,
+                orderId = orderId,
+                type = notificationType
+            )
+        }
+
+        return result
     }
 
     fun getMyOrders(userId: String): Flow<Resource<List<Order>>> {

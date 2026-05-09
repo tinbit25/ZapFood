@@ -77,6 +77,7 @@ fun AppNavigation(
                 restoreState = true
             }
             MainActivity.clearNotificationRoute()
+            // Note: notificationId clearing is handled within NotificationScreen
         }
     }
 

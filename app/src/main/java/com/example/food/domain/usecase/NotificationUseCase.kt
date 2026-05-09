@@ -154,6 +154,12 @@ class NotificationUseCase(
             NotificationType.ORDER_DELIVERED ->
                 "Order Delivered" to "Your order #$shortId has been delivered. Enjoy your meal!"
 
+            NotificationType.ORDER_READY ->
+                "Order Ready" to "Your order #$shortId is ready!"
+
+            NotificationType.ORDER_CANCELLED ->
+                "Order Cancelled" to "Your order #$shortId has been cancelled."
+
             NotificationType.SUPPORT_UPDATE ->
                 "Support Update" to "There's an update on your support ticket for order #$shortId."
 
@@ -162,6 +168,9 @@ class NotificationUseCase(
 
             NotificationType.VENDOR_UPDATE ->
                 "Vendor Update" to "The vendor has an update for order #$shortId."
+
+            NotificationType.ORDER_STATUS_UPDATE ->
+                "Order Update" to "The status of your order #$shortId has changed."
         }
     }
 }

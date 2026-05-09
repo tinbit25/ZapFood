@@ -1,5 +1,7 @@
 package com.example.food.ui.screens.notifications
 
+import com.example.food.MainActivity
+
 import android.text.format.DateUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,6 +48,12 @@ fun NotificationScreen(
     LaunchedEffect(user?.userId) {
         user?.userId?.let { userId ->
             notificationViewModel.startObserving(userId)
+            
+            // If we came here from a notification click, mark that notification as read
+            MainActivity.pendingNotificationId?.let { notificationId ->
+                notificationViewModel.markAsRead(notificationId)
+                MainActivity.clearNotificationId()
+            }
         }
     }
 

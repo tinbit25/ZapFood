@@ -36,12 +36,19 @@ class MainActivity : ComponentActivity() {
         var pendingNotificationRoute: String? = null
             private set
 
+        var pendingNotificationId: String? = null
+            private set
+
         fun clearPaymentReturn() {
             pendingPaymentReturn = false
         }
 
         fun clearNotificationRoute() {
             pendingNotificationRoute = null
+        }
+
+        fun clearNotificationId() {
+            pendingNotificationId = null
         }
     }
 
@@ -84,14 +91,16 @@ class MainActivity : ComponentActivity() {
         
         // Handle Notification Click
         val type = intent.getStringExtra("notification_type")
+        val notificationId = intent.getStringExtra("notification_id")
+        
         if (type != null) {
-            Log.i(TAG, "Notification clicked: type=$type")
-            pendingNotificationRoute = when (type) {
-                "ORDER" -> Screen.OrderHistory.route
-                "SUPPORT" -> Screen.SupportTickets.route
-                "ADMIN" -> Screen.AdminDashboard.route
-                else -> Screen.Notifications.route
-            }
+            Log.i(TAG, "Notification clicked: type=$type, id=$notificationId")
+            
+            // Capture the notification ID if present
+            pendingNotificationId = notificationId
+            
+            // All notification clicks now lead to the Notifications Screen as requested
+            pendingNotificationRoute = Screen.Notifications.route
         }
 
         // Handle Deep Link (zapfood://payment/return)
