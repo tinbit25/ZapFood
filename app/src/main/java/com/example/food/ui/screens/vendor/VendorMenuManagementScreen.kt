@@ -26,8 +26,8 @@ import com.example.food.data.model.SpiceLevel
 import com.example.food.data.model.ProteinLevel
 import com.example.food.data.model.MealTime
 import com.example.food.data.model.CuisineType
-import com.example.food.data.model.CarbLevel
 import com.example.food.data.model.OilLevel
+import kotlinx.coroutines.launch
 
 @Composable
 fun VendorMenuManagementScreen(
@@ -38,6 +38,8 @@ fun VendorMenuManagementScreen(
     val user by userViewModel.user.collectAsState()
     val mealsState by mealViewModel.mealsState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     
     LaunchedEffect(user) {
         user?.let {
@@ -46,6 +48,7 @@ fun VendorMenuManagementScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = Color(0xFF0F0F0F),
         topBar = {
             TopNavBar(
@@ -116,9 +119,18 @@ fun VendorMenuManagementScreen(
                         mealTime = listOf(mealTime),
                         tags = tags.split(",").map { it.trim() }.filter { it.isNotEmpty() }
                     )
-                    mealViewModel.createMeal(vendor, newMeal) {
-                        showAddDialog = false
-                        mealViewModel.fetchMeals() // Refresh
+                    mealViewModel.createMeal(vendor, newMeal) { result ->
+                        if (result is Resource.Success) {
+                            showAddDialog = false
+                            mealViewModel.fetchMeals() // Refresh
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Meal added successfully!")
+                            }
+                        } else if (result is Resource.Error) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(result.message ?: "Failed to add meal")
+                            }
+                        }
                     }
                 }
             }
