@@ -47,6 +47,7 @@ class OrderRepository {
                 }
                 val order = snapshot?.toObject(Order::class.java)
                 if (order != null) {
+                    android.util.Log.d("ORDER_SYNC", "Realtime update received for timeline [${order.orderId}]: ${order.status}")
                     val timeline = OrderTimeline(
                         orderId = order.orderId,
                         history = order.statusHistory,
@@ -71,7 +72,9 @@ class OrderRepository {
                 }
                 val orders = snapshot?.documents?.mapNotNull { doc ->
                     try {
-                        doc.toObject(Order::class.java)
+                        doc.toObject(Order::class.java).also { order ->
+                            android.util.Log.d("ORDER_SYNC", "Realtime update received for customer: ${order?.status}")
+                        }
                     } catch (e: Exception) {
                         null
                     }
@@ -94,7 +97,9 @@ class OrderRepository {
                 }
                 val orders = snapshot?.documents?.mapNotNull { doc ->
                     try {
-                        doc.toObject(Order::class.java)
+                        doc.toObject(Order::class.java).also { order ->
+                            android.util.Log.d("ORDER_SYNC", "Realtime update received for vendor: ${order?.status}")
+                        }
                     } catch (e: Exception) {
                         null
                     }

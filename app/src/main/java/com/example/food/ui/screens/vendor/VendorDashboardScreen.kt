@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.launch
 
 @Composable
 fun VendorDashboardScreen(
@@ -72,7 +73,21 @@ fun VendorDashboardScreen(
                     val orders = state.data ?: emptyList()
                     if (orders.isEmpty()) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text(text = "No incoming orders", color = Color.Gray)
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(text = "No incoming orders", color = Color.Gray)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(
+                                    onClick = {
+                                        scope.launch {
+                                            com.example.food.data.repository.MealRepository().seedMealsForVendor(user!!.userId, user!!.displayName ?: "My Shop")
+                                            snackbarHostState.showSnackbar("Meals seeded! Restart app to see them.")
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24))
+                                ) {
+                                    Text("Seed My Meals")
+                                }
+                            }
                         }
                     } else {
                         LazyColumn(

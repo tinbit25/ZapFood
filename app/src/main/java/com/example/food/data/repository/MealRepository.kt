@@ -113,4 +113,31 @@ class MealRepository {
             Resource.Error(e.localizedMessage ?: "Seeding failed")
         }
     }
+    suspend fun seedMealsForVendor(vendorId: String, vendorName: String): Resource<Unit> {
+        val seedData = listOf(
+            Triple("Classic Injera Combo", 8.99, "https://images.unsplash.com/photo-1541014741259-df549af00c67?w=800"),
+            Triple("Spicy Shiro", 7.50, "https://images.unsplash.com/photo-1589647363585-f4a7d3877b10?w=800"),
+            Triple("Kitfo Special", 12.00, "https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=800")
+        )
+
+        return try {
+            seedData.forEachIndexed { index, data ->
+                val meal = Meal(
+                    id = java.util.UUID.randomUUID().toString(),
+                    name = data.first,
+                    price = data.second,
+                    imageUrl = data.third,
+                    vendorId = vendorId,
+                    vendorName = vendorName,
+                    category = "Ethiopian",
+                    calories = 400 + (index * 100),
+                    isAvailable = true
+                )
+                mealsCollection.document(meal.id).set(meal).await()
+            }
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Seeding failed")
+        }
+    }
 }

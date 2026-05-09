@@ -34,12 +34,48 @@ import java.util.*
 fun OrderTrackingScreen(
     orderId: String,
     onNavigateBack: () -> Unit,
-    viewModel: OrderTrackingViewModel = viewModel()
+    viewModel: OrderTrackingViewModel = viewModel(),
+    userViewModel: com.example.food.ui.viewmodel.UserViewModel = viewModel()
 ) {
     val timelineResource by viewModel.timelineState.collectAsState()
+    val user by userViewModel.user.collectAsState()
 
     LaunchedEffect(orderId) {
         viewModel.observeOrder(orderId)
+    }
+
+    // LEVEL 2 TEST — Real local notification trigger
+    val context = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(timelineResource) {
+        val resource = timelineResource
+        if (resource is Resource.Success) {
+            val timeline = resource.data
+            if (timeline != null) {
+                when (timeline.currentStatus) {
+                    com.example.food.data.model.OrderStatus.ACCEPTED -> {
+                        user?.userId?.let { uid ->
+                            com.example.food.core.util.LocalNotificationHelper.showOrderNotification(
+                                context,
+                                uid,
+                                "Order Accepted ✓",
+                                "Your order is being prepared!"
+                            )
+                        }
+                    }
+                    com.example.food.data.model.OrderStatus.PREPARING -> {
+                        user?.userId?.let { uid ->
+                            com.example.food.core.util.LocalNotificationHelper.showOrderNotification(
+                                context,
+                                uid,
+                                "Preparing Your Meal 🍳",
+                                "The chef has started cooking your order."
+                            )
+                        }
+                    }
+                    else -> {}
+                }
+            }
+        }
     }
 
     Scaffold(

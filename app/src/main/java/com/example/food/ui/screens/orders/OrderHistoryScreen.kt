@@ -46,6 +46,26 @@ fun OrderHistoryScreen(
         user?.let { orderViewModel.fetchUserOrders(it.userId) }
     }
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(ordersState) {
+        val state = ordersState
+        if (state is Resource.Success) {
+            state.data?.firstOrNull()?.let { latestOrder ->
+                if (latestOrder.status == com.example.food.data.model.OrderStatus.ACCEPTED || 
+                    latestOrder.status == com.example.food.data.model.OrderStatus.PREPARING) {
+                    user?.userId?.let { uid ->
+                        com.example.food.core.util.LocalNotificationHelper.showOrderNotification(
+                            context,
+                            uid,
+                            "Order Update: ${latestOrder.status.name}",
+                            "Order #${latestOrder.orderId.take(8)} is now ${latestOrder.status.name}"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     val dateFormat = remember { SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()) }
 
     Column(
