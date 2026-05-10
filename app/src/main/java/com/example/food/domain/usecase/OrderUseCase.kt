@@ -5,6 +5,10 @@ import com.example.food.data.model.*
 import com.example.food.data.repository.OrderRepository
 import com.example.food.data.repository.MealRepository
 import com.example.food.data.remote.NotificationService
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
@@ -12,7 +16,8 @@ class OrderUseCase(
     private val orderRepository: OrderRepository = OrderRepository(),
     private val mealRepository: MealRepository = MealRepository(),
     private val paymentUseCase: PaymentUseCase = PaymentUseCase(),
-    private val notificationService: NotificationService = NotificationService()
+    private val notificationService: NotificationService = NotificationService(),
+    private val userPreferenceUseCase: UserPreferenceUseCase = UserPreferenceUseCase()
 ) {
     /**
      * Customer places an order for a list of meals.
@@ -64,7 +69,14 @@ class OrderUseCase(
         )
 
         val result = orderRepository.saveOrder(order)
-        return if (result is Resource.Success) Resource.Success(order) else Resource.Error(result.message ?: "Failed to place order")
+        if (result is Resource.Success) {
+            // Fire and forget behavior profile update
+            CoroutineScope(Dispatchers.IO).launch {
+                userPreferenceUseCase.updateProfileAfterOrder(order)
+            }
+            return Resource.Success(order)
+        }
+        return Resource.Error(result.message ?: "Failed to place order")
     }
 
     /**

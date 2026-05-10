@@ -32,6 +32,7 @@ import com.example.food.data.model.MealPlan
 import com.example.food.data.model.Meal
 import com.example.food.ui.components.MPCodeDialog
 import com.example.food.core.util.Resource
+import com.example.food.domain.usecase.EthiopianBehaviorIntelligence
 
 @Composable
 fun HomeScreen(
@@ -57,7 +58,12 @@ fun HomeScreen(
         ExploreItem("Cafes", "☕")
     )
 
+    var showFastingPrompt by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
+        if (EthiopianBehaviorIntelligence.isFastingDay()) {
+            showFastingPrompt = true
+        }
         mealPlanViewModel.fetchDiscoverPlans()
         mealViewModel.fetchMeals()
     }
@@ -81,6 +87,53 @@ fun HomeScreen(
         item {
             HomeSearchBar(onSearchClick = onNavigateToSearch)
             Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // Smart Hybrid Fasting Prompt
+        if (showFastingPrompt) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E3A2F))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("🌱", fontSize = 24.sp)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                "Today is a fasting day",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Would you like fasting meal recommendations?",
+                            color = Color.LightGray,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Button(
+                                onClick = { 
+                                    showFastingPrompt = false 
+                                    mealViewModel.applyCategory(com.example.food.data.model.EthiopianFoodCategory.FASTING_FOODS)
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                            ) {
+                                Text("Yes")
+                            }
+                            TextButton(onClick = { showFastingPrompt = false }) {
+                                Text("No, thanks", color = Color.LightGray)
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // Featured Promo Banner
