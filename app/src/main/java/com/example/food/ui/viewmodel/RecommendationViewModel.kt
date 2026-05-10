@@ -3,26 +3,25 @@ package com.example.food.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.food.data.repository.RecommendationRepository
-import com.example.food.domain.model.ScoredMeal
+import com.example.food.domain.model.ScoredMealResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import com.example.food.domain.model.ComboRecommendation
 import com.example.food.data.model.Meal
 
 sealed class RecommendationState {
     object Initial : RecommendationState()
     object Loading : RecommendationState()
     data class Success(
-        val personalized: List<ScoredMeal>,
-        val trending: List<ScoredMeal>,
-        val fastingPicks: List<ScoredMeal>
+        val personalized: List<ScoredMealResponse>,
+        val trending: List<ScoredMealResponse>,
+        val fastingPicks: List<ScoredMealResponse>
     ) : RecommendationState()
     data class Error(val message: String) : RecommendationState()
     
     // Additional states for Cart
-    data class CartSuggestionsLoaded(val suggestions: List<ComboRecommendation>) : RecommendationState()
+    data class CartSuggestionsLoaded(val suggestions: List<ScoredMealResponse>) : RecommendationState()
 }
 
 class RecommendationViewModel(
@@ -70,7 +69,8 @@ class RecommendationViewModel(
         viewModelScope.launch {
             _cartSuggestionsState.value = RecommendationState.Loading
             try {
-                val result = repository.getCartSuggestions(userId, cartMeals)
+                val cartMealIds = cartMeals.map { it.id }
+                val result = repository.getCartSuggestions(userId, cartMealIds)
                 if (result.isSuccess) {
                     _cartSuggestionsState.value = RecommendationState.CartSuggestionsLoaded(result.getOrNull() ?: emptyList())
                 } else {
@@ -79,6 +79,12 @@ class RecommendationViewModel(
             } catch (e: Exception) {
                 _cartSuggestionsState.value = RecommendationState.Error(e.message ?: "Unknown error")
             }
+        }
+    }
+    
+    fun trackAnalyticsEvent(userId: String, eventType: String, mealId: String? = null, context: String? = null) {
+        viewModelScope.launch {
+            repository.trackAnalyticsEvent(userId, eventType, mealId, context)
         }
     }
 }

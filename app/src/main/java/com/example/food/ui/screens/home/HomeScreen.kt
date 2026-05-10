@@ -30,6 +30,10 @@ import com.example.food.ui.viewmodel.MealPlanViewModel
 import com.example.food.ui.viewmodel.MealViewModel
 import com.example.food.ui.viewmodel.RecommendationViewModel
 import com.example.food.ui.viewmodel.RecommendationState
+import com.example.food.domain.model.ScoredMealResponse
+import com.example.food.R
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material.icons.filled.Star
 import com.example.food.data.model.MealPlan
 import com.example.food.data.model.Meal
 import com.example.food.ui.components.MPCodeDialog
@@ -258,7 +262,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(recData.personalized) { scoredMeal ->
-                            PopularMealCard(meal = scoredMeal.meal, onClick = { onNavigateToDetails(scoredMeal.meal.id) })
+                            PopularMealCard(scoredMeal = scoredMeal, onClick = { onNavigateToDetails(scoredMeal.mealId) })
                         }
                     }
                 }
@@ -273,7 +277,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(recData.trending) { scoredMeal ->
-                            PopularMealCard(meal = scoredMeal.meal, onClick = { onNavigateToDetails(scoredMeal.meal.id) })
+                            PopularMealCard(scoredMeal = scoredMeal, onClick = { onNavigateToDetails(scoredMeal.mealId) })
                         }
                     }
                 }
@@ -288,7 +292,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(recData.fastingPicks) { scoredMeal ->
-                            PopularMealCard(meal = scoredMeal.meal, onClick = { onNavigateToDetails(scoredMeal.meal.id) })
+                            PopularMealCard(scoredMeal = scoredMeal, onClick = { onNavigateToDetails(scoredMeal.mealId) })
                         }
                     }
                 }
@@ -316,6 +320,72 @@ fun HomeScreen(
         if (mealPlans.isNotEmpty()) {
             items(mealPlans.reversed()) { plan ->
                 ImmersiveLargeCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.id) })
+            }
+        }
+    }
+}
+
+@Composable
+fun PopularMealCard(scoredMeal: ScoredMealResponse, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .width(160.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
+    ) {
+        Column {
+            Box(modifier = Modifier.fillMaxWidth().height(140.dp)) {
+                AsyncImage(
+                    model = scoredMeal.imageUrl,
+                    contentDescription = scoredMeal.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+                // Score Badge
+                if (scoredMeal.matchScore > 0) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(8.dp)
+                            .background(Color(0xFF4CAF50).copy(alpha = 0.9f), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "${(scoredMeal.matchScore * 100).toInt()}% Match",
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = scoredMeal.name,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFC107), modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = "4.8", fontSize = 12.sp, color = Color.Gray) // Stub rating for now
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "RWF ${scoredMeal.price.toInt()}", fontSize = 12.sp, color = Color(0xFFF16B24), fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = scoredMeal.reason,
+                    fontSize = 11.sp,
+                    color = Color.Gray,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 14.sp
+                )
             }
         }
     }

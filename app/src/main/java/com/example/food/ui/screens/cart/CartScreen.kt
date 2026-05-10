@@ -27,7 +27,8 @@ import com.example.food.ui.viewmodel.RecommendationViewModel
 import com.example.food.ui.viewmodel.RecommendationState
 import com.example.food.data.model.Meal
 import com.example.food.data.model.MealPlan
-import com.example.food.domain.model.ComboRecommendation
+import com.example.food.domain.model.ScoredMealResponse
+import com.example.food.R
 
 @Composable
 fun CartScreen(
@@ -119,7 +120,30 @@ fun CartScreen(
                         items(suggestions) { combo ->
                             ComboRecommendationCard(
                                 recommendation = combo,
-                                onAddClick = { cartViewModel.addMeal(combo.meal) }
+                                onAddClick = { 
+                                    // Construct dummy Meal for cart insertion
+                                    val dummyMeal = com.example.food.data.model.Meal(
+                                        id = combo.mealId,
+                                        name = combo.name,
+                                        price = combo.price,
+                                        imageUrl = combo.imageUrl,
+                                        vendorId = combo.vendorId,
+                                        category = "traditional",
+                                        tags = combo.tags,
+                                        ingredients = emptyList(),
+                                        spiceLevel = com.example.food.data.model.SpiceLevel.MEDIUM,
+                                        fastingFriendly = false,
+                                        veganFriendly = false,
+                                        popularityScore = 50.0
+                                    )
+                                    cartViewModel.addMeal(dummyMeal) 
+                                    recommendationViewModel.trackAnalyticsEvent(
+                                        userId = "user123",
+                                        eventType = "combo_accepted",
+                                        mealId = combo.mealId,
+                                        context = "cart"
+                                    )
+                                }
                             )
                         }
                         
@@ -213,7 +237,7 @@ fun ReceiptRow(label: String, amount: String, isTotal: Boolean = false) {
 
 @Composable
 fun ComboRecommendationCard(
-    recommendation: ComboRecommendation,
+    recommendation: ScoredMealResponse,
     onAddClick: () -> Unit
 ) {
     Surface(
@@ -225,8 +249,8 @@ fun ComboRecommendationCard(
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
-                model = recommendation.meal.imageUrl,
-                contentDescription = recommendation.meal.name,
+                model = recommendation.imageUrl,
+                contentDescription = recommendation.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(64.dp)
@@ -234,9 +258,9 @@ fun ComboRecommendationCard(
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = recommendation.meal.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(text = recommendation.upsell_reason, fontSize = 12.sp, color = Color(0xFFF16B24))
-                Text(text = "RWF ${"%,.0f".format(recommendation.meal.price * 1000)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                Text(text = recommendation.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = recommendation.reason, fontSize = 12.sp, color = Color(0xFFF16B24))
+                Text(text = "RWF ${"%,.0f".format(recommendation.price)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
             }
             
             Button(
