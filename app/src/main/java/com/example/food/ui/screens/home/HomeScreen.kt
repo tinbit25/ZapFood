@@ -28,6 +28,8 @@ import coil.compose.AsyncImage
 import com.example.food.ui.viewmodel.UserViewModel
 import com.example.food.ui.viewmodel.MealPlanViewModel
 import com.example.food.ui.viewmodel.MealViewModel
+import com.example.food.ui.viewmodel.RecommendationViewModel
+import com.example.food.ui.viewmodel.RecommendationState
 import com.example.food.data.model.MealPlan
 import com.example.food.data.model.Meal
 import com.example.food.ui.components.MPCodeDialog
@@ -39,6 +41,7 @@ fun HomeScreen(
     userViewModel: UserViewModel,
     mealPlanViewModel: MealPlanViewModel,
     mealViewModel: MealViewModel,
+    recommendationViewModel: RecommendationViewModel,
     onNavigateToDetails: (String) -> Unit,
     onNavigateToMealPlanDetails: (String) -> Unit,
     onNavigateToSearch: () -> Unit,
@@ -47,6 +50,7 @@ fun HomeScreen(
     val user by userViewModel.user.collectAsState()
     val discoverPlansState by mealPlanViewModel.discoverPlansState.collectAsState()
     val mealsState by mealViewModel.mealsState.collectAsState()
+    val recommendationState by recommendationViewModel.uiState.collectAsState()
     
     val mealPlans = (discoverPlansState as? Resource.Success)?.data ?: emptyList()
     val meals = (mealsState as? Resource.Success)?.data ?: emptyList()
@@ -66,6 +70,7 @@ fun HomeScreen(
         }
         mealPlanViewModel.fetchDiscoverPlans()
         mealViewModel.fetchMeals()
+        user?.let { recommendationViewModel.loadHomeRecommendations(it.userId) }
     }
 
     LazyColumn(
@@ -234,20 +239,64 @@ fun HomeScreen(
             }
         }
 
-        // Popular Meals Section
-        item {
-            SectionHeader(title = "Popular Meals", onActionClick = {})
-            if (mealsState is Resource.Loading) {
+        // AI Recommendation Sections
+        if (recommendationState is RecommendationState.Loading) {
+            item {
                 Box(modifier = Modifier.fillMaxWidth().height(150.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = Color(0xFFF16B24))
                 }
-            } else if (meals.isEmpty()) {
-                Text(
-                    text = "No meals available.",
-                    modifier = Modifier.padding(24.dp),
-                    color = Color.Gray
-                )
-            } else {
+            }
+        } else if (recommendationState is RecommendationState.Success) {
+            val recData = recommendationState as RecommendationState.Success
+            
+            // Recommended For You
+            if (recData.personalized.isNotEmpty()) {
+                item {
+                    SectionHeader(title = "Recommended For You \uD83C\uDFAF", onActionClick = {})
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(recData.personalized) { scoredMeal ->
+                            PopularMealCard(meal = scoredMeal.meal, onClick = { onNavigateToDetails(scoredMeal.meal.id) })
+                        }
+                    }
+                }
+            }
+            
+            // Trending
+            if (recData.trending.isNotEmpty()) {
+                item {
+                    SectionHeader(title = "Trending Ethiopian Meals \uD83D\uDD25", onActionClick = {})
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(recData.trending) { scoredMeal ->
+                            PopularMealCard(meal = scoredMeal.meal, onClick = { onNavigateToDetails(scoredMeal.meal.id) })
+                        }
+                    }
+                }
+            }
+            
+            // Fasting Picks
+            if (recData.fastingPicks.isNotEmpty()) {
+                item {
+                    SectionHeader(title = "Fasting Picks \uD83C\uDF3F", onActionClick = {})
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(recData.fastingPicks) { scoredMeal ->
+                            PopularMealCard(meal = scoredMeal.meal, onClick = { onNavigateToDetails(scoredMeal.meal.id) })
+                        }
+                    }
+                }
+            }
+        } else if (recommendationState is RecommendationState.Error) {
+            // Fallback to local meals if API fails
+            item {
+                SectionHeader(title = "Popular Meals", onActionClick = {})
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 20.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)

@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Dict, Any
 from app.models.combo import ComboRequest, ComboRecommendation
-from app.services.combo.combo_builder import ComboBuilder
+from ai.combo_engine import ComboEngine
 
 router = APIRouter(prefix="/combos", tags=["Combo Engine"])
-builder = ComboBuilder()
+builder = ComboEngine()
 
 @router.post("/recommended/{meal_id}", response_model=List[ComboRecommendation])
 async def get_recommended_combo_for_meal(meal_id: str, request: ComboRequest):

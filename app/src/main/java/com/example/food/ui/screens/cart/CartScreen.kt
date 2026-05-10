@@ -23,15 +23,28 @@ import coil.compose.AsyncImage
 import com.example.food.ui.components.PrimaryButton
 import com.example.food.ui.components.TopNavBar
 import com.example.food.ui.viewmodel.CartViewModel
+import com.example.food.ui.viewmodel.RecommendationViewModel
+import com.example.food.ui.viewmodel.RecommendationState
 import com.example.food.data.model.Meal
 import com.example.food.data.model.MealPlan
+import com.example.food.domain.model.ComboRecommendation
 
 @Composable
 fun CartScreen(
     cartViewModel: CartViewModel,
+    recommendationViewModel: RecommendationViewModel,
     onNavigateToCheckout: () -> Unit
 ) {
     val cartState by cartViewModel.cartState.collectAsState()
+    val suggestionsState by recommendationViewModel.cartSuggestionsState.collectAsState()
+    
+    // Load recommendations when cart changes
+    LaunchedEffect(cartState.meals) {
+        val cartMeals = cartState.meals.map { it.first }
+        if (cartMeals.isNotEmpty()) {
+            recommendationViewModel.loadCartSuggestions("current_user_id", cartMeals)
+        }
+    }
     
     val deliveryFee = 2000.0 // RWF
     val total = (cartState.subtotal * 1000) + deliveryFee
@@ -87,6 +100,33 @@ fun CartScreen(
                     ReceiptRow("Total", "RWF ${"%,.0f".format(total)}", isTotal = true)
                     
                     Spacer(modifier = Modifier.height(32.dp))
+                }
+                
+                // Smart Cart Suggestions
+                if (suggestionsState is RecommendationState.CartSuggestionsLoaded) {
+                    val suggestions = (suggestionsState as RecommendationState.CartSuggestionsLoaded).suggestions
+                    if (suggestions.isNotEmpty()) {
+                        item {
+                            Text(
+                                text = "Frequently Ordered Together ✨",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+                        }
+                        
+                        items(suggestions) { combo ->
+                            ComboRecommendationCard(
+                                recommendation = combo,
+                                onAddClick = { cartViewModel.addMeal(combo.meal) }
+                            )
+                        }
+                        
+                        item {
+                            Spacer(modifier = Modifier.height(32.dp))
+                        }
+                    }
                 }
             }
 
@@ -168,5 +208,45 @@ fun ReceiptRow(label: String, amount: String, isTotal: Boolean = false) {
             fontWeight = if (isTotal) FontWeight.Bold else FontWeight.Medium,
             color = if (isTotal) Color(0xFFF16B24) else Color.White
         )
+    }
+}
+
+@Composable
+fun ComboRecommendationCard(
+    recommendation: ComboRecommendation,
+    onAddClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        color = Color(0xFF1A1A1A),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            AsyncImage(
+                model = recommendation.meal.imageUrl,
+                contentDescription = recommendation.meal.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = recommendation.meal.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = recommendation.upsell_reason, fontSize = 12.sp, color = Color(0xFFF16B24))
+                Text(text = "RWF ${"%,.0f".format(recommendation.meal.price * 1000)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+            }
+            
+            Button(
+                onClick = onAddClick,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24)),
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Text(text = "Add", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        }
     }
 }

@@ -27,6 +27,7 @@ import com.example.food.ui.screens.orders.OrderTrackingScreen
 import com.example.food.ui.viewmodel.UserViewModel
 import com.example.food.ui.viewmodel.MealPlanViewModel
 import com.example.food.ui.viewmodel.CartViewModel
+import com.example.food.ui.viewmodel.RecommendationViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.food.ui.screens.auth.PreferencesOnboardingScreen
 import com.example.food.ui.screens.menu.AIPlanGeneratorScreen
@@ -55,7 +56,8 @@ fun AppNavigation(
     mealViewModel: com.example.food.ui.viewmodel.MealViewModel = viewModel(),
     orderViewModel: com.example.food.ui.viewmodel.OrderViewModel = viewModel(),
     cartViewModel: CartViewModel = viewModel(),
-    paymentViewModel: com.example.food.ui.viewmodel.PaymentViewModel = viewModel()
+    paymentViewModel: com.example.food.ui.viewmodel.PaymentViewModel = viewModel(),
+    recommendationViewModel: RecommendationViewModel = viewModel()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -184,6 +186,7 @@ fun AppNavigation(
                     userViewModel = userViewModel,
                     mealPlanViewModel = mealPlanViewModel,
                     mealViewModel = mealViewModel,
+                    recommendationViewModel = recommendationViewModel,
                     onNavigateToDetails = { productId ->
                         navController.navigate(Screen.ProductDetails.createRoute(productId))
                     },
@@ -235,6 +238,7 @@ fun AppNavigation(
             composable(route = Screen.Cart.route) {
                 CartScreen(
                     cartViewModel = cartViewModel,
+                    recommendationViewModel = recommendationViewModel,
                     onNavigateToCheckout = { navController.navigate(Screen.Checkout.route) }
                 )
             }

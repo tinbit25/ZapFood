@@ -1,7 +1,7 @@
 import time
 from fastapi import APIRouter, HTTPException
 from app.models.recommendation import SimilarityRequest, RecommendationResponse
-from app.services.ml_similarity_engine import MLSimilarityEngine
+from ai.similarity_engine import MLSimilarityEngine
 
 router = APIRouter(prefix="/similarity", tags=["Similarity ML"])
 ml_engine = MLSimilarityEngine()

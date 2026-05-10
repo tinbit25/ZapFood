@@ -1,53 +1,55 @@
 package com.example.food.domain.model
 
-import com.example.food.data.model.EthiopianFoodCategory
-import com.example.food.data.model.MealTime
-import com.example.food.data.model.ProteinLevel
-import com.example.food.data.model.SpiceLevel
+import com.example.food.data.model.Meal
+import com.example.food.data.model.UserFoodPreference
 
-/**
- * Placeholder data structures for future AI recommendation systems.
- * This file contains the architecture for the planned collaborative filtering
- * and content-based recommendation engine for Ethiopian cuisine.
- */
+data class ScoredMeal(
+    val meal: Meal,
+    val final_score: Float,
+    val score_breakdown: Map<String, Float>,
+    val cultural_reasoning: String
+)
 
+data class RecommendationResponse(
+    val recommendations: List<ScoredMeal>,
+    val processing_time_ms: Float
+)
+
+data class RecommendationRequest(
+    val user_preference: UserFoodPreference,
+    val candidate_meals: List<Meal>,
+    val current_time_of_day: String? = null,
+    val current_day_of_week: String? = null
+)
+
+data class SimilarityRequest(
+    val target_meal_id: String,
+    val candidate_meals: List<Meal>,
+    val top_n: Int = 5
+)
+
+data class CartContext(
+    val cart_meals: List<Meal>,
+    val time_of_day: String = "Lunch",
+    val day_of_week: String = "Monday",
+    val weather: String = "Clear",
+    val user_id: String? = null
+)
+
+data class ComboRequest(
+    val context: CartContext,
+    val candidate_meals: List<Meal>,
+    val top_n: Int = 3
+)
+
+data class ComboRecommendation(
+    val meal: Meal,
+    val match_score: Float,
+    val upsell_reason: String
+)
+
+// Legacy Placeholders (can be removed or kept for reference)
 data class MealEmbedding(
     val mealId: String,
-    val vector: FloatArray, // e.g. [0.2, 0.5, -0.1, 0.9] representing categorized embeddings
-    val dominantCategory: EthiopianFoodCategory,
-    val isFastingFriendly: Boolean
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        other as MealEmbedding
-        return mealId == other.mealId && vector.contentEquals(other.vector)
-    }
-
-    override fun hashCode(): Int {
-        var result = mealId.hashCode()
-        result = 31 * result + vector.contentHashCode()
-        return result
-    }
-}
-
-data class UserPreferenceProfile(
-    val userId: String,
-    val preferredCategories: Map<EthiopianFoodCategory, Float>, // Category to weight
-    val prefersFasting: Boolean,
-    val spiceTolerance: SpiceLevel,
-    val preferredMealTimes: List<MealTime>,
-    val explicitDislikes: List<String> // Tags or Meal IDs
-)
-
-data class RecommendationScore(
-    val mealId: String,
-    val score: Float, // 0.0 to 1.0
-    val reasoning: List<String> // e.g., ["Matches fasting preference", "High protein"]
-)
-
-data class CollaborativeFilterMatch(
-    val userId1: String,
-    val userId2: String,
-    val similarityScore: Float // Cosine similarity
+    val vector: FloatArray
 )
