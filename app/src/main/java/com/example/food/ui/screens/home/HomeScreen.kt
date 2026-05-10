@@ -61,7 +61,7 @@ fun HomeScreen(
     
     val exploreCategories = listOf(
         ExploreItem("Restaurants", "🍟"),
-        ExploreItem("Kravinz", "🥘"),
+        ExploreItem("ZapFood", "🥘"),
         ExploreItem("Chefs", "👩‍🍳"),
         ExploreItem("Cafes", "☕")
     )
@@ -375,7 +375,7 @@ fun PopularMealCard(scoredMeal: ScoredMealResponse, onClick: () -> Unit) {
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(text = "4.8", fontSize = 12.sp, color = Color.Gray) // Stub rating for now
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "RWF ${scoredMeal.price.toInt()}", fontSize = 12.sp, color = Color(0xFFF16B24), fontWeight = FontWeight.Bold)
+                    Text(text = "ETB ${scoredMeal.price.toInt()}", fontSize = 12.sp, color = Color(0xFFF16B24), fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -411,7 +411,7 @@ fun PopularMealCard(meal: Meal, onClick: () -> Unit) {
             )
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(text = meal.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1)
-                Text(text = "RWF ${"%,.0f".format(meal.price * 1000)}", fontSize = 12.sp, color = Color(0xFFF16B24))
+                Text(text = "ETB ${"%,.0f".format(meal.price * 1000)}", fontSize = 12.sp, color = Color(0xFFF16B24))
             }
         }
     }
@@ -673,7 +673,7 @@ fun ImmersiveLargeCard(plan: MealPlan, onClick: () -> Unit) {
                 Text(text = plan.name, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "Starting from RWF 45,000", fontSize = 12.sp, color = Color.LightGray)
+                    Text(text = "Starting from ETB 45,000", fontSize = 12.sp, color = Color.LightGray)
                 }
             }
         }

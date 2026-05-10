@@ -53,7 +53,7 @@ class OrderUseCase(
             subtotal += (meal.price * quantity)
         }
 
-        val deliveryFee = 2.0 // Unit: thousands of RWF (e.g. 2.0 = 2000 RWF)
+        val deliveryFee = 2.0 // Unit: thousands of ETB (e.g. 2.0 = 2000 ETB)
         val order = Order(
             orderId = UUID.randomUUID().toString(),
             customerId = user.userId,

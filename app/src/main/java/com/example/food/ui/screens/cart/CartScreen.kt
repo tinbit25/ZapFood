@@ -47,7 +47,7 @@ fun CartScreen(
         }
     }
     
-    val deliveryFee = 2000.0 // RWF
+    val deliveryFee = 2000.0 // ETB
     val total = (cartState.subtotal * 1000) + deliveryFee
 
     Column(
@@ -94,11 +94,11 @@ fun CartScreen(
                     HorizontalDivider(color = Color.Gray.copy(alpha = 0.3f))
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    ReceiptRow("Subtotal", "RWF ${"%,.0f".format(cartState.subtotal * 1000)}")
+                    ReceiptRow("Subtotal", "ETB ${"%,.0f".format(cartState.subtotal * 1000)}")
                     Spacer(modifier = Modifier.height(8.dp))
-                    ReceiptRow("Delivery Fee", "RWF ${"%,.0f".format(deliveryFee)}")
+                    ReceiptRow("Delivery Fee", "ETB ${"%,.0f".format(deliveryFee)}")
                     Spacer(modifier = Modifier.height(8.dp))
-                    ReceiptRow("Total", "RWF ${"%,.0f".format(total)}", isTotal = true)
+                    ReceiptRow("Total", "ETB ${"%,.0f".format(total)}", isTotal = true)
                     
                     Spacer(modifier = Modifier.height(32.dp))
                 }
@@ -156,7 +156,7 @@ fun CartScreen(
 
             Box(modifier = Modifier.padding(24.dp)) {
                 PrimaryButton(
-                    text = "Checkout | RWF ${"%,.0f".format(total)}",
+                    text = "Checkout | ETB ${"%,.0f".format(total)}",
                     onClick = onNavigateToCheckout,
                     backgroundColor = Color(0xFFF16B24)
                 )
@@ -193,7 +193,7 @@ fun CartItemRow(
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(text = "RWF ${"%,.0f".format(price * 1000)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF16B24))
+                Text(text = "ETB ${"%,.0f".format(price * 1000)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF16B24))
             }
             
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -260,7 +260,7 @@ fun ComboRecommendationCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = recommendation.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 Text(text = recommendation.reason, fontSize = 12.sp, color = Color(0xFFF16B24))
-                Text(text = "RWF ${"%,.0f".format(recommendation.price)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                Text(text = "ETB ${"%,.0f".format(recommendation.price)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
             }
             
             Button(

@@ -71,7 +71,7 @@ fun SignUpScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Join Kravinz today",
+                text = "Join ZapFood today",
                 fontSize = 16.sp,
                 color = Color.Gray
             )

@@ -199,7 +199,7 @@ fun AddMealDialog(
                     OutlinedTextField(
                         value = price,
                         onValueChange = { price = it },
-                        label = { Text("Price (in thousands RWF)") },
+                        label = { Text("Price (in thousands ETB)") },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.Gray,
@@ -332,7 +332,7 @@ fun VendorMealItem(meal: Meal) {
                 Text(text = "${meal.calories} kcal", fontSize = 12.sp, color = Color.Gray)
             }
             Text(
-                text = "RWF ${"%,.0f".format(meal.price * 1000)}",
+                text = "ETB ${"%,.0f".format(meal.price * 1000)}",
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )

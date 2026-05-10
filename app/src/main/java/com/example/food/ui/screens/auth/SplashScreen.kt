@@ -36,7 +36,7 @@ fun SplashScreen(
     ) {
         // Placeholder for Logo, using stylized text for now
         Text(
-            text = "KRAVINZ",
+            text = "ZapFood",
             color = MaterialTheme.colorScheme.primary,
             fontSize = 40.sp,
             fontWeight = FontWeight.Bold,

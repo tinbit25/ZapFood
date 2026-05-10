@@ -82,7 +82,7 @@ fun AdminDashboardScreen(
                     StatCard(
                         modifier = Modifier.weight(1f),
                         title = "Revenue",
-                        value = "RWF ${if (dashboardData is Resource.Success) "%,.0f".format(dashboardData.data?.totalRevenue ?: 0.0) else "--"}",
+                        value = "ETB ${if (dashboardData is Resource.Success) "%,.0f".format(dashboardData.data?.totalRevenue ?: 0.0) else "--"}",
                         icon = Icons.Default.MonetizationOn,
                         color = Color(0xFF4CAF50)
                     )

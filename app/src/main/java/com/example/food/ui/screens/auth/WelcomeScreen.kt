@@ -68,7 +68,7 @@ fun WelcomeScreen(
                 color = Color.White
             )
             Text(
-                text = "Kravinz",
+                text = "ZapFood",
                 fontSize = 48.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color(0xFFF16B24)

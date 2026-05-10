@@ -106,7 +106,7 @@ fun AdminOrderCard(order: Order) {
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(text = "Total Amount", color = Color.Gray, fontSize = 10.sp)
-                    Text(text = "RWF ${"%,.0f".format(order.totalAmount)}", color = Color(0xFFF16B24), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(text = "ETB ${"%,.0f".format(order.totalAmount)}", color = Color(0xFFF16B24), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
             }
             

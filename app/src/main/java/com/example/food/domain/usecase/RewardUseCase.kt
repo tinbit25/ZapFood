@@ -13,7 +13,7 @@ class RewardUseCase(
     }
 
     suspend fun calculateDiscount(pointsToRedeem: Int): Double {
-        // Rule: 10 points = 100 RWF discount
+        // Rule: 10 points = 100 ETB discount
         return (pointsToRedeem / 10) * 100.0
     }
 

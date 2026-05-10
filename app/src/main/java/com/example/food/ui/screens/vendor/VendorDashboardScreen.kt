@@ -146,7 +146,7 @@ fun VendorOrderCard(order: Order, user: User, onUpdateStatus: (OrderStatus) -> U
             
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "RWF ${"%,.0f".format(order.totalAmount * 1000)}",
+                    text = "ETB ${"%,.0f".format(order.totalAmount * 1000)}",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFF16B24)
