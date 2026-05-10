@@ -9,7 +9,9 @@ data class AdminDashboardData(
     val pendingVendors: Int = 0,
     val recentOrders: List<Order> = emptyList(),
     val revenueByDay: Map<String, Double> = emptyMap(), // Date string to revenue
-    val topSellingMeals: List<Pair<String, Int>> = emptyList() // Meal name to count
+    val topSellingMeals: List<Pair<String, Int>> = emptyList(), // Meal name to count
+    val categoryDistribution: Map<String, Int> = emptyMap(),
+    val fastingRatio: Double = 0.0 // Percentage of fasting friendly meals ordered
 )
 
 data class SystemHealth(

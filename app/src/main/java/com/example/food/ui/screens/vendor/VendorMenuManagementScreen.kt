@@ -22,12 +22,14 @@ import com.example.food.data.model.MealFilters
 import com.example.food.ui.components.TopNavBar
 import com.example.food.ui.viewmodel.MealViewModel
 import com.example.food.ui.viewmodel.UserViewModel
-import com.example.food.data.model.SpiceLevel
-import com.example.food.data.model.ProteinLevel
 import com.example.food.data.model.MealTime
 import com.example.food.data.model.CuisineType
+import com.example.food.data.model.EthiopianFoodCategory
 import com.example.food.data.model.OilLevel
+import com.example.food.data.model.SpiceLevel
+import com.example.food.data.model.ProteinLevel
 import kotlinx.coroutines.launch
+
 
 @Composable
 fun VendorMenuManagementScreen(
@@ -108,7 +110,7 @@ fun VendorMenuManagementScreen(
                     val newMeal = com.example.food.data.model.Meal(
                         name = name,
                         price = price,
-                        category = category,
+                        category = category.name,
                         vendorId = vendor.userId,
                         vendorName = vendor.displayName ?: "Vendor",
                         imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop",
@@ -141,11 +143,11 @@ fun VendorMenuManagementScreen(
 @Composable
 fun AddMealDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, Double, String, Boolean, Boolean, SpiceLevel, ProteinLevel, MealTime, String) -> Unit
+    onConfirm: (String, Double, EthiopianFoodCategory, Boolean, Boolean, SpiceLevel, ProteinLevel, MealTime, String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("Main Course") }
+    var category by remember { mutableStateOf(EthiopianFoodCategory.GENERAL) }
     
     // AI Metadata State
     var fastingFriendly by remember { mutableStateOf(false) }
@@ -155,10 +157,10 @@ fun AddMealDialog(
     var mealTime by remember { mutableStateOf(MealTime.LUNCH) }
     var tags by remember { mutableStateOf("") }
     
-    // Dropdown expanded states
     var spiceExpanded by remember { mutableStateOf(false) }
     var proteinExpanded by remember { mutableStateOf(false) }
     var timeExpanded by remember { mutableStateOf(false) }
+    var categoryExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -169,7 +171,18 @@ fun AddMealDialog(
                 item {
                     OutlinedTextField(
                         value = name,
-                        onValueChange = { name = it },
+                        onValueChange = { 
+                            name = it 
+                            if (it.length > 2) {
+                                val suggestion = com.example.food.domain.usecase.EthiopianFoodKnowledge.suggestMetadataForMeal(it)
+                                category = suggestion.category
+                                fastingFriendly = suggestion.fastingFriendly
+                                veganFriendly = suggestion.veganFriendly
+                                proteinLevel = suggestion.proteinLevel
+                                spiceLevel = suggestion.spiceLevel
+                                tags = suggestion.tags.joinToString(", ")
+                            }
+                        },
                         label = { Text("Meal Name") },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -187,16 +200,21 @@ fun AddMealDialog(
                             focusedBorderColor = Color(0xFFF16B24)
                         )
                     )
-                    OutlinedTextField(
-                        value = category,
-                        onValueChange = { category = it },
-                        label = { Text("Category") },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = Color.Gray,
-                            focusedBorderColor = Color(0xFFF16B24)
-                        )
-                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Category", color = Color.LightGray, fontWeight = FontWeight.Bold)
+                    Box {
+                        OutlinedButton(onClick = { categoryExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(category.name, color = Color.White)
+                        }
+                        DropdownMenu(expanded = categoryExpanded, onDismissRequest = { categoryExpanded = false }) {
+                            EthiopianFoodCategory.values().forEach { cat ->
+                                DropdownMenuItem(
+                                    text = { Text(cat.name) },
+                                    onClick = { category = cat; categoryExpanded = false }
+                                )
+                            }
+                        }
+                    }
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Dietary Info", color = Color.LightGray, fontWeight = FontWeight.Bold)

@@ -115,6 +115,27 @@ fun AdminDashboardScreen(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    StatCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Fasting Ratio",
+                        value = "${if (dashboardData is Resource.Success) "%.1f".format(dashboardData.data?.fastingRatio ?: 0.0) else "--"}%",
+                        icon = Icons.Default.RestaurantMenu,
+                        color = Color(0xFF8BC34A)
+                    )
+                    
+                    val categories = (dashboardData as? Resource.Success)?.data?.categoryDistribution?.size ?: 0
+                    StatCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Active Categories",
+                        value = "$categories",
+                        icon = Icons.Default.Category,
+                        color = Color(0xFF9C27B0)
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // Management Quick Links

@@ -67,9 +67,14 @@ class AdminRepository {
                 val pendingVendors = allUsers.count { it.role == UserRole.VENDOR && it.vendorStatus == VendorStatus.PENDING }
                 val recentOrders = allOrders.sortedByDescending { it.createdAt }.take(10)
                 
-                val mealIds = allOrders.flatMap { order -> order.items.map { it.mealId } }
+                val allItems = allOrders.flatMap { it.items }
+                val mealIds = allItems.map { it.mealId }
                 val mealCounts = mealIds.groupingBy { it }.eachCount()
                 val topMeals = mealCounts.entries.sortedByDescending { it.value }.take(5).map { it.key to it.value }
+                
+                val categoryDistribution = allItems.groupingBy { it.category }.eachCount()
+                val fastingCount = allItems.count { it.fastingFriendly }
+                val fastingRatio = if (allItems.isNotEmpty()) (fastingCount.toDouble() / allItems.size) * 100.0 else 0.0
 
                 trySend(Resource.Success(
                     AdminDashboardData(
@@ -78,7 +83,9 @@ class AdminRepository {
                         activeUsers = allUsers.count { it.isActive },
                         pendingVendors = pendingVendors,
                         recentOrders = recentOrders,
-                        topSellingMeals = topMeals
+                        topSellingMeals = topMeals,
+                        categoryDistribution = categoryDistribution,
+                        fastingRatio = fastingRatio
                     )
                 ))
             }

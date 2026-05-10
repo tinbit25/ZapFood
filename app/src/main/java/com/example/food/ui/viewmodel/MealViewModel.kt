@@ -43,7 +43,7 @@ class MealViewModel(
         updateFilters(_currentFilters.value.copy(query = query))
     }
 
-    fun applyCategory(category: String?) {
+    fun applyCategory(category: com.example.food.data.model.EthiopianFoodCategory?) {
         updateFilters(_currentFilters.value.copy(category = category))
     }
 

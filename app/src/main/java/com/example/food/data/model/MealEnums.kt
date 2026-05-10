@@ -38,3 +38,17 @@ enum class CuisineType {
     INTERNATIONAL,
     FUSION
 }
+
+enum class EthiopianFoodCategory {
+    FASTING_FOODS,
+    MEAT_FOODS,
+    BREAKFAST,
+    HEALTHY,
+    BUDGET_MEALS,
+    HIGH_PROTEIN,
+    FAMILY_MEALS,
+    TRADITIONAL,
+    STREET_FOOD,
+    MODERN_FUSION,
+    GENERAL
+}

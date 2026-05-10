@@ -43,7 +43,7 @@ class OrderUseCase(
                 return Resource.Error("Orders must contain meals from a single vendor")
             }
 
-            orderItems.add(OrderItem(meal.id, meal.name, meal.price, quantity))
+            orderItems.add(OrderItem(meal.id, meal.name, meal.price, quantity, meal.category, meal.fastingFriendly))
             subtotal += (meal.price * quantity)
         }
 

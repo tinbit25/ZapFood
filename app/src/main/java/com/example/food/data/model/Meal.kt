@@ -47,7 +47,7 @@ data class Meal(
 }
 
 data class MealFilters(
-    val category: String? = null,
+    val category: EthiopianFoodCategory? = null,
     val vendorId: String? = null,
     val query: String? = null,
     

@@ -40,7 +40,7 @@ class MealRepository {
 
         var query: Query = mealsCollection
 
-        filters.category?.let { query = query.whereEqualTo("category", it) }
+        filters.category?.let { query = query.whereEqualTo("category", it.name) }
         filters.vendorId?.let { query = query.whereEqualTo("vendorId", it) }
         
         // Metadata Filters
@@ -84,12 +84,25 @@ class MealRepository {
     // ── Search Preparation Queries ──────────────────────────
 
     fun searchMealsByTag(tag: String) = getFilteredMeals(MealFilters(tag = tag))
+    
+    fun getMealsByTags(tags: List<String>): Flow<Resource<List<Meal>>> {
+        // Simple client-side fallback: just query one tag if multiple, or implement multi-tag locally.
+        // For simplicity, we query the first tag. Advanced AI backends will handle complex multi-tag.
+        return getFilteredMeals(MealFilters(tag = tags.firstOrNull()))
+    }
 
     fun getFastingMeals() = getFilteredMeals(MealFilters(fastingFriendly = true))
 
     fun getBreakfastMeals() = getFilteredMeals(MealFilters(mealTime = com.example.food.data.model.MealTime.BREAKFAST))
 
     fun getHighProteinMeals() = getFilteredMeals(MealFilters(proteinLevel = com.example.food.data.model.ProteinLevel.HIGH))
+
+    fun getMealsByCategory(category: com.example.food.data.model.EthiopianFoodCategory) = 
+        getFilteredMeals(MealFilters(category = category))
+
+    fun getTraditionalMeals() = getMealsByCategory(com.example.food.data.model.EthiopianFoodCategory.TRADITIONAL)
+    
+    fun getHealthyMeals() = getMealsByCategory(com.example.food.data.model.EthiopianFoodCategory.HEALTHY)
 
     suspend fun deleteMeal(id: String): Resource<Unit> {
         return try {
@@ -122,7 +135,7 @@ class MealRepository {
                     imageUrl = data.third,
                     vendorId = vendorId,
                     vendorName = "Demo Vendor ${index + 1}",
-                    category = if (index % 2 == 0) "Main Course" else "Healthy",
+                    category = if (index % 2 == 0) com.example.food.data.model.EthiopianFoodCategory.MEAT_FOODS.name else com.example.food.data.model.EthiopianFoodCategory.HEALTHY.name,
                     calories = 300 + (index * 50),
                     isAvailable = true
                 )
@@ -149,7 +162,7 @@ class MealRepository {
                     imageUrl = data.third,
                     vendorId = vendorId,
                     vendorName = vendorName,
-                    category = "Ethiopian",
+                    category = com.example.food.data.model.EthiopianFoodCategory.TRADITIONAL.name,
                     calories = 400 + (index * 100),
                     isAvailable = true
                 )
