@@ -17,7 +17,8 @@ class OrderUseCase(
     private val mealRepository: MealRepository = MealRepository(),
     private val paymentUseCase: PaymentUseCase = PaymentUseCase(),
     private val notificationService: NotificationService = NotificationService(),
-    private val userPreferenceUseCase: UserPreferenceUseCase = UserPreferenceUseCase()
+    private val userPreferenceUseCase: UserPreferenceUseCase = UserPreferenceUseCase(),
+    private val analyticsPreparationUseCase: AnalyticsPreparationUseCase = AnalyticsPreparationUseCase()
 ) {
     /**
      * Customer places an order for a list of meals.
@@ -73,6 +74,7 @@ class OrderUseCase(
             // Fire and forget behavior profile update
             CoroutineScope(Dispatchers.IO).launch {
                 userPreferenceUseCase.updateProfileAfterOrder(order)
+                analyticsPreparationUseCase.processOrderAnalytics(order)
             }
             return Resource.Success(order)
         }

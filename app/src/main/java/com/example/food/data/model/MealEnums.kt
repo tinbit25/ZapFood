@@ -50,5 +50,6 @@ enum class EthiopianFoodCategory {
     TRADITIONAL,
     STREET_FOOD,
     MODERN_FUSION,
+    CULTURAL_FEASTS,
     GENERAL
 }

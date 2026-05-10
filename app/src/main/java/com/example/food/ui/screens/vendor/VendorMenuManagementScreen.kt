@@ -105,7 +105,7 @@ fun VendorMenuManagementScreen(
     if (showAddDialog) {
         AddMealDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { name, price, category, fasting, vegan, spice, protein, mealTime, tags ->
+            onConfirm = { name, price, category, fasting, vegan, spice, protein, mealTime, tags, ingredients, mealRegion ->
                 user?.let { vendor ->
                     val newMeal = com.example.food.data.model.Meal(
                         name = name,
@@ -119,7 +119,9 @@ fun VendorMenuManagementScreen(
                         spiceLevel = spice,
                         proteinLevel = protein,
                         mealTime = listOf(mealTime),
-                        tags = tags.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                        tags = tags.split(",").map { it.trim() }.filter { it.isNotEmpty() },
+                        ingredients = ingredients,
+                        mealRegion = mealRegion
                     )
                     mealViewModel.createMeal(vendor, newMeal) { result ->
                         if (result is Resource.Success) {
@@ -143,7 +145,7 @@ fun VendorMenuManagementScreen(
 @Composable
 fun AddMealDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, Double, EthiopianFoodCategory, Boolean, Boolean, SpiceLevel, ProteinLevel, MealTime, String) -> Unit
+    onConfirm: (String, Double, EthiopianFoodCategory, Boolean, Boolean, SpiceLevel, ProteinLevel, MealTime, String, List<String>, String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
@@ -156,6 +158,8 @@ fun AddMealDialog(
     var proteinLevel by remember { mutableStateOf(ProteinLevel.MEDIUM) }
     var mealTime by remember { mutableStateOf(MealTime.LUNCH) }
     var tags by remember { mutableStateOf("") }
+    var ingredients by remember { mutableStateOf<List<String>>(emptyList()) }
+    var mealRegion by remember { mutableStateOf("Ethiopia") }
     
     var spiceExpanded by remember { mutableStateOf(false) }
     var proteinExpanded by remember { mutableStateOf(false) }
@@ -181,6 +185,8 @@ fun AddMealDialog(
                                 proteinLevel = suggestion.proteinLevel
                                 spiceLevel = suggestion.spiceLevel
                                 tags = suggestion.tags.joinToString(", ")
+                                ingredients = suggestion.ingredients
+                                mealRegion = suggestion.mealRegion
                             }
                         },
                         label = { Text("Meal Name") },
@@ -294,7 +300,7 @@ fun AddMealDialog(
             TextButton(
                 onClick = {
                     val priceVal = price.toDoubleOrNull() ?: 0.0
-                    onConfirm(name, priceVal, category, fastingFriendly, veganFriendly, spiceLevel, proteinLevel, mealTime, tags)
+                    onConfirm(name, priceVal, category, fastingFriendly, veganFriendly, spiceLevel, proteinLevel, mealTime, tags, ingredients, mealRegion)
                 }
             ) {
                 Text("Add", color = Color(0xFFF16B24))

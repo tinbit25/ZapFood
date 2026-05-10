@@ -22,6 +22,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.routes.health import router as health_router
 from app.routes.payments import router as payments_router
+from app.routes.recommendations import router as recommendations_router
+from app.routes.similarity import router as similarity_router
+from app.routes.combos import router as combos_router
 from app.services.firebase_client import initialize_firebase
 
 # ─────────────────────────────────────────────────────────────
@@ -115,6 +118,9 @@ app.add_middleware(
 # ─────────────────────────────────────────────────────────────
 app.include_router(health_router, prefix="/api")
 app.include_router(payments_router, prefix="/api")
+app.include_router(recommendations_router, prefix="/api")
+app.include_router(similarity_router, prefix="/api")
+app.include_router(combos_router, prefix="/api")
 
 
 # ─────────────────────────────────────────────────────────────

@@ -26,11 +26,15 @@ data class Meal(
 
     val mealTime: List<MealTime> = emptyList(),
 
-    val popularityScore: Double = 0.0,
-    val averageRating: Double = 0.0,
-
     val tags: List<String> = emptyList(),
     
+    // AI Recommendation Metadata
+    val popularityScore: Double = 0.0,
+    val averageRating: Double = 0.0,
+    val ingredients: List<String> = emptyList(),
+    val mealRegion: String = "", // e.g. Addis, Tigray, Gurage
+    val traditionalCategory: String = "",
+
     // Legacy support
     val calories: Int = 0,
     val protein: Float = 0f,

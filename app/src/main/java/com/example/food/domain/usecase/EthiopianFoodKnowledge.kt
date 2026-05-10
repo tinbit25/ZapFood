@@ -10,7 +10,9 @@ data class MealMetadataSuggestion(
     val spiceLevel: SpiceLevel,
     val carbLevel: CarbLevel,
     val oilLevel: OilLevel,
-    val tags: List<String>
+    val tags: List<String>,
+    val ingredients: List<String>,
+    val mealRegion: String
 )
 
 object EthiopianFoodKnowledge {
@@ -33,6 +35,8 @@ object EthiopianFoodKnowledge {
         var carbLevel = CarbLevel.MEDIUM
         var oilLevel = OilLevel.MEDIUM
         val tags = mutableSetOf<String>("habesha", "cultural")
+        var ingredients = emptyList<String>()
+        var mealRegion = "Ethiopia"
 
         // Knowledge Base Rules
         when {
@@ -43,6 +47,8 @@ object EthiopianFoodKnowledge {
                 proteinLevel = ProteinLevel.MEDIUM
                 oilLevel = OilLevel.MEDIUM
                 tags.addAll(listOf("fasting", "vegetarian", "traditional"))
+                ingredients = listOf("shiro powder", "berbere", "onion", "garlic", "oil")
+                mealRegion = "All Regions"
             }
             lowerName.contains("kitfo") -> {
                 category = EthiopianFoodCategory.MEAT_FOODS
@@ -50,18 +56,25 @@ object EthiopianFoodKnowledge {
                 spiceLevel = SpiceLevel.VERY_SPICY
                 oilLevel = OilLevel.HIGH
                 tags.addAll(listOf("meat", "protein-rich", "traditional", "spicy"))
+                ingredients = listOf("minced beef", "mitmita", "niter kibbeh")
+                mealRegion = "Gurage"
             }
             lowerName.contains("doro") || lowerName.contains("wat") -> {
                 category = if (lowerName.contains("doro")) EthiopianFoodCategory.MEAT_FOODS else EthiopianFoodCategory.TRADITIONAL
                 proteinLevel = ProteinLevel.HIGH
                 spiceLevel = SpiceLevel.SPICY
                 tags.addAll(listOf("traditional", "spicy"))
-                if (lowerName.contains("doro")) tags.add("meat")
+                if (lowerName.contains("doro")) {
+                    tags.add("meat")
+                    ingredients = listOf("chicken", "berbere", "onion", "niter kibbeh", "boiled eggs")
+                    mealRegion = "Amhara"
+                }
             }
             lowerName.contains("firfir") || lowerName.contains("chechebsa") || lowerName.contains("kinche") -> {
                 category = EthiopianFoodCategory.BREAKFAST
                 carbLevel = CarbLevel.HIGH
                 tags.addAll(listOf("breakfast", "traditional"))
+                if (lowerName.contains("firfir")) ingredients = listOf("injera", "berbere", "onion")
             }
             lowerName.contains("tibs") -> {
                 category = EthiopianFoodCategory.MEAT_FOODS
@@ -115,7 +128,9 @@ object EthiopianFoodKnowledge {
             spiceLevel = spiceLevel,
             carbLevel = carbLevel,
             oilLevel = oilLevel,
-            tags = tags.toList()
+            tags = tags.toList(),
+            ingredients = ingredients,
+            mealRegion = mealRegion
         )
     }
 }
