@@ -37,6 +37,8 @@ fun AdvancedProfileEditScreen(
 ) {
     val user by userViewModel.user.collectAsState()
     val uploadProgress by userViewModel.uploadProgress.collectAsState()
+    val errorMessage by userViewModel.errorMessage.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var displayName by remember { mutableStateOf(user?.displayName ?: "") }
     var email by remember { mutableStateOf(user?.email ?: "") }
@@ -48,152 +50,191 @@ fun AdvancedProfileEditScreen(
     var cuisineType by remember { mutableStateOf(user?.cuisineType ?: "") }
     var businessAddress by remember { mutableStateOf(user?.businessAddress ?: "") }
 
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            userViewModel.clearError()
+        }
+    }
+
+    val context = androidx.compose.ui.platform.LocalContext.current
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { userViewModel.uploadProfilePicture(it) }
+        uri?.let { userViewModel.uploadProfilePicture(it, context.contentResolver) }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF0F0F0F))
-    ) {
-        TopNavBar(title = "Edit Profile", onBackClick = onNavigateBack)
-
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = Color(0xFF0F0F0F)
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(padding)
         ) {
-            // Profile Image Section
-            Box(
+            TopNavBar(title = "Edit Profile", onBackClick = onNavigateBack)
+
+            Column(
                 modifier = Modifier
-                    .size(120.dp)
-                    .clickable { imagePickerLauncher.launch("image/*") }
+                    .fillMaxSize()
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                AsyncImage(
-                    model = user?.photoUrl ?: "https://via.placeholder.com/150",
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape)
-                        .border(2.dp, Color(0xFFF16B24), CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-                
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFF16B24))
-                        .align(Alignment.BottomEnd)
-                        .padding(8.dp)
+                        .size(120.dp)
+                        .clickable { imagePickerLauncher.launch("image/*") }
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit Image",
-                        modifier = Modifier.fillMaxSize(),
-                        tint = Color.White
-                    )
+                    if (user?.photoUrl != null) {
+                        AsyncImage(
+                            model = user?.photoUrl,
+                            contentDescription = "Profile Picture",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                                .border(2.dp, Color(0xFFF16B24), CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        // Fallback to Initials
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                                .background(Color(0xFF1E88E5))
+                                .border(2.dp, Color(0xFFF16B24), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = user?.displayName?.take(2)?.uppercase() ?: "??",
+                                color = Color.White,
+                                fontSize = 32.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFF16B24))
+                            .align(Alignment.BottomEnd)
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit Image",
+                            modifier = Modifier.fillMaxSize(),
+                            tint = Color.White
+                        )
+                    }
+
+                    if (uploadProgress != null) {
+                        if (uploadProgress == 0) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.fillMaxSize(),
+                                color = Color(0xFFF16B24),
+                                strokeWidth = 4.dp
+                            )
+                        } else {
+                            CircularProgressIndicator(
+                                progress = uploadProgress!! / 100f,
+                                modifier = Modifier.fillMaxSize(),
+                                color = Color(0xFFF16B24),
+                                strokeWidth = 4.dp
+                            )
+                        }
+                    }
                 }
 
-                if (uploadProgress != null) {
-                    CircularProgressIndicator(
-                        progress = uploadProgress!! / 100f,
-                        modifier = Modifier.fillMaxSize(),
-                        color = Color(0xFFF16B24),
-                        strokeWidth = 4.dp
-                    )
-                }
-            }
+                Spacer(modifier = Modifier.height(32.dp))
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            SectionTitle("General Info")
-            CustomTextField(
-                value = displayName,
-                onValueChange = { displayName = it },
-                placeholder = "Full Name",
-                leadingIcon = Icons.Default.Person
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            CustomTextField(
-                value = email,
-                onValueChange = { email = it },
-                placeholder = "Email Address",
-                leadingIcon = Icons.Default.Email
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            CustomTextField(
-                value = phoneNumber,
-                onValueChange = { phoneNumber = it },
-                placeholder = "Phone Number",
-                leadingIcon = Icons.Default.Phone
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            SectionTitle("Identity & Bio")
-            // Gender Dropdown Placeholder or Simple TextField for now
-            CustomTextField(
-                value = gender,
-                onValueChange = { gender = it },
-                placeholder = "Gender (Male/Female/Other)",
-                leadingIcon = Icons.Default.Face
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            CustomTextField(
-                value = bio,
-                onValueChange = { bio = it },
-                placeholder = "A short bio about yourself...",
-                leadingIcon = Icons.Default.Info,
-                modifier = Modifier.height(120.dp)
-            )
-
-            if (user?.role == UserRole.VENDOR) {
-                Spacer(modifier = Modifier.height(24.dp))
-                SectionTitle("Business Information")
+                SectionTitle("General Info")
                 CustomTextField(
-                    value = cuisineType,
-                    onValueChange = { cuisineType = it },
-                    placeholder = "Cuisine Type",
-                    leadingIcon = Icons.Default.Restaurant
+                    value = displayName,
+                    onValueChange = { displayName = it },
+                    placeholder = "Full Name",
+                    leadingIcon = Icons.Default.Person
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 CustomTextField(
-                    value = businessAddress,
-                    onValueChange = { businessAddress = it },
-                    placeholder = "Business Address",
-                    leadingIcon = Icons.Default.Business
+                    value = email,
+                    onValueChange = { email = it },
+                    placeholder = "Email Address",
+                    leadingIcon = Icons.Default.Email
                 )
+                Spacer(modifier = Modifier.height(16.dp))
+                CustomTextField(
+                    value = phoneNumber,
+                    onValueChange = { phoneNumber = it },
+                    placeholder = "Phone Number",
+                    leadingIcon = Icons.Default.Phone
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                SectionTitle("Identity & Bio")
+                // Gender Dropdown Placeholder or Simple TextField for now
+                CustomTextField(
+                    value = gender,
+                    onValueChange = { gender = it },
+                    placeholder = "Gender (Male/Female/Other)",
+                    leadingIcon = Icons.Default.Face
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                CustomTextField(
+                    value = bio,
+                    onValueChange = { bio = it },
+                    placeholder = "A short bio about yourself...",
+                    leadingIcon = Icons.Default.Info,
+                    modifier = Modifier.height(120.dp)
+                )
+
+                if (user?.role == UserRole.VENDOR) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    SectionTitle("Business Information")
+                    CustomTextField(
+                        value = cuisineType,
+                        onValueChange = { cuisineType = it },
+                        placeholder = "Cuisine Type",
+                        leadingIcon = Icons.Default.Restaurant
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    CustomTextField(
+                        value = businessAddress,
+                        onValueChange = { businessAddress = it },
+                        placeholder = "Business Address",
+                        leadingIcon = Icons.Default.Business
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(48.dp))
+
+                PrimaryButton(
+                    text = "Save Profile",
+                    onClick = {
+                        user?.let { curr ->
+                            val updated = curr.copy(
+                                displayName = displayName,
+                                email = email,
+                                phoneNumber = phoneNumber,
+                                gender = gender,
+                                bio = bio,
+                                cuisineType = cuisineType,
+                                businessAddress = businessAddress
+                            )
+                            userViewModel.updateProfile(updated)
+                            onNavigateBack()
+                        }
+                    },
+                    backgroundColor = Color(0xFFF16B24)
+                )
+                
+                Spacer(modifier = Modifier.height(32.dp))
             }
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            PrimaryButton(
-                text = "Save Profile",
-                onClick = {
-                    user?.let { curr ->
-                        val updated = curr.copy(
-                            displayName = displayName,
-                            email = email,
-                            phoneNumber = phoneNumber,
-                            gender = gender,
-                            bio = bio,
-                            cuisineType = cuisineType,
-                            businessAddress = businessAddress
-                        )
-                        userViewModel.updateProfile(updated)
-                        onNavigateBack()
-                    }
-                },
-                backgroundColor = Color(0xFFF16B24)
-            )
-            
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }

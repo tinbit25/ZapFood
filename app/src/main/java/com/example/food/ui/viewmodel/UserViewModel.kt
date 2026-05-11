@@ -20,6 +20,9 @@ class UserViewModel(
     private val _user = MutableStateFlow<User?>(null)
     val user: StateFlow<User?> = _user.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     init {
         fetchUser()
     }
@@ -47,30 +50,42 @@ class UserViewModel(
             try {
                 profileRepository.updateProfile(updatedUser)
                 _user.value = updatedUser
+                _errorMessage.value = null
             } catch (e: Exception) {
-                // Handle error
+                _errorMessage.value = "Failed to update profile: ${e.localizedMessage}"
             }
         }
     }
 
-    fun uploadProfilePicture(uri: android.net.Uri) {
+    fun uploadProfilePicture(uri: android.net.Uri, contentResolver: android.content.ContentResolver) {
         val userId = _user.value?.userId ?: return
         viewModelScope.launch {
-            profileRepository.uploadProfilePicture(userId, uri).collect { status ->
-                when (status) {
-                    is com.example.food.data.repository.UploadStatus.Progress -> {
-                        _uploadProgress.value = status.percentage
-                    }
-                    is com.example.food.data.repository.UploadStatus.Success -> {
-                        _uploadProgress.value = null
-                        profileRepository.updatePhotoUrl(userId, status.downloadUrl)
-                        _user.value = _user.value?.copy(photoUrl = status.downloadUrl)
-                    }
-                    is com.example.food.data.repository.UploadStatus.Error -> {
-                        _uploadProgress.value = null
+            try {
+                profileRepository.uploadProfilePicture(userId, uri, contentResolver).collect { status ->
+                    when (status) {
+                        is com.example.food.data.repository.UploadStatus.Progress -> {
+                            _uploadProgress.value = status.percentage
+                        }
+                        is com.example.food.data.repository.UploadStatus.Success -> {
+                            _uploadProgress.value = null
+                            profileRepository.updatePhotoUrl(userId, status.downloadUrl)
+                            _user.value = _user.value?.copy(photoUrl = status.downloadUrl)
+                            _errorMessage.value = null
+                        }
+                        is com.example.food.data.repository.UploadStatus.Error -> {
+                            _uploadProgress.value = null
+                            _errorMessage.value = status.message
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                _uploadProgress.value = null
+                _errorMessage.value = "Upload failed: ${e.localizedMessage}"
             }
         }
+    }
+
+    fun clearError() {
+        _errorMessage.value = null
     }
 }
