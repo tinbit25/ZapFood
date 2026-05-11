@@ -27,7 +27,6 @@ data class Meal(
     val oilLevel: OilLevel = OilLevel.MEDIUM,
 
     val mealTime: List<MealTime> = emptyList(),
-
     val tags: List<String> = emptyList(),
     
     // AI Recommendation Metadata
@@ -36,12 +35,6 @@ data class Meal(
     val ingredients: List<String> = emptyList(),
     val mealRegion: String = "", // e.g. Addis, Tigray, Gurage
     val traditionalCategory: String = "",
-
-    // Legacy support
-    val calories: Int = 0,
-    val protein: Float = 0f,
-    val carbs: Float = 0f,
-    val fats: Float = 0f,
     val rating: Float = 0f
 ) {
     fun isValid(): Boolean {
@@ -72,9 +65,6 @@ data class MealFilters(
     val carbLevel: CarbLevel? = null,
     val oilLevel: OilLevel? = null,
     val mealTime: MealTime? = null,
-    val tag: String? = null,
-    
-    val minCalories: Int? = null,
-    val maxCalories: Int? = null
+    val tag: String? = null
 )
 

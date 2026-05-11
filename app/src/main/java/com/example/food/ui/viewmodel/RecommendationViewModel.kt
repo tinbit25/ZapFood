@@ -15,7 +15,9 @@ sealed class RecommendationState {
     object Initial : RecommendationState()
     object Loading : RecommendationState()
     data class Success(
-        val personalized: List<ScoredMealResponse>,
+        val smartPicks: List<ScoredMealResponse> = emptyList(),
+        val fastingMeals: List<ScoredMealResponse> = emptyList(),
+        val popularInAddis: List<ScoredMealResponse> = emptyList(),
         val reasoning: String = "",
         val nutritionSummary: String = ""
     ) : RecommendationState()
@@ -41,7 +43,9 @@ class RecommendationViewModel(
                 if (result.isSuccess) {
                     val data = result.getOrNull()
                     _uiState.value = RecommendationState.Success(
-                        personalized = data?.recommendations ?: emptyList(),
+                        smartPicks = data?.smartPicks ?: emptyList(),
+                        fastingMeals = data?.fastingMeals ?: emptyList(),
+                        popularInAddis = data?.popularInAddis ?: emptyList(),
                         reasoning = data?.reasoning ?: "",
                         nutritionSummary = data?.nutritionSummary ?: ""
                     )

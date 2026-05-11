@@ -8,8 +8,8 @@ from app.repositories.behavior_repository import BehaviorRepository
 logger = logging.getLogger("behavior-service")
 
 class BehaviorService:
-    def __init__(self, repository: BehaviorRepository = BehaviorRepository()):
-        self.repository = repository
+    def __init__(self, repository: BehaviorRepository = None):
+        self.repository = repository or BehaviorRepository()
 
     def process_event(self, event: BehaviorEvent) -> bool:
         # Enrich event with Ethiopian cultural context

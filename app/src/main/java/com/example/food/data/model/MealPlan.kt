@@ -10,12 +10,6 @@ enum class PlanSourceType {
     VENDOR, CUSTOMER, AI
 }
 
-data class NutritionalSummary(
-    val totalCalories: Int = 0,
-    val totalProtein: Float = 0f,
-    val totalCarbs: Float = 0f,
-    val totalFats: Float = 0f
-)
 
 data class MealPlan(
     val id: String = UUID.randomUUID().toString(),
@@ -27,7 +21,6 @@ data class MealPlan(
     val vendorName: String = "",
     val sourceType: PlanSourceType = PlanSourceType.CUSTOMER,
     val meals: Map<Day, List<String>> = emptyMap(), // Map of Day to List of Meal IDs
-    val nutritionalSummary: NutritionalSummary = NutritionalSummary(),
     val price: Double = 0.0,
     val mpcode: String = "",
     val isPublic: Boolean = false,

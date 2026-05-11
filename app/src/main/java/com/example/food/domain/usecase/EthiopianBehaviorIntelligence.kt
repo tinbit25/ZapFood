@@ -18,49 +18,26 @@ object EthiopianBehaviorIntelligence {
         newOrder: Order
     ): UserFoodPreference {
         
-        val newMealCounts = currentPrefs.mealOrderCounts.toMutableMap()
-        val newVendorCounts = currentPrefs.vendorInteractionCounts.toMutableMap()
-        
-        // Update vendor count
-        val vId = newOrder.vendorId
-        if (vId.isNotEmpty()) {
-            newVendorCounts[vId] = (newVendorCounts[vId] ?: 0) + 1
-        }
-
-        // Update meal counts
+        // Simple update logic for favorite foods and categories
+        val newFavoriteFoods = currentPrefs.favoriteFoods.toMutableSet()
         newOrder.items.forEach { item ->
-            newMealCounts[item.mealId] = (newMealCounts[item.mealId] ?: 0) + item.quantity
+            newFavoriteFoods.add(item.mealId)
         }
 
-        // Calculate favorite vendors (top 3)
-        val favoriteVendors = newVendorCounts.entries
-            .sortedByDescending { it.value }
-            .take(3)
-            .map { it.key }
+        val newFavoriteVendors = currentPrefs.favoriteVendors.toMutableSet()
+        if (newOrder.vendorId.isNotEmpty()) {
+            newFavoriteVendors.add(newOrder.vendorId)
+        }
 
-        // Calculate favorite meals (top 5)
-        val learnedFavoriteMeals = newMealCounts.entries
-            .sortedByDescending { it.value }
-            .take(5)
-            .map { it.key }
-
-        // Calculate frequently ordered categories
-        val categoryCounts = mutableMapOf<String, Int>()
+        val newFavoriteCategories = currentPrefs.favoriteCategories.toMutableSet()
         newOrder.items.forEach { item ->
-            categoryCounts[item.category] = (categoryCounts[item.category] ?: 0) + item.quantity
+            newFavoriteCategories.add(item.category)
         }
-        
-        // Add existing frequency logic if needed, but for simplicity we will just 
-        // append or rely on a more complex historical analysis later.
-        val freqCategories = currentPrefs.frequentlyOrderedCategories.toMutableSet()
-        freqCategories.addAll(categoryCounts.keys)
 
         return currentPrefs.copy(
-            favoriteMeals = learnedFavoriteMeals,
-            favoriteVendors = favoriteVendors,
-            frequentlyOrderedCategories = freqCategories.toList(),
-            vendorInteractionCounts = newVendorCounts,
-            mealOrderCounts = newMealCounts,
+            favoriteFoods = newFavoriteFoods.toList().take(10),
+            favoriteVendors = newFavoriteVendors.toList().take(5),
+            favoriteCategories = newFavoriteCategories.toList().take(5),
             lastUpdated = System.currentTimeMillis()
         )
     }

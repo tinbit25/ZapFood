@@ -1,7 +1,6 @@
 package com.example.food.data.api
 
 import com.example.food.domain.model.AIAnalyticsEventRequest
-import com.example.food.domain.model.AIPersonalizedRequest
 import com.example.food.domain.model.AIRecommendationResponse
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers

@@ -58,9 +58,6 @@ class MealRepository {
         filters.mealTime?.let { query = query.whereArrayContains("mealTime", it.name) }
         filters.tag?.let { query = query.whereArrayContains("tags", it) }
 
-        // Legacy/Range Filters
-        filters.minCalories?.let { query = query.whereGreaterThanOrEqualTo("calories", it) }
-        filters.maxCalories?.let { query = query.whereLessThanOrEqualTo("calories", it) }
         
         // Search
         filters.query?.let {
@@ -138,7 +135,6 @@ class MealRepository {
                     vendorId = vendorId,
                     vendorName = "Demo Vendor ${index + 1}",
                     category = if (index % 2 == 0) com.example.food.data.model.EthiopianFoodCategory.MEAT_FOODS.name else com.example.food.data.model.EthiopianFoodCategory.HEALTHY.name,
-                    calories = 300 + (index * 50),
                     isAvailable = true
                 )
                 mealsCollection.document(meal.id).set(meal).await()
@@ -165,7 +161,6 @@ class MealRepository {
                     vendorId = vendorId,
                     vendorName = vendorName,
                     category = com.example.food.data.model.EthiopianFoodCategory.TRADITIONAL.name,
-                    calories = 400 + (index * 100),
                     isAvailable = true
                 )
                 mealsCollection.document(meal.id).set(meal).await()

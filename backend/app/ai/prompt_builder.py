@@ -9,64 +9,49 @@ class EthiopianFoodPromptBuilder:
     ) -> str:
         """
         Builds a culturally-aware Ethiopian food recommendation prompt.
-        
-        Inputs:
-        - available_meals: List of real meals from Firestore
-        - user_habits: { "orderHistory": [], "favoriteMeals": [], "spiceTolerance": "medium", "budgetPreference": "standard" }
-        - context: { "mealTime": "lunch", "fastingMode": true, "dayOfWeek": "Wednesday" }
         """
         
         meals_context = "\n".join([
-            f"- ID: {m.get('id')}, Name: {m.get('name')}, Category: {m.get('category')}, "
-            f"FastingFriendly: {m.get('fastingFriendly')}, SpiceLevel: {m.get('spiceLevel')}, "
-            f"Price: {m.get('price')}, Description: {m.get('description', '')}"
+            f"- ID: {m.get('id')}, Name: {m.get('name')}, Vendor: {m.get('vendorName')}, "
+            f"Tags: {m.get('tags')}, MealTime: {m.get('mealTime')}, "
+            f"SpiceLevel: {m.get('spiceLevel')}, Price: {m.get('price')}"
             for m in available_meals
         ])
 
         system_instruction = """
-        You are the 'ZapFood' Ethiopian Cultural AI. Your mission is to provide the most authentic, 
+        You are the 'ZapFood Smart Assistant'. Your mission is to provide the most authentic, 
         culturally-aware food recommendations for users in Ethiopia.
+        
+        Avoid using the word 'AI' in your reasoning. Use terms like 'Smart Picks' or 'Recommended for you'.
 
-        ### ETHIOPIAN CULTURAL KNOWLEDGE BASE:
-        1. BREAKFAST (6 AM - 10 AM): Traditional choices are Ful, Chechebsa, Kinche, or Firfir.
-        2. LUNCH (12 PM - 3 PM): The main meal. Shiro, Tibs, Beyaynetu, and various Wots with Injera.
-        3. DINNER (7 PM - 10 PM): Often lighter versions of lunch or specific dinner stews.
-        4. FASTING (Tsom): Wednesdays and Fridays are strict fasting days (no animal products). 
-           During Lent (Abiy Tsom) and other fasting periods, meat is avoided entirely.
-        5. SPICE (Berbere/Mitmita): Respect the user's spice tolerance. Don't recommend 'Very Spicy' 
-           meals to users with 'Low' tolerance.
+        ### ETHIOPIAN CULTURAL KNOWLEDGE:
+        1. BREAKFAST: Ful, Chechebsa, Kinche, Firfir, Genfo.
+        2. LUNCH: Shiro, Tibs, Beyaynetu, stews with Injera.
+        3. DINNER: Often stews or Tibs, sometimes lighter.
+        4. FASTING: Wednesdays and Fridays are strictly vegan (no meat/dairy). 
+        5. SPICE: Berbere/Mitmita are key. Respect spice preferences (LOW, MEDIUM, HIGH).
 
-        ### YOUR STRICT OPERATING RULES:
-        1. GROUNDING: You MUST ONLY recommend meal IDs from the "AVAILABLE MEALS" list. 
-        2. NO HALLUCINATIONS: Do not invent meals, names, or IDs. If no perfect match exists, 
-           pick the closest one from the list.
-        3. FASTING ADHERENCE: If 'fastingMode' is true, NEVER recommend meat or dairy. 
-           Prioritize 'FastingFriendly' stews (Shiro, Misir, Gomen).
-        4. REASONING & EXPLANATION: Explain your choice using Ethiopian cultural context AND user habits. 
-           Example: "Since it's a Friday (fasting day) and you frequently order fasting meals, I recommend the Special Beyaynetu..."
-           OR "Based on your love for Shiro, you might enjoy this variant from a different vendor."
-        5. PRIORITIZATION: Favor meals that:
-           - Match the user's 'topCategories'
-           - Are in 'repeatedMeals' (familiarity)
-           - Align with the current 'mealTime' and 'fastingMode'
-        6. OUTPUT: Return ONLY a valid JSON object.
+        ### OPERATING RULES:
+        1. ONLY recommend meal IDs from the "AVAILABLE MEALS" list. 
+        2. FASTING ADHERENCE: If 'fastingMode' is true, NEVER recommend meat or dairy.
+        3. MEAL TIME: If it's BREAKFAST time, prioritize breakfast items.
+        4. REASONING: Explain your choice using Ethiopian cultural context and user preferences.
         """
 
         prompt = f"""
         {system_instruction}
 
-        ### USER PROFILE & HABITS:
-        - Preference Summary: {user_habits.get('preferenceSummary', 'No habits recorded yet.')}
+        ### USER PREFERENCES & HABITS:
+        - Favorite Foods: {", ".join(user_habits.get('favoriteFoods', []))}
         - Top Categories: {", ".join(user_habits.get('topCategories', []))}
-        - Repeated Orders (IDs): {", ".join(user_habits.get('repeatedMeals', []))}
-        - Spice Tolerance: {user_habits.get('spiceTolerance', 'medium')}
-        - Budget: {user_habits.get('budgetPreference', 'standard')}
-        - Favorites: {", ".join(user_habits.get('favoriteMeals', []))}
-        - Recent History: {user_habits.get('orderHistory', [])[:5]}
+        - Spice Preference: {user_habits.get('spicePreference', 'MEDIUM')}
+        - Budget: {user_habits.get('budgetPreference', 'STANDARD')}
+        - Recent History (IDs): {user_habits.get('orderHistory', [])[:5]}
 
         ### CURRENT CONTEXT:
-        - Time of Day: {context.get('mealTime', 'unknown')}
+        - Current Time Slot: {context.get('mealTime', 'unknown')}
         - Fasting Day: {context.get('fastingMode', False)} ({context.get('dayOfWeek', 'unknown')})
+        - Is it Wed/Fri: {context.get('isWednesdayOrFriday', False)}
 
         ### AVAILABLE MEALS (GROUND TRUTH):
         {meals_context}
@@ -75,7 +60,7 @@ class EthiopianFoodPromptBuilder:
         {{
           "recommendedMealIds": ["id1", "id2"],
           "reasoning": "Culturally-aware explanation",
-          "nutritionSummary": "Brief overview of nutritional value"
+          "nutritionSummary": "Brief overview"
         }}
         """
 

@@ -3,6 +3,7 @@ package com.example.food.data.repository
 import com.example.food.core.util.Resource
 import com.example.food.data.model.*
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
@@ -102,6 +103,39 @@ open class AuthRepository {
             } else null
         } catch (e: Exception) {
             null
+        }
+    }
+
+    open suspend fun findUserByPhone(phone: String): User? {
+        return try {
+            val snapshot = firestore.collection("users")
+                .whereEqualTo("phoneNumber", phone)
+                .get()
+                .await()
+            if (!snapshot.isEmpty) {
+                snapshot.documents[0].toObject(User::class.java)
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    open suspend fun loginWithPhone(credential: PhoneAuthCredential): Resource<com.google.firebase.auth.FirebaseUser> {
+        return try {
+            val authResult = auth.signInWithCredential(credential).await()
+            val user = authResult.user ?: return Resource.Error("Phone login failed: No user returned")
+            Resource.Success(user)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Phone login failed")
+        }
+    }
+
+    open suspend fun createUserProfile(user: User): Resource<Unit> {
+        return try {
+            firestore.collection("users").document(user.userId).set(user).await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Failed to create user profile")
         }
     }
 }

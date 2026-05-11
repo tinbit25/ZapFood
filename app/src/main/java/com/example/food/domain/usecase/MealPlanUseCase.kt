@@ -1,6 +1,5 @@
 package com.example.food.domain.usecase
 
-import com.example.food.core.util.NutritionCalculator
 import com.example.food.core.util.Resource
 import com.example.food.data.model.*
 import com.example.food.data.repository.MealPlanRepository
@@ -42,20 +41,10 @@ class MealPlanUseCase(
             updatedAt = System.currentTimeMillis()
         )
 
-        // 4. Recalculate nutrition before saving
-        val finalPlan = recalculateNutrition(planToSave)
-
-        return mealPlanRepository.saveMealPlan(finalPlan)
+        // 4. Save plan
+        return mealPlanRepository.saveMealPlan(planToSave)
     }
 
-    suspend fun recalculateNutrition(plan: MealPlan): MealPlan {
-        val allMealIds = plan.meals.values.flatten()
-        val meals = allMealIds.mapNotNull { mealRepository.getMealById(it) }
-        
-        return plan.copy(
-            nutritionalSummary = NutritionCalculator.calculateSummary(meals)
-        )
-    }
 
     suspend fun addMealToDay(plan: MealPlan, day: Day, mealId: String): Resource<MealPlan> {
         val meal = mealRepository.getMealById(mealId) ?: return Resource.Error("Meal not found")
@@ -68,7 +57,7 @@ class MealPlanUseCase(
         updatedMeals[day] = currentDayMeals
 
         val updatedPlan = plan.copy(meals = updatedMeals)
-        return Resource.Success(recalculateNutrition(updatedPlan))
+        return Resource.Success(updatedPlan)
     }
 
     suspend fun removeMealFromDay(plan: MealPlan, day: Day, mealId: String): Resource<MealPlan> {
@@ -85,7 +74,7 @@ class MealPlanUseCase(
         if (updatedMeals.isEmpty()) return Resource.Error("Cannot leave plan empty")
 
         val updatedPlan = plan.copy(meals = updatedMeals)
-        return Resource.Success(recalculateNutrition(updatedPlan))
+        return Resource.Success(updatedPlan)
     }
 
     suspend fun cloneMealPlan(user: User, originalPlan: MealPlan): Resource<MealPlan> {

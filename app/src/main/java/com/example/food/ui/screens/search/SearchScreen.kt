@@ -41,7 +41,6 @@ fun SearchScreen(
             description = "Juicy beef patty with cheese",
             price = 8.99,
             imageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop",
-            calories = 600,
             vendorId = vendorId,
             vendorName = "Burger King"
         ),
@@ -51,7 +50,6 @@ fun SearchScreen(
             description = "Crispy crust with pepperoni",
             price = 12.99,
             imageUrl = "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&auto=format&fit=crop",
-            calories = 800,
             vendorId = vendorId,
             vendorName = "Pizza Hut"
         ),
@@ -61,7 +59,6 @@ fun SearchScreen(
             description = "Fresh tuna with spicy mayo",
             price = 10.50,
             imageUrl = "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=500&auto=format&fit=crop",
-            calories = 450,
             vendorId = vendorId,
             vendorName = "Sushi Zen"
         ),
@@ -71,7 +68,6 @@ fun SearchScreen(
             description = "Fresh greens with grilled chicken",
             price = 9.99,
             imageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&auto=format&fit=crop",
-            calories = 350,
             vendorId = vendorId,
             vendorName = "Fresh Grill"
         )
@@ -146,7 +142,6 @@ fun MealSearchItem(meal: Meal, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = meal.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 Text(text = meal.vendorName, fontSize = 12.sp, color = Color.Gray)
-                Text(text = "${meal.calories} kcal", fontSize = 12.sp, color = Color(0xFFF16B24))
             }
             Text(
                 text = "ETB ${"%,.0f".format(meal.price * 1000)}",

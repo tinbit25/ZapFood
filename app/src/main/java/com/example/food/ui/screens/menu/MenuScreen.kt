@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -39,7 +39,7 @@ fun MenuScreen(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Meal Plans",
+                text = "Recommendations",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -49,8 +49,8 @@ fun MenuScreen(
         // Feature Discovery Hint
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp), contentAlignment = Alignment.CenterStart) {
             com.example.food.ui.components.onboarding.FeatureDiscoveryHint(
-                text = "Book chefs at home",
-                icon = "👩‍🍳"
+                text = "Personalize your smart picks",
+                icon = "✨"
             )
         }
 
@@ -73,7 +73,7 @@ fun MenuScreen(
                     onClick = { selectedTab = index },
                     text = {
                         Text(
-                            text = title,
+                            text = if (title == "My Meal Plans") "Smart Picks" else "Saved Picks",
                             fontSize = 14.sp,
                             color = if (selectedTab == index) Color.White else Color.Gray,
                             fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
@@ -92,14 +92,14 @@ fun MenuScreen(
                 Surface(
                     modifier = Modifier
                         .size(100.dp)
-                        .clickable { onNavigateToAI() }, // Default to AI or show selection
+                        .clickable { onNavigateToAI() }, 
                     shape = RoundedCornerShape(20.dp),
                     color = Color(0xFF1A1A1A)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Create",
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Preferences",
                             tint = Color.White,
                             modifier = Modifier.size(40.dp)
                         )
@@ -107,7 +107,7 @@ fun MenuScreen(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Create Meal Plan",
+                    text = "Personalize Recommendations",
                     fontSize = 14.sp,
                     color = Color.Gray,
                     fontWeight = FontWeight.Medium

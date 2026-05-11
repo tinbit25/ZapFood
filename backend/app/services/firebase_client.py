@@ -57,6 +57,19 @@ def initialize_firebase() -> bool:
 
         cred = credentials.Certificate(cred_path)
 
+        # Read project_id from service account and set env var so google-cloud
+        # libraries don't fall back to ADC when detecting the project.
+        import json as _json
+        try:
+            with open(cred_path) as f:
+                _sa = _json.load(f)
+            project_id = _sa.get("project_id", "")
+            if project_id:
+                os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
+                logger.info(f"GCP project set to: {project_id}")
+        except Exception as _e:
+            logger.warning(f"Could not read project_id from service account: {_e}")
+
         # Avoid re-initializing if the default app already exists
         firebase_app = None
         if not firebase_admin._apps:

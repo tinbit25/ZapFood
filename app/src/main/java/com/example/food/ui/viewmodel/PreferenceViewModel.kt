@@ -40,10 +40,10 @@ class PreferenceViewModel(
             _onboardingStatus.value = Resource.Loading()
             val newPrefs = UserFoodPreference(
                 userId = userId,
-                spiceTolerance = spiceLevel,
+                spicePreference = spiceLevel,
                 fastingMode = fastingMode,
-                explicitFavoriteMeals = favoriteMeals,
-                preferredBudgetRange = budgetRange
+                favoriteFoods = favoriteMeals,
+                budgetPreference = budgetRange
             )
             val result = useCase.saveExplicitPreferences(newPrefs)
             _onboardingStatus.value = result

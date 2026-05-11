@@ -51,7 +51,6 @@ fun ProductDetailsScreen(
         description = "Juicy beef patty with cheese and premium ingredients.",
         price = 8.99,
         imageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop",
-        calories = 650,
         vendorId = "mock-vendor",
         vendorName = "Burger King"
     )
@@ -116,7 +115,7 @@ fun ProductDetailsScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Delicious ${product.name} prepared by ${product.vendorName}. Contains ${product.calories} calories and premium ingredients.",
+                    text = "Delicious ${product.name} prepared by ${product.vendorName} with premium ingredients.",
                     fontSize = 14.sp,
                     color = Color.Gray,
                     lineHeight = 20.sp

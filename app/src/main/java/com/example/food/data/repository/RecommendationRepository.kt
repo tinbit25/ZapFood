@@ -1,7 +1,6 @@
 package com.example.food.data.repository
 
 import com.example.food.data.api.AiRecommendationApi
-import com.example.food.domain.model.AIPersonalizedRequest
 import com.example.food.domain.model.AIAnalyticsEventRequest
 import com.example.food.domain.model.ScoredMealResponse
 import com.example.food.domain.model.AIRecommendationResponse
@@ -29,7 +28,7 @@ class RecommendationRepository(
     suspend fun getSimilarMeals(userId: String, mealId: String): Result<List<ScoredMealResponse>> {
         val result = api.getSimilarMeals(mealId)
         if (result.isSuccess) {
-            return Result.success(result.getOrNull()?.recommendations ?: emptyList())
+            return Result.success(result.getOrNull()?.smartPicks ?: emptyList())
         }
         return Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
     }
@@ -41,7 +40,7 @@ class RecommendationRepository(
         val targetMealId = cartMealIds.last()
         val result = api.getCombos(targetMealId)
         if (result.isSuccess) {
-            return Result.success(result.getOrNull()?.recommendations ?: emptyList())
+            return Result.success(result.getOrNull()?.smartPicks ?: emptyList())
         }
         return Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
     }

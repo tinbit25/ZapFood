@@ -153,7 +153,7 @@ fun MealPlanDetailsScreen(
                     ) {
                         val totalMealsCount = plan.meals.values.sumOf { it.size }
                         StatItem("🍳", "$totalMealsCount meals")
-                        StatItem("🍱", "${plan.nutritionalSummary.totalCalories} kcal")
+                        StatItem("🍱", "Traditional")
                         StatItem("📑", if (plan.mpcode.isNotEmpty()) plan.mpcode else "No Code")
                     }
 
@@ -276,7 +276,7 @@ fun MealDetailItem(meal: Meal) {
         Spacer(modifier = Modifier.width(16.dp))
         Column {
             Text(text = meal.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            Text(text = "${meal.calories} kcal | P: ${meal.protein}g | C: ${meal.carbs}g | F: ${meal.fats}g", fontSize = 11.sp, color = Color(0xFFF16B24))
+            Text(text = "Traditional Ethiopian Recipe", fontSize = 11.sp, color = Color(0xFFF16B24))
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = meal.description,

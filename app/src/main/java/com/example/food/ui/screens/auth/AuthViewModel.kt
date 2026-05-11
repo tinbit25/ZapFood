@@ -27,6 +27,14 @@ sealed class AdvancedAuthState {
     data class RecoverySent(val message: String) : AdvancedAuthState()
 }
 
+sealed class PhoneAuthState {
+    object Idle : PhoneAuthState()
+    object Loading : PhoneAuthState()
+    data class CodeSent(val verificationId: String, val resendToken: com.google.firebase.auth.PhoneAuthProvider.ForceResendingToken) : PhoneAuthState()
+    object Verified : PhoneAuthState()
+    data class Error(val message: String) : PhoneAuthState()
+}
+
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val authUseCase = AuthUseCase(application)
@@ -97,6 +105,83 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
+    }
+
+    private val _phoneAuthState = MutableStateFlow<PhoneAuthState>(PhoneAuthState.Idle)
+    val phoneAuthState: StateFlow<PhoneAuthState> = _phoneAuthState.asStateFlow()
+
+    fun sendOtp(activity: android.app.Activity, phone: String) {
+        val formattedPhone = formatEthiopianPhone(phone)
+        viewModelScope.launch {
+            _phoneAuthState.value = PhoneAuthState.Loading
+            val phoneAuthService = com.example.food.data.auth.FirebasePhoneAuthService(activity)
+            phoneAuthService.sendVerificationCode(
+                phoneNumber = formattedPhone,
+                onCodeSent = { verificationId, token ->
+                    _phoneAuthState.value = PhoneAuthState.CodeSent(verificationId, token)
+                },
+                onVerificationCompleted = { credential ->
+                    verifyPhoneWithCredential(credential)
+                },
+                onVerificationFailed = { e ->
+                    _phoneAuthState.value = PhoneAuthState.Error(e.localizedMessage ?: "Verification failed")
+                }
+            )
+        }
+    }
+
+    fun resendOtp(activity: android.app.Activity, phone: String, token: com.google.firebase.auth.PhoneAuthProvider.ForceResendingToken) {
+        val formattedPhone = formatEthiopianPhone(phone)
+        viewModelScope.launch {
+            _phoneAuthState.value = PhoneAuthState.Loading
+            val phoneAuthService = com.example.food.data.auth.FirebasePhoneAuthService(activity)
+            phoneAuthService.resendVerificationCode(
+                phoneNumber = formattedPhone,
+                token = token,
+                onCodeSent = { verificationId, _ ->
+                    _phoneAuthState.value = PhoneAuthState.CodeSent(verificationId, token)
+                },
+                onVerificationFailed = { e ->
+                    _phoneAuthState.value = PhoneAuthState.Error(e.localizedMessage ?: "Resend failed")
+                }
+            )
+        }
+    }
+
+    fun verifyOtp(verificationId: String, code: String) {
+        val credential = com.google.firebase.auth.PhoneAuthProvider.getCredential(verificationId, code)
+        verifyPhoneWithCredential(credential)
+    }
+
+    private fun verifyPhoneWithCredential(credential: com.google.firebase.auth.PhoneAuthCredential) {
+        viewModelScope.launch {
+            _phoneAuthState.value = PhoneAuthState.Loading
+            authUseCase.loginWithPhone(credential).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> _phoneAuthState.value = PhoneAuthState.Loading
+                    is Resource.Success -> {
+                        _phoneAuthState.value = PhoneAuthState.Verified
+                        _authState.value = AdvancedAuthState.Success(resource.data!!.userId, resource.data.role)
+                    }
+                    is Resource.Error -> {
+                        _phoneAuthState.value = PhoneAuthState.Error(resource.message ?: "Verification failed")
+                    }
+                }
+            }
+        }
+    }
+
+    private fun formatEthiopianPhone(phone: String): String {
+        var p = phone.trim()
+        if (p.startsWith("09")) {
+            p = "+251" + p.substring(1)
+        } else if (p.startsWith("251") && !p.startsWith("+")) {
+            p = "+" + p
+        } else if (!p.startsWith("+")) {
+            // Assume 9xxxxxxxx
+            p = "+251" + p
+        }
+        return p
     }
 
     fun signInWithGoogle(context: Context) {

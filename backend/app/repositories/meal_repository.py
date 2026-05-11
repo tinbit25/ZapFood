@@ -32,6 +32,7 @@ class MealRepository:
                         id=doc.id,
                         name=data.get("name", ""),
                         vendorId=data.get("vendorId", ""),
+                        vendorName=data.get("vendorName", "ZapFood Vendor"),
                         price=float(data.get("price", 0.0)),
                         category=data.get("category", "traditional"),
                         tags=data.get("tags", []),
@@ -40,7 +41,7 @@ class MealRepository:
                         fastingFriendly=data.get("fastingFriendly", False),
                         veganFriendly=data.get("veganFriendly", False),
                         popularityScore=data.get("popularityScore", 50),
-                        mealTimes=data.get("mealTimes", ["Lunch", "Dinner"]),
+                        mealTime=data.get("mealTimes", ["Lunch", "Dinner"]),
                         imageUrl=data.get("imageUrl", "")
                     ))
                 except Exception as map_err:

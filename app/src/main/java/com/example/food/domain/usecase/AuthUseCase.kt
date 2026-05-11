@@ -240,6 +240,60 @@ class AuthUseCase(
         }
     }
 
+    suspend fun loginWithPhone(credential: com.google.firebase.auth.PhoneAuthCredential): Flow<Resource<User>> = flow {
+        emit(Resource.Loading())
+        try {
+            val result = authRepository.loginWithPhone(credential)
+            if (result is Resource.Error) {
+                emit(Resource.Error(result.message ?: "Phone login failed"))
+                return@flow
+            }
+
+            val firebaseUser = result.data!!
+            val phone = firebaseUser.phoneNumber ?: ""
+            
+            // Check if user profile exists
+            var user = authRepository.findUserByPhone(phone)
+            
+            if (user == null) {
+                // Create new user profile
+                user = User(
+                    userId = firebaseUser.uid,
+                    phoneNumber = phone,
+                    displayName = "User ${phone.takeLast(4)}",
+                    role = UserRole.CUSTOMER,
+                    isActive = true
+                )
+                authRepository.createUserProfile(user)
+            }
+
+            if (!user.isActive) {
+                emit(Resource.Error("Your account has been deactivated"))
+                return@flow
+            }
+
+            // Create Session & Tokens
+            val accessToken = securityManager.generateSimulatedToken(user.userId, user.role.name, 15)
+            val refreshToken = securityManager.generateSimulatedToken(user.userId, user.role.name, 10080)
+            val tokens = AuthToken(accessToken, refreshToken, System.currentTimeMillis() + (15 * 60 * 1000))
+            
+            val session = AuthSession(userId = user.userId, expiryTimestamp = tokens.expiryTimestamp)
+            securityManager.saveTokens(tokens, session.sessionId)
+            authRepository.saveSession(session)
+
+            emit(Resource.Success(user))
+        } catch (e: Exception) {
+            emit(Resource.Error(e.localizedMessage ?: "Phone login failed"))
+        }
+    }
+
+    fun validateEthiopianPhone(phone: String): Boolean {
+        val sanitized = phone.trim().replace(" ", "").replace("-", "")
+        // Matches +2519xxxxxxxx, +2517xxxxxxxx, 09xxxxxxxx, 07xxxxxxxx, 9xxxxxxxx, 7xxxxxxxx
+        val regex = "^(\\+251|0|)(9|7)\\d{8}$".toRegex()
+        return sanitized.matches(regex)
+    }
+
     suspend fun logout(): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         val sessionId = securityManager.getSessionId()

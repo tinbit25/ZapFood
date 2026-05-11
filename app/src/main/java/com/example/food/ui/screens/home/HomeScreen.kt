@@ -12,6 +12,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.*
@@ -49,6 +51,7 @@ fun HomeScreen(
     recommendationViewModel: RecommendationViewModel,
     onNavigateToDetails: (String) -> Unit,
     onNavigateToMealPlanDetails: (String) -> Unit,
+    onNavigateToSmartPreference: () -> Unit,
     onNavigateToSearch: () -> Unit,
     onNavigateToNotifications: () -> Unit
 ) {
@@ -60,12 +63,6 @@ fun HomeScreen(
     val mealPlans = (discoverPlansState as? Resource.Success)?.data ?: emptyList()
     val meals = (mealsState as? Resource.Success)?.data ?: emptyList()
     
-    val exploreCategories = listOf(
-        ExploreItem("Restaurants", "🍟"),
-        ExploreItem("ZapFood", "🥘"),
-        ExploreItem("Chefs", "👩‍🍳"),
-        ExploreItem("Cafes", "☕")
-    )
 
     val foodFilters = listOf(
         FoodFilter("Fasting", "🌱", com.example.food.data.model.FoodType.FASTING, null),
@@ -193,7 +190,7 @@ fun HomeScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Would you like fasting meal recommendations?",
+                            "Looking for the best fasting stews in the city?",
                             color = Color.LightGray,
                             fontSize = 14.sp
                         )
@@ -207,13 +204,13 @@ fun HomeScreen(
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                             ) {
-                                Text("Yes")
+                                Text("Show Me")
                             }
                             TextButton(onClick = { 
                                 showFastingPrompt = false 
                                 user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId ?: "guest", "fasting_prompt_ignored", context = "home_fasting_card") }
                             }) {
-                                Text("No, thanks", color = Color.LightGray)
+                                Text("Maybe later", color = Color.LightGray)
                             }
                         }
                     }
@@ -226,34 +223,13 @@ fun HomeScreen(
             FeaturedPromoBanner()
         }
 
-        // MPCode Import Section
+        // Recommendations Hub Entry
         item {
-            val rewardViewModel: com.example.food.ui.viewmodel.RewardViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-            val importState by rewardViewModel.importState.collectAsState()
-            var showImportDialog by remember { mutableStateOf(false) }
-
-            LaunchedEffect(importState) {
-                if (importState is Resource.Success) {
-                    onNavigateToMealPlanDetails((importState as Resource.Success).data!!.id)
-                }
-            }
-
-            if (showImportDialog) {
-                MPCodeDialog(
-                    onDismiss = { showImportDialog = false },
-                    onConfirm = { code -> 
-                        user?.let { rewardViewModel.importPlan(it, code) }
-                    },
-                    isLoading = importState is Resource.Loading,
-                    errorMessage = (importState as? Resource.Error)?.message
-                )
-            }
-
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 8.dp)
-                    .clickable { showImportDialog = true },
+                    .clickable { onNavigateToSmartPreference() },
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
             ) {
@@ -267,59 +243,21 @@ fun HomeScreen(
                         color = Color(0xFFF16B24).copy(alpha = 0.1f)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color(0xFFF16B24))
+                            Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = Color(0xFFF16B24))
                         }
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
-                        Text(text = "Have a share code?", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                        Text(text = "Import a meal plan using MPCode", fontSize = 12.sp, color = Color.Gray)
+                        Text(text = "Smart Picks", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(text = "Personalized Ethiopian favorites", fontSize = 12.sp, color = Color.Gray)
                     }
                     Spacer(modifier = Modifier.weight(1f))
-                    Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color.Gray)
+                    Icon(imageVector = Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
                 }
             }
         }
 
-        // Explore Categories
-        item {
-            SectionTitle("Explore Categories")
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(exploreCategories) { item ->
-                    ModernCategoryItem(item)
-                }
-            }
-        }
-
-        // Hottest Plans
-        item {
-            SectionHeader(title = "Hottest Plans", onActionClick = {})
-            if (discoverPlansState is Resource.Loading) {
-                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color(0xFFF16B24))
-                }
-            } else if (mealPlans.isEmpty()) {
-                Text(
-                    text = "No plans available. Ask Admin to seed data!",
-                    modifier = Modifier.padding(24.dp),
-                    color = Color.Gray
-                )
-            } else {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(mealPlans) { plan ->
-                        PremiumHottestCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.id) })
-                    }
-                }
-            }
-        }
-
-        // AI Recommendation Section
+        // Smart Picks For You (Personalized)
         if (recommendationState is RecommendationState.Loading) {
             item {
                 Box(modifier = Modifier.fillMaxWidth().height(150.dp), contentAlignment = Alignment.Center) {
@@ -329,53 +267,67 @@ fun HomeScreen(
         } else if (recommendationState is RecommendationState.Success) {
             val recData = recommendationState as RecommendationState.Success
             
-            item {
-                SectionHeader(title = "AI Personalized Picks \uD83E\uDDE0", onActionClick = {})
-                if (recData.reasoning.isNotEmpty()) {
-                    Text(
-                        text = recData.reasoning,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-                        color = Color.LightGray,
-                        fontSize = 14.sp,
-                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                    )
+            // 1. Smart Picks For You
+            if (recData.smartPicks.isNotEmpty()) {
+                item {
+                    SectionHeader(title = "Smart Picks For You ✨", onActionClick = {})
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(recData.smartPicks) { scoredMeal ->
+                            PopularMealCard(scoredMeal = scoredMeal, onClick = { 
+                                user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "view_meal", scoredMeal.mealId, context = "smart_picks") }
+                                onNavigateToDetails(scoredMeal.mealId) 
+                            })
+                        }
+                    }
                 }
+            }
+
+            // 2. Today's Fasting Specials (Contextual)
+            if (recData.fastingMeals.isNotEmpty()) {
+                item {
+                    SectionHeader(title = "Today's Fasting Specials 🌱", onActionClick = {})
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(recData.fastingMeals) { scoredMeal ->
+                            PopularMealCard(scoredMeal = scoredMeal, onClick = { 
+                                user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "view_meal", scoredMeal.mealId, context = "fasting_specials") }
+                                onNavigateToDetails(scoredMeal.mealId) 
+                            })
+                        }
+                    }
+                }
+            }
+
+            // 3. Popular in Addis (Community Fallback)
+            item {
+                SectionHeader(title = "Popular in Addis Ababa \uD83D\uDCCD", onActionClick = {})
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 20.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(recData.personalized) { scoredMeal ->
+                    items(recData.popularInAddis) { scoredMeal ->
                         PopularMealCard(scoredMeal = scoredMeal, onClick = { 
-                            user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "view_meal", scoredMeal.mealId, context = "ai_picks") }
+                            user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "view_meal", scoredMeal.mealId, context = "popular_addis") }
                             onNavigateToDetails(scoredMeal.mealId) 
                         })
                     }
                 }
-                if (recData.nutritionSummary.isNotEmpty()) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
-                    ) {
-                        Text(
-                            text = "Nutrition Insight: ${recData.nutritionSummary}",
-                            modifier = Modifier.padding(16.dp),
-                            color = Color(0xFF4CAF50),
-                            fontSize = 12.sp
-                        )
-                    }
-                }
             }
         } else {
-            // Fallback to local meals if API fails or is in error state
+            // Fallback: Best Ethiopian Meals
             item {
-                SectionHeader(title = "Popular Meals", onActionClick = {})
+                SectionHeader(title = "Recommended Ethiopian Meals", onActionClick = {})
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 20.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(meals) { meal ->
                         PopularMealCard(meal = meal, onClick = { 
-                            user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "view_meal", meal.id, context = "popular_meals") }
                             onNavigateToDetails(meal.id) 
                         })
                     }
@@ -383,16 +335,6 @@ fun HomeScreen(
             }
         }
 
-        // Recommendation Section
-        item {
-            SectionTitle("Tailored for you")
-        }
-        
-        if (mealPlans.isNotEmpty()) {
-            items(mealPlans.reversed()) { plan ->
-                ImmersiveLargeCard(plan = plan, onClick = { onNavigateToMealPlanDetails(plan.id) })
-            }
-        }
     }
 }
 

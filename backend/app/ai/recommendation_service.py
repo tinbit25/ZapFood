@@ -19,112 +19,156 @@ class RecommendationService:
         try:
             # 1. Fetch available meals from Firestore
             all_meals = self.meal_repo.get_available_meals()
-            
-            # 2. Hybrid Step: Pre-Filter (Rule-Based Filtering)
-            # This reduces token usage and prevents Gemini from breaking fundamental rules (like fasting)
+            if not all_meals:
+                return self._get_fallback_recommendations("We couldn't find any meals right now. Showing popular Ethiopian favorites.")
+
+            # 2. Hybrid Step: Pre-Filter & Categorization
             from datetime import datetime
             dt = datetime.now()
             weekday = dt.weekday()
             hour = dt.hour
             
-            fasting_mode = weekday in [2, 4] or user_profile.get("fastingMode", False)
+            # Ethiopian fasting: Wednesday (2) and Friday (4)
+            is_fasting_day = weekday in [2, 4]
+            user_fasting_mode = user_profile.get("fastingMode", False)
+            effective_fasting = is_fasting_day or user_fasting_mode
             
-            meal_time = "late-night"
-            if 6 <= hour < 11: meal_time = "breakfast"
-            elif 11 <= hour < 16: meal_time = "lunch"
-            elif 18 <= hour < 22: meal_time = "dinner"
+            # Meal Time Intelligence
+            current_meal_time = "DINNER"
+            if 5 <= hour < 10: current_meal_time = "BREAKFAST"
+            elif 11 <= hour < 16: current_meal_time = "LUNCH"
+            elif 16 <= hour < 19: current_meal_time = "SNACK"
+            
+            # Filter meals by rules
+            smart_candidates = []
+            fasting_meals = []
+            popular_in_addis = sorted(all_meals, key=lambda x: x.popularityScore, reverse=True)
 
-            # Filter logic:
-            filtered_meals_objs = []
             for m in all_meals:
-                # Rule 1: Fasting Adherence
-                if fasting_mode and not m.fastingFriendly:
-                    continue
-                
-                # Rule 2: Meal Time Match (Allow lunch meals for dinner but not breakfast for lunch)
-                # This is a simplified rule
-                if meal_time == "breakfast" and "Breakfast" not in (m.mealTimes or []):
-                    continue
-                
-                # Rule 3: Spice Level (Don't show Very Spicy to Low Tolerance users)
-                if user_profile.get("spiceTolerance") == "low" and m.spiceLevel == "spicy":
-                    continue
-                    
-                filtered_meals_objs.append(m)
+                # Rule 1: Fasting Adherence (Strict for Fasting category)
+                is_fasting_friendly = m.fastingFriendly or "FASTING" in (m.tags or []) or "VEGAN" in (m.tags or [])
+                if is_fasting_friendly:
+                    fasting_meals.append(m)
 
-            # Convert to dict for PromptBuilder
-            candidate_meals = [
-                {
-                    "id": m.id,
-                    "name": m.name,
-                    "category": m.category,
-                    "fastingFriendly": m.fastingFriendly,
-                    "spiceLevel": m.spiceLevel,
-                    "price": m.price,
-                    "description": getattr(m, 'description', '')
-                } for m in filtered_meals_objs[:15] # Limit candidates for cost/performance
-            ]
-            
-            # 3. Fetch user behavior history for ranking context
+                # Rule 2: Smart Selection (Personalized)
+                # Adhere to user fasting preference
+                if effective_fasting and not is_fasting_friendly:
+                    continue
+                
+                # Spice Preference Check
+                user_spice = user_profile.get("spicePreference", "MEDIUM").upper()
+                meal_spice = m.spiceLevel.upper() if m.spiceLevel else "MEDIUM"
+                if user_spice == "LOW" and meal_spice == "HIGH":
+                    continue
+                
+                # Meal Time Preference (Soft filter for smart picks)
+                # But for breakfast time, prioritize breakfast items
+                if current_meal_time == "BREAKFAST" and "BREAKFAST" not in [t.upper() for t in (m.mealTime or [])]:
+                    if len(smart_candidates) > 5: continue # Soft limit non-breakfast items in AM
+                
+                smart_candidates.append(m)
+
+            # 3. Construct user context for Gemini ranking
             history = self.behavior_repo.get_user_behavior(user_id, limit=10)
-            
-            # 4. Construct context for Gemini with lightweight personalization
             patterns = self.behavior_service.get_user_patterns(user_id)
             preference_summary = self.behavior_service.build_preference_summary(patterns)
 
             user_habits = {
                 "orderHistory": [h.get("mealId") for h in history if h.get("interactionType") == "PURCHASE"],
-                "favoriteMeals": [h.get("mealId") for h in history if h.get("interactionType") == "FAVORITE"],
+                "favoriteMeals": user_profile.get("favoriteFoods", []),
                 "repeatedMeals": patterns.get("repeated_meal_ids", []),
-                "topCategories": patterns.get("top_categories", []),
+                "topCategories": user_profile.get("favoriteCategories", []),
                 "preferenceSummary": preference_summary,
-                "spiceTolerance": user_profile.get("spiceTolerance", "medium"),
-                "budgetPreference": user_profile.get("budgetPreference", "standard")
+                "spicePreference": user_profile.get("spicePreference", "MEDIUM"),
+                "budgetPreference": user_profile.get("budgetPreference", "STANDARD")
             }
             
             context = {
-                "mealTime": meal_time,
-                "fastingMode": fasting_mode,
-                "dayOfWeek": dt.strftime("%A")
+                "mealTime": current_meal_time,
+                "fastingMode": effective_fasting,
+                "dayOfWeek": dt.strftime("%A"),
+                "isWednesdayOrFriday": is_fasting_day
             }
 
-            # 5. Gemini Step: Ranking & Reasoning
-            # Gemini only sees VALID candidates and provides the final 'smart' layer
+            # 4. Gemini Step: Smart Picks Ranking
+            # We rank the top 15 candidates
+            candidates_for_gemini = [
+                {
+                    "id": m.id,
+                    "name": m.name,
+                    "category": m.category,
+                    "tags": m.tags,
+                    "mealTime": m.mealTime,
+                    "spiceLevel": m.spiceLevel,
+                    "price": m.price,
+                    "vendorName": m.vendorName
+                } for m in smart_candidates[:15]
+            ]
+            
             prompt = EthiopianFoodPromptBuilder.build_recommendation_prompt(
-                available_meals=candidate_meals,
+                available_meals=candidates_for_gemini,
                 user_habits=user_habits,
                 context=context
             )
 
-            # Update PromptBuilder behavior (handled in instruction)
             response = self.gemini.generate_recommendations(prompt)
-
-            # 6. Hybrid Validation & Final Scoring
-            valid_ids = [m['id'] for m in candidate_meals]
-            recommendations = []
             
-            # Structure the output with scores and reasons
+            # 5. Build Result Structure
+            # Smart Picks
+            smart_picks = []
+            valid_ids = [m['id'] for m in candidates_for_gemini]
             for mid in response.get("recommendedMealIds", []):
                 if mid in valid_ids:
-                    meal_obj = next((m for m in candidate_meals if m['id'] == mid), None)
+                    meal_obj = next((m for m in smart_candidates if m.id == mid), None)
                     if meal_obj:
-                        recommendations.append({
+                        smart_picks.append({
                             "mealId": mid,
-                            "mealName": meal_obj['name'],
-                            "score": 90 - (len(recommendations) * 5), # Simplified scoring
-                            "reason": response.get("reasoning", "Matches your cultural preferences.")
+                            "mealName": meal_obj.name,
+                            "score": 95 - (len(smart_picks) * 5),
+                            "reason": response.get("reasoning", "Matches your taste.")
                         })
 
+            # If Gemini fails or returns too few, fill with candidates
+            if len(smart_picks) < 3:
+                for m in smart_candidates:
+                    if m.id not in [p['mealId'] for p in smart_picks]:
+                        smart_picks.append({
+                            "mealId": m.id,
+                            "mealName": m.name,
+                            "score": 70,
+                            "reason": "Popular traditional choice."
+                        })
+                    if len(smart_picks) >= 6: break
+
+            # Format categories for UI
             return {
-                "recommendations": recommendations,
-                "reasoning": response.get("reasoning", ""),
+                "smartPicks": smart_picks[:10],
+                "fastingMeals": [self._map_to_scored_meal(m, "Today's fasting pick.") for m in fasting_meals[:8]],
+                "popularInAddis": [self._map_to_scored_meal(m, f"Popular at {m.vendorName}") for m in popular_in_addis[:8]],
+                "reasoning": response.get("reasoning", "Based on your cultural preferences and current time."),
                 "nutritionSummary": response.get("nutritionSummary", "")
             }
 
         except Exception as e:
-            logger.error(f"Hybrid Recommendation failed: {e}")
-            return {
-                "recommendations": [],
-                "reasoning": "System is currently prioritizing reliability. Please check traditional favorites.",
-                "nutritionSummary": ""
-            }
+            logger.error(f"Smart Recommendation failed: {e}")
+            return self._get_fallback_recommendations()
+
+    def _map_to_scored_meal(self, meal, reason: str) -> Dict[str, Any]:
+        return {
+            "mealId": meal.id,
+            "mealName": meal.name,
+            "score": 85,
+            "reason": reason
+        }
+
+    def _get_fallback_recommendations(self, reason: str = "System is currently prioritizing reliability.") -> Dict[str, Any]:
+        # Simple fallback to popular meals
+        all_meals = self.meal_repo.get_available_meals()
+        popular = sorted(all_meals, key=lambda x: x.popularityScore, reverse=True)[:6]
+        return {
+            "smartPicks": [self._map_to_scored_meal(m, "Highly rated by others.") for m in popular],
+            "fastingMeals": [],
+            "popularInAddis": [self._map_to_scored_meal(m, "Community favorite.") for m in popular],
+            "reasoning": reason,
+            "nutritionSummary": ""
+        }

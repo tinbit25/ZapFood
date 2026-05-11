@@ -30,7 +30,7 @@ import com.example.food.ui.viewmodel.CartViewModel
 import com.example.food.ui.viewmodel.RecommendationViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.food.ui.screens.auth.PreferencesOnboardingScreen
-import com.example.food.ui.screens.menu.AIPlanGeneratorScreen
+import com.example.food.ui.screens.menu.SmartPreferenceScreen
 import com.example.food.ui.screens.menu.CustomPlanCreatorScreen
 import com.example.food.ui.screens.cart.CheckoutScreen
 import com.example.food.ui.screens.cart.OrderSuccessScreen
@@ -220,6 +220,9 @@ fun AppNavigation(
                     onNavigateToMealPlanDetails = { planId ->
                         navController.navigate(Screen.MealPlanDetails.createRoute(planId))
                     },
+                    onNavigateToSmartPreference = {
+                        navController.navigate(Screen.SmartPreference.route)
+                    },
                     onNavigateToSearch = {
                         navController.navigate(Screen.Search.route)
                     },
@@ -231,19 +234,18 @@ fun AppNavigation(
             
             composable(route = Screen.Menu.route) {
                 MenuScreen(
-                    onNavigateToAI = { navController.navigate(Screen.AIPlanGenerator.route) },
+                    onNavigateToAI = { navController.navigate(Screen.SmartPreference.route) },
                     onNavigateToCustom = { navController.navigate(Screen.CustomPlanCreator.route) },
                     onNavigateToBrowse = { navController.navigate(Screen.Home.route) }
                 )
             }
             
-            composable(route = Screen.AIPlanGenerator.route) {
-                AIPlanGeneratorScreen(
-                    mealPlanViewModel = mealPlanViewModel,
-                    onPlanGenerated = { planId ->
-                        navController.navigate(Screen.MealPlanDetails.createRoute(planId)) {
-                            popUpTo(Screen.AIPlanGenerator.route) { inclusive = true }
-                        }
+            composable(route = Screen.SmartPreference.route) {
+                com.example.food.ui.screens.menu.SmartPreferenceScreen(
+                    recommendationViewModel = recommendationViewModel,
+                    userViewModel = userViewModel,
+                    onPreferencesSaved = {
+                        navController.popBackStack()
                     },
                     onNavigateBack = { navController.popBackStack() }
                 )

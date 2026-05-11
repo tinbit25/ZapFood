@@ -115,7 +115,6 @@ fun CustomMealItem(
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = meal.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(text = "${meal.calories} kcal", fontSize = 12.sp, color = Color.Gray)
             }
             if (isSelected) {
                 Icon(

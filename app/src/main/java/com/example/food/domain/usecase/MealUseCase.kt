@@ -22,9 +22,6 @@ class MealUseCase(
 
         // 2. Validate input
         if (meal.name.isBlank()) return Resource.Error("Meal name cannot be empty")
-        if (meal.calories < 0 || meal.protein < 0 || meal.carbs < 0 || meal.fats < 0) {
-            return Resource.Error("Invalid nutrition values: Macros cannot be negative")
-        }
         if (meal.price <= 0) return Resource.Error("Price must be greater than zero")
 
         // 3. Attach vendorId automatically

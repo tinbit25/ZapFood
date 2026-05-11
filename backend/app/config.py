@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     
     # ── Firebase ───────────────────────────────────────────────
     firebase_credentials_path: Optional[str] = "./firebase-service-account.json"
+    google_cloud_project: Optional[str] = None
     
     # ── Chapa Payment ──────────────────────────────────────────
     chapa_secret_key: Optional[str] = None
@@ -45,6 +46,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"  # Ignore unknown env vars (e.g. system env vars)
 
 @lru_cache()
 def get_settings() -> Settings:

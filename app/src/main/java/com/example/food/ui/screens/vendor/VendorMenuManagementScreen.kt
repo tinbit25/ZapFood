@@ -369,7 +369,6 @@ fun VendorMealItem(meal: Meal) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = meal.name, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp)
                 Text(text = meal.category, fontSize = 12.sp, color = Color(0xFFF16B24))
-                Text(text = "${meal.calories} kcal", fontSize = 12.sp, color = Color.Gray)
             }
             Text(
                 text = "ETB ${"%,.0f".format(meal.price * 1000)}",

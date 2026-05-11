@@ -10,12 +10,11 @@ class Meal(BaseModel):
     vendorName: str
     fastingFriendly: bool = False
     veganFriendly: bool = False
-    foodType: str = "NON_FASTING"
-    dietType: str = "MEAT"
-    spiceLevel: str = "MEDIUM"
-    proteinLevel: str = "MEDIUM"
-    mealTime: List[str] = []
-    tags: List[str] = []
+    foodType: str = "NON_FASTING" # FASTING, NON_FASTING
+    dietType: str = "MEAT" # MEAT, VEGAN, DAIRY
+    spiceLevel: str = "MEDIUM" # LOW, MEDIUM, HIGH
+    mealTime: List[str] = [] # BREAKFAST, LUNCH, DINNER
+    tags: List[str] = [] # TRADITIONAL, SPICY, VEGAN, etc.
     ingredients: List[str] = []
     mealRegion: str = ""
     traditionalCategory: str = ""
@@ -25,21 +24,14 @@ class Meal(BaseModel):
 class UserFoodPreference(BaseModel):
     userId: str
     fastingMode: bool = False
-    spiceTolerance: str = "MEDIUM"
-    preferredBudgetRange: str = "Medium"
-    dietaryPreferences: List[str] = []
-    explicitFavoriteMeals: List[str] = []
-    preferredMealTimes: List[str] = []
-    
-    favoriteMeals: List[str] = []
-    dislikedMeals: List[str] = []
+    spicePreference: str = "MEDIUM" # LOW, MEDIUM, HIGH
+    dietaryType: str = "ANY" # VEGAN, NON_VEGAN, ANY
+    budgetPreference: str = "STANDARD" # BUDGET, STANDARD, PREMIUM
+    favoriteFoods: List[str] = []
+    preferredMealTime: str = "ANY"
     favoriteVendors: List[str] = []
     favoriteCategories: List[str] = []
-    
-    mealTimePatterns: Dict[str, List[str]] = {}
-    orderingPatterns: Dict[str, int] = {}
-    cuisineAffinity: Dict[str, float] = {}
-    fastingBehavior: str = "Occasional"
+    lastUpdated: Optional[int] = None
 
 class RecommendationRequest(BaseModel):
     user_preference: UserFoodPreference

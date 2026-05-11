@@ -161,13 +161,10 @@ async def webhook_stats() -> ApiResponse[dict]:
     include_in_schema=False,
     summary="Payment Return",
 )
-async def payment_return(request: Request):
+async def payment_return():
     """
     Chapa redirects the user here after payment.
-    In production, this would redirect to a deep link (food://payment/complete).
+    We then redirect to the app's deep link to trigger auto-verification.
     """
-    return {
-        "message": "Payment complete. You can return to the app.",
-        "status": "return",
-        "params": dict(request.query_params),
-    }
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="zapfood://payment/return")

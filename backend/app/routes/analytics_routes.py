@@ -8,10 +8,13 @@ from app.config import get_settings
 router = APIRouter(prefix="/api", tags=["Analytics & AI"])
 logger = logging.getLogger("analytics-router")
 
-@router.post("/analytics/track")
+def get_behavior_service():
+    return BehaviorService()
+
+@router.post("/analytics/track", response_model=None)
 async def track_behavior(
     event: BehaviorEvent,
-    service: BehaviorService = Depends(BehaviorService)
+    service: BehaviorService = Depends(get_behavior_service)
 ):
     """
     Log a user behavior event.
@@ -23,11 +26,17 @@ async def track_behavior(
 
 from app.repositories.user_repository import UserRepository
 
-@router.get("/recommendations/ai/{user_id}")
+def get_recommendation_service():
+    return RecommendationService()
+
+def get_user_repository():
+    return UserRepository()
+
+@router.get("/recommendations/ai/{user_id}", response_model=None)
 async def get_ai_recommendations(
     user_id: str,
-    service: RecommendationService = Depends(RecommendationService),
-    user_repo: UserRepository = Depends(UserRepository)
+    service: RecommendationService = Depends(get_recommendation_service),
+    user_repo: UserRepository = Depends(get_user_repository)
 ):
     """
     Get intelligent food recommendations powered by Gemini AI.
