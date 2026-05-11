@@ -30,6 +30,7 @@ fun LoginScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToSignUp: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
+    onNavigateToPhone: () -> Unit,
     viewModel: AuthViewModel = viewModel()
 ) {
     val authState by viewModel.authState.collectAsState()
@@ -138,6 +139,34 @@ fun LoginScreen(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(text = "Sign In with Google", fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                HorizontalDivider(modifier = Modifier.weight(1f), color = Color.DarkGray)
+                Text(" OR ", color = Color.Gray, modifier = Modifier.padding(horizontal = 8.dp))
+                HorizontalDivider(modifier = Modifier.weight(1f), color = Color.DarkGray)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedButton(
+                onClick = onNavigateToPhone,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Phone,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(text = "Log In with Phone Number", fontWeight = FontWeight.Bold)
             }
 
             if (authState is AdvancedAuthState.Loading) {

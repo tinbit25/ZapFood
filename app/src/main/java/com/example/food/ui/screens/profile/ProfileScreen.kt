@@ -42,6 +42,7 @@ fun ProfileScreen(
     onNavigateToVendorMenu: () -> Unit,
     onNavigateToSupportTickets: () -> Unit,
     onNavigateToAdminSupport: () -> Unit,
+    onNavigateToLinkPhone: () -> Unit,
     authViewModel: AuthViewModel = viewModel()
 ) {
     val user by userViewModel.user.collectAsState()
@@ -127,6 +128,14 @@ fun ProfileScreen(
             }
 
             ProfileMenuItem(icon = Icons.Default.Settings, title = "Settings", onClick = onNavigateToSettings)
+            
+            if (user?.phoneNumber.isNullOrEmpty()) {
+                ProfileMenuItem(
+                    icon = Icons.Default.Phone,
+                    title = "Link Phone Number",
+                    onClick = onNavigateToLinkPhone
+                )
+            }
             
             Spacer(modifier = Modifier.height(32.dp))
             

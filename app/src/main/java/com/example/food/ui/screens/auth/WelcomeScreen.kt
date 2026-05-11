@@ -15,6 +15,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +31,8 @@ import com.example.food.ui.components.PrimaryButton
 @Composable
 fun WelcomeScreen(
     onNavigateToLogin: () -> Unit,
-    onNavigateToSignUp: () -> Unit
+    onNavigateToSignUp: () -> Unit,
+    onNavigateToPhone: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
@@ -110,6 +112,20 @@ fun WelcomeScreen(
                     text = "Sign Up",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Phone Login Button (Secondary)
+            TextButton(
+                onClick = onNavigateToPhone,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text(
+                    text = "Continue with Phone Number",
+                    color = Color.White,
+                    fontWeight = FontWeight.Medium
                 )
             }
             

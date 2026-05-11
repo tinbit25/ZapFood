@@ -148,9 +148,31 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun verifyOtp(verificationId: String, code: String) {
+    fun verifyOtp(verificationId: String, code: String, isLinking: Boolean = false) {
         val credential = com.google.firebase.auth.PhoneAuthProvider.getCredential(verificationId, code)
-        verifyPhoneWithCredential(credential)
+        if (isLinking) {
+            linkPhoneWithCredential(credential)
+        } else {
+            verifyPhoneWithCredential(credential)
+        }
+    }
+
+    private fun linkPhoneWithCredential(credential: com.google.firebase.auth.PhoneAuthCredential) {
+        viewModelScope.launch {
+            _phoneAuthState.value = PhoneAuthState.Loading
+            authUseCase.linkPhoneToAccount(credential).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> _phoneAuthState.value = PhoneAuthState.Loading
+                    is Resource.Success -> {
+                        _phoneAuthState.value = PhoneAuthState.Verified
+                        // Update UserViewModel if needed (usually happens via flow)
+                    }
+                    is Resource.Error -> {
+                        _phoneAuthState.value = PhoneAuthState.Error(resource.message ?: "Linking failed")
+                    }
+                }
+            }
+        }
     }
 
     private fun verifyPhoneWithCredential(credential: com.google.firebase.auth.PhoneAuthCredential) {

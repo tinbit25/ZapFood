@@ -17,6 +17,9 @@ import com.example.food.ui.screens.cart.CartScreen
 import com.example.food.ui.screens.details.ProductDetailsScreen
 import com.example.food.ui.screens.home.HomeScreen
 import com.example.food.ui.screens.menu.MenuScreen
+import com.example.food.ui.screens.auth.PhoneLoginScreen
+import com.example.food.ui.screens.auth.OTPVerificationScreen
+import com.example.food.ui.screens.auth.AuthViewModel
 import com.example.food.ui.screens.profile.ProfileScreen
 import com.example.food.ui.screens.profile.ProfileEditScreen
 import com.example.food.ui.screens.search.SearchScreen
@@ -60,7 +63,8 @@ fun AppNavigation(
     orderViewModel: com.example.food.ui.viewmodel.OrderViewModel = viewModel(),
     cartViewModel: CartViewModel = viewModel(),
     paymentViewModel: com.example.food.ui.viewmodel.PaymentViewModel = viewModel(),
-    recommendationViewModel: RecommendationViewModel = viewModel()
+    recommendationViewModel: RecommendationViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -152,7 +156,8 @@ fun AppNavigation(
             composable(route = Screen.Welcome.route) {
                 WelcomeScreen(
                     onNavigateToLogin = { navController.navigate(Screen.Login.route) },
-                    onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) }
+                    onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
+                    onNavigateToPhone = { navController.navigate(Screen.PhoneLogin.createRoute(false)) }
                 )
             }
             
@@ -164,7 +169,8 @@ fun AppNavigation(
                         }
                     },
                     onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
-                    onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) }
+                    onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) },
+                    onNavigateToPhone = { navController.navigate(Screen.PhoneLogin.createRoute(false)) }
                 )
             }
 
@@ -197,6 +203,43 @@ fun AppNavigation(
                 )
             }
             
+            composable(
+                route = Screen.PhoneLogin.route,
+                arguments = listOf(navArgument("isLinking") { type = NavType.BoolType })
+            ) { backStackEntry ->
+                val isLinking = backStackEntry.arguments?.getBoolean("isLinking") ?: false
+                PhoneLoginScreen(
+                    onNavigateToOTP = { phone, linking ->
+                        navController.navigate(Screen.OTPVerification.createRoute(phone, linking))
+                    },
+                    onNavigateBack = { navController.popBackStack() },
+                    isLinking = isLinking,
+                    viewModel = authViewModel
+                )
+            }
+
+            composable(
+                route = Screen.OTPVerification.route,
+                arguments = listOf(
+                    navArgument("phone") { type = NavType.StringType },
+                    navArgument("isLinking") { type = NavType.BoolType }
+                )
+            ) { backStackEntry ->
+                val phone = backStackEntry.arguments?.getString("phone") ?: ""
+                val isLinking = backStackEntry.arguments?.getBoolean("isLinking") ?: false
+                OTPVerificationScreen(
+                    phoneNumber = phone,
+                    isLinking = isLinking,
+                    onNavigateToHome = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateBack = { navController.popBackStack() },
+                    viewModel = authViewModel
+                )
+            }
+
             composable(route = Screen.PreferencesOnboarding.route) {
                 PreferencesOnboardingScreen(
                     onComplete = { goals, diets ->
@@ -328,7 +371,10 @@ fun AppNavigation(
                     onNavigateToVendorDashboard = { navController.navigate(Screen.VendorDashboard.route) },
                     onNavigateToVendorMenu = { navController.navigate(Screen.VendorMenuManagement.route) },
                     onNavigateToSupportTickets = { navController.navigate(Screen.SupportTickets.route) },
-                    onNavigateToAdminSupport = { navController.navigate(Screen.AdminSupportDashboard.route) }
+                    onNavigateToAdminSupport = { navController.navigate(Screen.AdminSupportDashboard.route) },
+                    onNavigateToLinkPhone = {
+                        navController.navigate(Screen.PhoneLogin.createRoute(true))
+                    }
                 )
             }
 

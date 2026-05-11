@@ -252,19 +252,32 @@ class AuthUseCase(
             val firebaseUser = result.data!!
             val phone = firebaseUser.phoneNumber ?: ""
             
-            // Check if user profile exists
+            // Step 1: Check for existing profile by phone
             var user = authRepository.findUserByPhone(phone)
             
             if (user == null) {
-                // Create new user profile
-                user = User(
-                    userId = firebaseUser.uid,
-                    phoneNumber = phone,
-                    displayName = "User ${phone.takeLast(4)}",
-                    role = UserRole.CUSTOMER,
-                    isActive = true
-                )
-                authRepository.createUserProfile(user)
+                // Step 2: Check if current Firebase User has an email but no profile (Google Sign-in case)
+                val email = firebaseUser.email
+                if (email != null && email.isNotEmpty()) {
+                    user = authRepository.findUserByEmail(email)
+                }
+                
+                if (user == null) {
+                    // Step 3: Create new user profile if still null
+                    user = User(
+                        userId = firebaseUser.uid,
+                        phoneNumber = phone,
+                        email = email ?: "",
+                        displayName = firebaseUser.displayName ?: "User ${phone.takeLast(4)}",
+                        role = UserRole.CUSTOMER,
+                        isActive = true
+                    )
+                    authRepository.createUserProfile(user)
+                } else {
+                    // Update existing email user with phone
+                    user = user.copy(phoneNumber = phone)
+                    authRepository.createUserProfile(user)
+                }
             }
 
             if (!user.isActive) {
@@ -284,6 +297,37 @@ class AuthUseCase(
             emit(Resource.Success(user))
         } catch (e: Exception) {
             emit(Resource.Error(e.localizedMessage ?: "Phone login failed"))
+        }
+    }
+
+    suspend fun linkPhoneToAccount(credential: com.google.firebase.auth.PhoneAuthCredential): Flow<Resource<User>> = flow {
+        emit(Resource.Loading())
+        try {
+            val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                ?: run { emit(Resource.Error("No active session found")); return@flow }
+            
+            // Link phone in Firebase Auth
+            val authResult = firebaseUser.linkWithCredential(credential).await()
+            val linkedUser = authResult.user
+            val phone = linkedUser?.phoneNumber ?: ""
+
+            if (phone.isEmpty()) {
+                emit(Resource.Error("Linking failed: No phone number returned"))
+                return@flow
+            }
+
+            // Update Firestore Profile
+            val doc = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users").document(firebaseUser.uid).get().await()
+            val user = doc.toObject(User::class.java)
+                ?: run { emit(Resource.Error("User profile not found")); return@flow }
+
+            val updatedUser = user.copy(phoneNumber = phone)
+            authRepository.createUserProfile(updatedUser)
+
+            emit(Resource.Success(updatedUser))
+        } catch (e: Exception) {
+            emit(Resource.Error(e.localizedMessage ?: "Linking failed"))
         }
     }
 

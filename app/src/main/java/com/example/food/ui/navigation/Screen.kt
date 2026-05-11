@@ -12,6 +12,12 @@ sealed class Screen(val route: String) {
     object ResetPassword : Screen("reset_password_screen/{token}") {
         fun createRoute(token: String) = "reset_password_screen/$token"
     }
+    object PhoneLogin : Screen("phone_login_screen/{isLinking}") {
+        fun createRoute(isLinking: Boolean) = "phone_login_screen/$isLinking"
+    }
+    object OTPVerification : Screen("otp_verification_screen/{phone}/{isLinking}") {
+        fun createRoute(phone: String, isLinking: Boolean) = "otp_verification_screen/$phone/$isLinking"
+    }
 
     // Main App Flow
     object Home : Screen("home_screen")
