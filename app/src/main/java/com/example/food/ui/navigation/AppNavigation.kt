@@ -25,6 +25,7 @@ import com.example.food.ui.screens.profile.ProfileEditScreen
 import com.example.food.ui.screens.search.SearchScreen
 import com.example.food.ui.screens.notifications.NotificationScreen
 import com.example.food.ui.screens.address.AddressScreen
+import com.example.food.ui.screens.address.AddressFormScreen
 import com.example.food.ui.screens.orders.OrderHistoryScreen
 import com.example.food.ui.screens.orders.OrderTrackingScreen
 import com.example.food.ui.viewmodel.UserViewModel
@@ -64,7 +65,8 @@ fun AppNavigation(
     cartViewModel: CartViewModel = viewModel(),
     paymentViewModel: com.example.food.ui.viewmodel.PaymentViewModel = viewModel(),
     recommendationViewModel: RecommendationViewModel = viewModel(),
-    authViewModel: AuthViewModel = viewModel()
+    authViewModel: AuthViewModel = viewModel(),
+    addressViewModel: com.example.food.ui.viewmodel.AddressViewModel = viewModel()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -379,7 +381,7 @@ fun AppNavigation(
             }
 
             composable(route = Screen.ProfileEdit.route) {
-                ProfileEditScreen(
+                com.example.food.ui.screens.profile.AdvancedProfileEditScreen(
                     onNavigateBack = { navController.popBackStack() },
                     userViewModel = userViewModel
                 )
@@ -402,7 +404,32 @@ fun AppNavigation(
 
             composable(route = Screen.Addresses.route) {
                 AddressScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToAddAddress = { navController.navigate(Screen.AddressAdd.route) },
+                    onNavigateToEditAddress = { id -> navController.navigate(Screen.AddressEdit.createRoute(id)) },
+                    userViewModel = userViewModel,
+                    addressViewModel = addressViewModel
+                )
+            }
+
+            composable(route = Screen.AddressAdd.route) {
+                AddressFormScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    userViewModel = userViewModel,
+                    addressViewModel = addressViewModel
+                )
+            }
+
+            composable(
+                route = Screen.AddressEdit.route,
+                arguments = listOf(navArgument("addressId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val addressId = backStackEntry.arguments?.getString("addressId") ?: ""
+                AddressFormScreen(
+                    addressId = addressId,
+                    onNavigateBack = { navController.popBackStack() },
+                    userViewModel = userViewModel,
+                    addressViewModel = addressViewModel
                 )
             }
 

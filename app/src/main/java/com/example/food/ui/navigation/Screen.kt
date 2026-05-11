@@ -32,6 +32,10 @@ sealed class Screen(val route: String) {
     object Search : Screen("search_screen")
     object Notifications : Screen("notifications_screen")
     object Addresses : Screen("addresses_screen")
+    object AddressAdd : Screen("address_add_screen")
+    object AddressEdit : Screen("address_edit_screen/{addressId}") {
+        fun createRoute(addressId: String) = "address_edit_screen/$addressId"
+    }
     object OrderHistory : Screen("order_history_screen")
     object SmartPreference : Screen("smart_preference_screen")
     object CustomPlanCreator : Screen("custom_plan_creator_screen")
