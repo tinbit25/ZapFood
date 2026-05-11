@@ -99,7 +99,30 @@ fun OrderTrackingScreen(
                 is Resource.Success -> {
                     val timeline = resource.data
                     if (timeline != null) {
-                        OrderTrackingContent(timeline)
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            // Contextual Notification Permission Request
+                            var showNotifyTooltip by remember { mutableStateOf(true) }
+                            val hasNotifyPermission = com.example.food.core.util.permissions.PermissionManager.hasNotificationPermission(context)
+                            
+                            if (showNotifyTooltip && !hasNotifyPermission) {
+                                com.example.food.ui.components.onboarding.ContextualTooltip(
+                                    text = "Enable notifications to track your delivery in real-time!",
+                                    isVisible = true,
+                                    onDismiss = { showNotifyTooltip = false },
+                                    modifier = Modifier.padding(16.dp)
+                                )
+                                
+                                // Automatically trigger permission dialog when they see the tooltip
+                                SideEffect {
+                                    val activity = context as? android.app.Activity
+                                    if (activity != null) {
+                                        com.example.food.core.util.permissions.PermissionManager.requestNotificationPermission(activity, 1002)
+                                    }
+                                }
+                            }
+                            
+                            OrderTrackingContent(timeline)
+                        }
                     }
                 }
             }

@@ -61,8 +61,8 @@ class MainActivity : ComponentActivity() {
         // Sync FCM Token
         FCMTokenManager().syncToken()
 
-        // Request Notification Permission (Android 13+)
-        askNotificationPermission()
+        // Delayed permission request removed for progressive onboarding
+        // askNotificationPermission()
 
         // Check if launched via notification or deep link
         handleIntent(intent)

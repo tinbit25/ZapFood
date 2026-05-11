@@ -58,13 +58,15 @@ def initialize_firebase() -> bool:
         cred = credentials.Certificate(cred_path)
 
         # Avoid re-initializing if the default app already exists
+        firebase_app = None
         if not firebase_admin._apps:
-            firebase_admin.initialize_app(cred)
+            firebase_app = firebase_admin.initialize_app(cred)
             logger.info("Firebase Admin SDK initialized successfully.")
         else:
+            firebase_app = firebase_admin.get_app()
             logger.info("Firebase Admin SDK already has a default app.")
 
-        _firestore_client = firestore.client()
+        _firestore_client = firestore.client(app=firebase_app)
         _initialized = True
 
         # Quick connectivity test — try to access a collection

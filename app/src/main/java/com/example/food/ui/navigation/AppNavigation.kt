@@ -39,6 +39,9 @@ import com.example.food.ui.screens.vendor.VendorDashboardScreen
 import com.example.food.ui.screens.support.SupportTicketScreen
 import com.example.food.ui.screens.admin.AdminSupportDashboardScreen
 import com.example.food.ui.screens.feedback.FeedbackScreen
+import com.example.food.ui.screens.onboarding.OnboardingScreen
+import com.example.food.ui.viewmodel.OnboardingViewModel
+import com.example.food.data.datastore.OnboardingDataStore
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
@@ -117,6 +120,30 @@ fun AppNavigation(
                     onNavigateToWelcome = {
                         navController.navigate(Screen.Welcome.route) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToOnboarding = {
+                        navController.navigate(Screen.Onboarding.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable(route = Screen.Onboarding.route) {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val onboardingViewModel: OnboardingViewModel = viewModel(
+                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                            return OnboardingViewModel(OnboardingDataStore(context)) as T
+                        }
+                    }
+                )
+                OnboardingScreen(
+                    viewModel = onboardingViewModel,
+                    onNavigateToWelcome = {
+                        navController.navigate(Screen.Welcome.route) {
+                            popUpTo(Screen.Onboarding.route) { inclusive = true }
                         }
                     }
                 )

@@ -45,6 +45,14 @@ fun MenuScreen(
                 color = Color.White
             )
         }
+        
+        // Feature Discovery Hint
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp), contentAlignment = Alignment.CenterStart) {
+            com.example.food.ui.components.onboarding.FeatureDiscoveryHint(
+                text = "Book chefs at home",
+                icon = "👩‍🍳"
+            )
+        }
 
         // Tabs
         TabRow(

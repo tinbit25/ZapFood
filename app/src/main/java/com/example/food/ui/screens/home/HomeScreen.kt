@@ -100,12 +100,12 @@ fun HomeScreen(
             )
         }
 
-        // Search Bar
+        // Search Bar - Moved Higher for accessibility
         item {
             HomeSearchBar(onSearchClick = onNavigateToSearch)
         }
 
-        // Ethiopian Classification Filters
+        // Ethiopian Classification Filters - Directly under Search
         item {
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
@@ -127,7 +127,47 @@ fun HomeScreen(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        // Discovery Center - Premium Layout
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = "Discovery Center",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    com.example.food.ui.components.onboarding.FeatureDiscoveryHint(
+                        text = "Find restaurants nearby",
+                        icon = "📍",
+                        modifier = Modifier.weight(1f)
+                    )
+                    com.example.food.ui.components.onboarding.FeatureDiscoveryHint(
+                        text = "Track your order live",
+                        icon = "🛵",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                
+                // Contextual Tooltip for AI Picks - Integrated into Discovery Center
+                var showTooltip by remember { mutableStateOf(true) }
+                com.example.food.ui.components.onboarding.ContextualTooltip(
+                    text = "New: Personalized AI picks based on your fasting habits!",
+                    isVisible = showTooltip,
+                    onDismiss = { showTooltip = false },
+                    modifier = Modifier.padding(top = 12.dp)
+                )
+            }
         }
 
         // Smart Hybrid Fasting Prompt

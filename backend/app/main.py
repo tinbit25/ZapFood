@@ -20,6 +20,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from app.services.firebase_client import initialize_firebase
+
+# Initialize Firebase early to avoid DefaultCredentialsError in routes/repos
+initialize_firebase()
+
 from app.routes.health import router as health_router
 from app.routes.payments import router as payments_router
 from app.routes.recommendations import router as recommendations_router
@@ -27,7 +32,6 @@ from app.routes.similarity import router as similarity_router
 from app.routes.combos import router as combos_router
 from app.routes.ai_routes import router as ai_router
 from app.routes.analytics_routes import router as analytics_router
-from app.services.firebase_client import initialize_firebase
 
 # ─────────────────────────────────────────────────────────────
 # Logging

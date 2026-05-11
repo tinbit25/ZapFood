@@ -51,8 +51,17 @@ fun AddressScreen(onNavigateBack: () -> Unit) {
             }
         }
         
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val activity = context as? android.app.Activity
+        
         Button(
-            onClick = { /* Add Address */ },
+            onClick = { 
+                if (activity != null && !com.example.food.core.util.permissions.PermissionManager.hasLocationPermission(context)) {
+                    com.example.food.core.util.permissions.PermissionManager.requestLocationPermission(activity, 1001)
+                } else {
+                    /* Add Address Logic */ 
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp)

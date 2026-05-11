@@ -2,6 +2,7 @@ package com.example.food.ui.navigation
 
 sealed class Screen(val route: String) {
     // Auth Flow
+    object Onboarding : Screen("onboarding_screen")
     object Splash : Screen("splash_screen")
     object Welcome : Screen("welcome_screen")
     object Login : Screen("login_screen")

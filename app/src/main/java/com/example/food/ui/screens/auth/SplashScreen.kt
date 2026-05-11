@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -17,14 +18,23 @@ import kotlinx.coroutines.delay
 @Composable
 fun SplashScreen(
     onNavigateToHome: () -> Unit,
-    onNavigateToWelcome: () -> Unit
+    onNavigateToWelcome: () -> Unit,
+    onNavigateToOnboarding: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val onboardingDataStore = remember { com.example.food.data.datastore.OnboardingDataStore(context) }
+    
     LaunchedEffect(key1 = true) {
         delay(2000L) // 2 second delay for splash
-        if (FirebaseAuth.getInstance().currentUser != null) {
-            onNavigateToHome()
-        } else {
-            onNavigateToWelcome()
+        
+        onboardingDataStore.readOnboardingState().collect { completed ->
+            if (!completed) {
+                onNavigateToOnboarding()
+            } else if (FirebaseAuth.getInstance().currentUser != null) {
+                onNavigateToHome()
+            } else {
+                onNavigateToWelcome()
+            }
         }
     }
 

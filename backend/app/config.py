@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     
     # ── Chapa Payment ──────────────────────────────────────────
     chapa_secret_key: Optional[str] = None
+    chapa_public_key: Optional[str] = None
+    chapa_webhook_secret: Optional[str] = None
     chapa_base_url: str = "https://api.chapa.co/v1"
     
     # ── Gemini AI ──────────────────────────────────────────────

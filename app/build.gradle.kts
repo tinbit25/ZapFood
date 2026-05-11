@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
     implementation(libs.coil.compose)
+    implementation(libs.androidx.datastore.preferences)
 
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
