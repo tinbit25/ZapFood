@@ -6,6 +6,8 @@ data class MealMetadataSuggestion(
     val category: EthiopianFoodCategory,
     val fastingFriendly: Boolean,
     val veganFriendly: Boolean,
+    val foodType: FoodType,
+    val dietType: DietType,
     val proteinLevel: ProteinLevel,
     val spiceLevel: SpiceLevel,
     val carbLevel: CarbLevel,
@@ -30,6 +32,8 @@ object EthiopianFoodKnowledge {
         var category = EthiopianFoodCategory.GENERAL
         var fastingFriendly = false
         var veganFriendly = false
+        var foodType = FoodType.NON_FASTING
+        var dietType = DietType.MEAT
         var proteinLevel = ProteinLevel.MEDIUM
         var spiceLevel = SpiceLevel.MEDIUM
         var carbLevel = CarbLevel.MEDIUM
@@ -44,6 +48,8 @@ object EthiopianFoodKnowledge {
                 category = EthiopianFoodCategory.FASTING_FOODS
                 fastingFriendly = true
                 veganFriendly = true
+                foodType = FoodType.FASTING
+                dietType = DietType.VEGAN
                 proteinLevel = ProteinLevel.MEDIUM
                 oilLevel = OilLevel.MEDIUM
                 tags.addAll(listOf("fasting", "vegetarian", "traditional"))
@@ -52,6 +58,8 @@ object EthiopianFoodKnowledge {
             }
             lowerName.contains("kitfo") -> {
                 category = EthiopianFoodCategory.MEAT_FOODS
+                foodType = FoodType.NON_FASTING
+                dietType = DietType.MEAT
                 proteinLevel = ProteinLevel.HIGH
                 spiceLevel = SpiceLevel.VERY_SPICY
                 oilLevel = OilLevel.HIGH
@@ -65,6 +73,8 @@ object EthiopianFoodKnowledge {
                 spiceLevel = SpiceLevel.SPICY
                 tags.addAll(listOf("traditional", "spicy"))
                 if (lowerName.contains("doro")) {
+                    foodType = FoodType.NON_FASTING
+                    dietType = DietType.MEAT
                     tags.add("meat")
                     ingredients = listOf("chicken", "berbere", "onion", "niter kibbeh", "boiled eggs")
                     mealRegion = "Amhara"
@@ -78,6 +88,8 @@ object EthiopianFoodKnowledge {
             }
             lowerName.contains("tibs") -> {
                 category = EthiopianFoodCategory.MEAT_FOODS
+                foodType = FoodType.NON_FASTING
+                dietType = DietType.MEAT
                 proteinLevel = ProteinLevel.HIGH
                 tags.addAll(listOf("meat", "protein-rich"))
             }
@@ -85,6 +97,8 @@ object EthiopianFoodKnowledge {
                 category = EthiopianFoodCategory.FASTING_FOODS
                 fastingFriendly = true
                 veganFriendly = true
+                foodType = FoodType.FASTING
+                dietType = DietType.VEGAN
                 proteinLevel = ProteinLevel.HIGH
                 tags.addAll(listOf("fasting", "vegetarian", "protein-rich"))
             }
@@ -92,6 +106,8 @@ object EthiopianFoodKnowledge {
                 category = EthiopianFoodCategory.HEALTHY
                 fastingFriendly = true
                 veganFriendly = true
+                foodType = FoodType.FASTING
+                dietType = DietType.VEGAN
                 proteinLevel = ProteinLevel.LOW
                 tags.addAll(listOf("healthy", "vegetarian", "fasting"))
             }
@@ -100,8 +116,12 @@ object EthiopianFoodKnowledge {
                 if (lowerName.contains("beyaynetu")) {
                     fastingFriendly = true
                     veganFriendly = true
+                    foodType = FoodType.FASTING
+                    dietType = DietType.VEGAN
                     tags.addAll(listOf("fasting", "vegetarian", "family-size"))
                 } else {
+                    foodType = FoodType.NON_FASTING
+                    dietType = DietType.MEAT
                     proteinLevel = ProteinLevel.HIGH
                     tags.addAll(listOf("meat", "family-size"))
                 }
@@ -112,11 +132,15 @@ object EthiopianFoodKnowledge {
         if (lowerName.contains("fasting") || lowerName.contains("tsom")) {
             fastingFriendly = true
             veganFriendly = true
+            foodType = FoodType.FASTING
+            dietType = DietType.VEGAN
             tags.add("fasting")
         }
         if (lowerName.contains("meat") || lowerName.contains("siga")) {
             fastingFriendly = false
             veganFriendly = false
+            foodType = FoodType.NON_FASTING
+            dietType = DietType.MEAT
             tags.add("meat")
         }
 
@@ -124,6 +148,8 @@ object EthiopianFoodKnowledge {
             category = category,
             fastingFriendly = fastingFriendly,
             veganFriendly = veganFriendly,
+            foodType = foodType,
+            dietType = dietType,
             proteinLevel = proteinLevel,
             spiceLevel = spiceLevel,
             carbLevel = carbLevel,

@@ -58,4 +58,12 @@ class InteractionRepository(
             firestore.collection("interactions").add(event).await()
         } catch (e: Exception) {}
     }
+
+    suspend fun trackBehaviorEvent(event: com.example.food.data.model.AnalyticsEvent) {
+        try {
+            firestore.collection("user_behavior").document(event.id).set(event).await()
+        } catch (e: Exception) {
+            // Background tracking, fail silently
+        }
+    }
 }

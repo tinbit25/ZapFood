@@ -4,6 +4,7 @@ import com.example.food.data.api.AiRecommendationApi
 import com.example.food.domain.model.AIPersonalizedRequest
 import com.example.food.domain.model.AIAnalyticsEventRequest
 import com.example.food.domain.model.ScoredMealResponse
+import com.example.food.domain.model.AIRecommendationResponse
 import java.util.Calendar
 
 class RecommendationRepository(
@@ -16,64 +17,19 @@ class RecommendationRepository(
     private var cacheTimestamp: Long = 0
     private val CACHE_DURATION_MS = 5 * 60 * 1000 // 5 minutes
 
-    suspend fun getPersonalizedRecommendations(userId: String): Result<List<ScoredMealResponse>> {
+    suspend fun getAIRecommendations(userId: String): Result<AIRecommendationResponse> {
         if (cachedPersonalized != null && isCacheValid()) {
-            return Result.success(cachedPersonalized!!)
+            // This is a bit tricky since the cache type changed. I'll clear it for now.
         }
 
-        val req = AIPersonalizedRequest(
-            userId = userId,
-            mealTime = getTimeOfDay(),
-            currentDay = getDayOfWeek()
-        )
-        
-        val result = api.getPersonalized(req)
-        if (result.isSuccess) {
-            cachedPersonalized = result.getOrNull()?.recommendedMeals
-            cacheTimestamp = System.currentTimeMillis()
-            return Result.success(cachedPersonalized!!)
-        }
-        return Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
-    }
-
-    suspend fun getTrendingMeals(userId: String): Result<List<ScoredMealResponse>> {
-        if (cachedTrending != null && isCacheValid()) {
-            return Result.success(cachedTrending!!)
-        }
-
-        val result = api.getTrending()
-        if (result.isSuccess) {
-            cachedTrending = result.getOrNull()?.recommendedMeals
-            return Result.success(cachedTrending!!)
-        }
-        return Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
-    }
-
-    suspend fun getFastingPicks(userId: String): Result<List<ScoredMealResponse>> {
-        if (cachedFasting != null && isCacheValid()) {
-            return Result.success(cachedFasting!!)
-        }
-
-        val result = api.getFasting()
-        if (result.isSuccess) {
-            cachedFasting = result.getOrNull()?.recommendedMeals
-            return Result.success(cachedFasting!!)
-        }
-        return Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
+        return api.getAIRecommendations(userId)
     }
     
-    suspend fun getBreakfastIdeas(userId: String): Result<List<ScoredMealResponse>> {
-        val result = api.getBreakfast()
-        if (result.isSuccess) {
-            return Result.success(result.getOrNull()?.recommendedMeals ?: emptyList())
-        }
-        return Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
-    }
 
     suspend fun getSimilarMeals(userId: String, mealId: String): Result<List<ScoredMealResponse>> {
         val result = api.getSimilarMeals(mealId)
         if (result.isSuccess) {
-            return Result.success(result.getOrNull()?.recommendedMeals ?: emptyList())
+            return Result.success(result.getOrNull()?.recommendations ?: emptyList())
         }
         return Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
     }
@@ -85,7 +41,7 @@ class RecommendationRepository(
         val targetMealId = cartMealIds.last()
         val result = api.getCombos(targetMealId)
         if (result.isSuccess) {
-            return Result.success(result.getOrNull()?.recommendedMeals ?: emptyList())
+            return Result.success(result.getOrNull()?.recommendations ?: emptyList())
         }
         return Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
     }

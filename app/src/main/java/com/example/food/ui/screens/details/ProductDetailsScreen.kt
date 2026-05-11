@@ -26,6 +26,8 @@ import com.example.food.ui.components.TopNavBar
 import com.example.food.data.model.Meal
 import com.example.food.ui.viewmodel.CartViewModel
 import com.example.food.ui.viewmodel.MealViewModel
+import com.example.food.ui.viewmodel.RecommendationViewModel
+import com.example.food.ui.viewmodel.UserViewModel
 import com.example.food.core.util.Resource
 
 @Composable
@@ -33,8 +35,11 @@ fun ProductDetailsScreen(
     productId: String,
     cartViewModel: CartViewModel,
     onNavigateBack: () -> Unit,
-    mealViewModel: MealViewModel = viewModel()
+    mealViewModel: MealViewModel = viewModel(),
+    recommendationViewModel: RecommendationViewModel = viewModel(),
+    userViewModel: UserViewModel = viewModel()
 ) {
+    val user by userViewModel.user.collectAsState()
     val mealsState by mealViewModel.mealsState.collectAsState()
     var quantity by remember { mutableIntStateOf(1) }
     
@@ -50,6 +55,10 @@ fun ProductDetailsScreen(
         vendorId = "mock-vendor",
         vendorName = "Burger King"
     )
+
+    LaunchedEffect(productId) {
+        user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "view_meal", productId, context = "product_details") }
+    }
 
     Column(
         modifier = Modifier
@@ -160,6 +169,7 @@ fun ProductDetailsScreen(
                     repeat(quantity) {
                         cartViewModel.addMeal(product) 
                     }
+                    user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "add_to_cart", productId, context = "product_details") }
                     onNavigateBack()
                 },
                 modifier = Modifier.weight(1f),

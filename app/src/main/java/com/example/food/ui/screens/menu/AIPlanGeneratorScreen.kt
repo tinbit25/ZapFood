@@ -23,14 +23,14 @@ import com.example.food.data.model.*
 import com.example.food.ui.components.CustomTextField
 import com.example.food.ui.components.PrimaryButton
 import com.example.food.ui.components.TopNavBar
-import com.example.food.ui.viewmodel.AIViewModel
+import com.example.food.ui.viewmodel.AiViewModel
 import com.example.food.ui.viewmodel.MealPlanViewModel
 
 @Composable
 fun AIPlanGeneratorScreen(
     onPlanGenerated: (String) -> Unit,
     onNavigateBack: () -> Unit,
-    aiViewModel: AIViewModel = viewModel(),
+    aiViewModel: AiViewModel = viewModel(),
     mealPlanViewModel: MealPlanViewModel,
     userViewModel: com.example.food.ui.viewmodel.UserViewModel = viewModel()
 ) {

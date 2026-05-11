@@ -1,5 +1,7 @@
 package com.example.food.ui.viewmodel
 
+import com.example.food.core.util.AnalyticsTracker
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.food.core.util.Resource
@@ -43,8 +45,11 @@ class MealViewModel(
         updateFilters(_currentFilters.value.copy(query = query))
     }
 
-    fun applyCategory(category: com.example.food.data.model.EthiopianFoodCategory?) {
+    fun applyCategory(category: com.example.food.data.model.EthiopianFoodCategory?, userId: String? = null) {
         updateFilters(_currentFilters.value.copy(category = category))
+        userId?.let { uid ->
+            // Log category view
+        }
     }
 
     fun createMeal(user: User, meal: Meal, onResult: (Resource<Unit>) -> Unit) {

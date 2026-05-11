@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,6 +39,8 @@ fun CartScreen(
 ) {
     val cartState by cartViewModel.cartState.collectAsState()
     val suggestionsState by recommendationViewModel.cartSuggestionsState.collectAsState()
+    val userViewModel: com.example.food.ui.viewmodel.UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val user by userViewModel.user.collectAsState()
     
     // Load recommendations when cart changes
     LaunchedEffect(cartState.meals) {
@@ -73,7 +76,10 @@ fun CartScreen(
                         price = plan.price,
                         imageUrl = plan.imageUrl,
                         quantity = quantity,
-                        onIncrease = { cartViewModel.addMealPlan(plan) },
+                        onIncrease = { 
+                            cartViewModel.addMealPlan(plan) 
+                            user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "add_to_cart", plan.id, context = "cart_meal_plan") }
+                        },
                         onDecrease = { /* Implement decrease in VM */ }
                     )
                 }
@@ -84,7 +90,10 @@ fun CartScreen(
                         price = meal.price,
                         imageUrl = meal.imageUrl,
                         quantity = quantity,
-                        onIncrease = { cartViewModel.addMeal(meal) },
+                        onIncrease = { 
+                            cartViewModel.addMeal(meal) 
+                            user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "add_to_cart", meal.id, context = "cart_meal") }
+                        },
                         onDecrease = { /* Implement decrease in VM */ }
                     )
                 }
@@ -124,12 +133,12 @@ fun CartScreen(
                                     // Construct dummy Meal for cart insertion
                                     val dummyMeal = com.example.food.data.model.Meal(
                                         id = combo.mealId,
-                                        name = combo.name,
-                                        price = combo.price,
-                                        imageUrl = combo.imageUrl,
-                                        vendorId = combo.vendorId,
+                                        name = combo.mealName,
+                                        price = 0.0,
+                                        imageUrl = "",
+                                        vendorId = "vendor_id",
                                         category = "traditional",
-                                        tags = combo.tags,
+                                        tags = emptyList(),
                                         ingredients = emptyList(),
                                         spiceLevel = com.example.food.data.model.SpiceLevel.MEDIUM,
                                         fastingFriendly = false,
@@ -248,19 +257,23 @@ fun ComboRecommendationCard(
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            AsyncImage(
-                model = recommendation.imageUrl,
-                contentDescription = recommendation.name,
-                contentScale = ContentScale.Crop,
+            Box(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(RoundedCornerShape(12.dp))
-            )
+                    .background(Color(0xFF252525)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Restaurant,
+                    contentDescription = null,
+                    tint = Color(0xFFF16B24).copy(alpha = 0.5f)
+                )
+            }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = recommendation.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(text = recommendation.reason, fontSize = 12.sp, color = Color(0xFFF16B24))
-                Text(text = "ETB ${"%,.0f".format(recommendation.price)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                Text(text = recommendation.mealName, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = recommendation.reason, fontSize = 12.sp, color = Color.LightGray, maxLines = 2)
             }
             
             Button(

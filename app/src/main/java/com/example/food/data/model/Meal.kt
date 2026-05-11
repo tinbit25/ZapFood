@@ -19,6 +19,8 @@ data class Meal(
     val spiceLevel: SpiceLevel = SpiceLevel.MEDIUM,
     val fastingFriendly: Boolean = false,
     val veganFriendly: Boolean = false,
+    val foodType: FoodType = FoodType.NON_FASTING,
+    val dietType: DietType = DietType.MEAT,
 
     val proteinLevel: ProteinLevel = ProteinLevel.MEDIUM,
     val carbLevel: CarbLevel = CarbLevel.MEDIUM,
@@ -48,6 +50,10 @@ data class Meal(
         if (tags.any { it.isBlank() }) return false // Empty tag prevention
         return true
     }
+
+    fun isFastingMeal(): Boolean = foodType == FoodType.FASTING
+    fun isMeatMeal(): Boolean = dietType == DietType.MEAT
+    fun isVeganMeal(): Boolean = dietType == DietType.VEGAN
 }
 
 data class MealFilters(
@@ -60,6 +66,8 @@ data class MealFilters(
     val spiceLevel: SpiceLevel? = null,
     val fastingFriendly: Boolean? = null,
     val veganFriendly: Boolean? = null,
+    val foodType: FoodType? = null,
+    val dietType: DietType? = null,
     val proteinLevel: ProteinLevel? = null,
     val carbLevel: CarbLevel? = null,
     val oilLevel: OilLevel? = null,

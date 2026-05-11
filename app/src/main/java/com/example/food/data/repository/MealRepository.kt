@@ -51,6 +51,8 @@ class MealRepository {
         filters.proteinLevel?.let { query = query.whereEqualTo("proteinLevel", it.name) }
         filters.carbLevel?.let { query = query.whereEqualTo("carbLevel", it.name) }
         filters.oilLevel?.let { query = query.whereEqualTo("oilLevel", it.name) }
+        filters.foodType?.let { query = query.whereEqualTo("foodType", it.name) }
+        filters.dietType?.let { query = query.whereEqualTo("dietType", it.name) }
         
         // List/Array filters
         filters.mealTime?.let { query = query.whereArrayContains("mealTime", it.name) }

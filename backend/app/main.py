@@ -26,6 +26,7 @@ from app.routes.recommendations import router as recommendations_router
 from app.routes.similarity import router as similarity_router
 from app.routes.combos import router as combos_router
 from app.routes.ai_routes import router as ai_router
+from app.routes.analytics_routes import router as analytics_router
 from app.services.firebase_client import initialize_firebase
 
 # ─────────────────────────────────────────────────────────────
@@ -123,6 +124,7 @@ app.include_router(recommendations_router, prefix="/api")
 app.include_router(similarity_router, prefix="/api")
 app.include_router(combos_router, prefix="/api")
 app.include_router(ai_router)
+app.include_router(analytics_router)
 
 
 # ─────────────────────────────────────────────────────────────

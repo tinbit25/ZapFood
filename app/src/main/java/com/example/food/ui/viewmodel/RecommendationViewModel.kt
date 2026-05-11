@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.food.data.repository.RecommendationRepository
 import com.example.food.domain.model.ScoredMealResponse
+import com.example.food.domain.model.AIRecommendationResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,8 +16,8 @@ sealed class RecommendationState {
     object Loading : RecommendationState()
     data class Success(
         val personalized: List<ScoredMealResponse>,
-        val trending: List<ScoredMealResponse>,
-        val fastingPicks: List<ScoredMealResponse>
+        val reasoning: String = "",
+        val nutritionSummary: String = ""
     ) : RecommendationState()
     data class Error(val message: String) : RecommendationState()
     
@@ -35,22 +36,17 @@ class RecommendationViewModel(
         viewModelScope.launch {
             _uiState.value = RecommendationState.Loading
             try {
-                // Fetch in parallel ideally, but doing sequentially for safety here
-                val personalizedResult = repository.getPersonalizedRecommendations(userId)
-                val trendingResult = repository.getTrendingMeals(userId)
-                val fastingResult = repository.getFastingPicks(userId)
+                val result = repository.getAIRecommendations(userId)
 
-                if (personalizedResult.isSuccess && trendingResult.isSuccess) {
+                if (result.isSuccess) {
+                    val data = result.getOrNull()
                     _uiState.value = RecommendationState.Success(
-                        personalized = personalizedResult.getOrNull() ?: emptyList(),
-                        trending = trendingResult.getOrNull() ?: emptyList(),
-                        fastingPicks = fastingResult.getOrNull() ?: emptyList()
+                        personalized = data?.recommendations ?: emptyList(),
+                        reasoning = data?.reasoning ?: "",
+                        nutritionSummary = data?.nutritionSummary ?: ""
                     )
                 } else {
-                    val errorMsg = personalizedResult.exceptionOrNull()?.message 
-                        ?: trendingResult.exceptionOrNull()?.message 
-                        ?: "Failed to load recommendations"
-                    _uiState.value = RecommendationState.Error(errorMsg)
+                    _uiState.value = RecommendationState.Error(result.exceptionOrNull()?.message ?: "Failed to load recommendations")
                 }
             } catch (e: Exception) {
                 _uiState.value = RecommendationState.Error(e.message ?: "Unknown error")

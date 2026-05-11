@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -66,6 +67,13 @@ fun HomeScreen(
         ExploreItem("Cafes", "☕")
     )
 
+    val foodFilters = listOf(
+        FoodFilter("Fasting", "🌱", com.example.food.data.model.FoodType.FASTING, null),
+        FoodFilter("Meat", "🍖", com.example.food.data.model.FoodType.NON_FASTING, com.example.food.data.model.DietType.MEAT),
+        FoodFilter("Vegan", "🥬", null, com.example.food.data.model.DietType.VEGAN)
+    )
+
+    var selectedFilter by remember { mutableStateOf<FoodFilter?>(null) }
     var showFastingPrompt by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -95,7 +103,31 @@ fun HomeScreen(
         // Search Bar
         item {
             HomeSearchBar(onSearchClick = onNavigateToSearch)
-            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // Ethiopian Classification Filters
+        item {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(foodFilters) { filter ->
+                    FilterChip(
+                        filter = filter,
+                        isSelected = selectedFilter == filter,
+                        onClick = {
+                            selectedFilter = if (selectedFilter == filter) null else filter
+                            mealViewModel.updateFilters(
+                                mealViewModel.currentFilters.value.copy(
+                                    foodType = selectedFilter?.foodType,
+                                    dietType = selectedFilter?.dietType
+                                )
+                            )
+                        }
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
         // Smart Hybrid Fasting Prompt
@@ -131,12 +163,16 @@ fun HomeScreen(
                                 onClick = { 
                                     showFastingPrompt = false 
                                     mealViewModel.applyCategory(com.example.food.data.model.EthiopianFoodCategory.FASTING_FOODS)
+                                    user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "fasting_prompt_accepted", context = "home_fasting_card") }
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                             ) {
                                 Text("Yes")
                             }
-                            TextButton(onClick = { showFastingPrompt = false }) {
+                            TextButton(onClick = { 
+                                showFastingPrompt = false 
+                                user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId ?: "guest", "fasting_prompt_ignored", context = "home_fasting_card") }
+                            }) {
                                 Text("No, thanks", color = Color.LightGray)
                             }
                         }
@@ -243,7 +279,7 @@ fun HomeScreen(
             }
         }
 
-        // AI Recommendation Sections
+        // AI Recommendation Section
         if (recommendationState is RecommendationState.Loading) {
             item {
                 Box(modifier = Modifier.fillMaxWidth().height(150.dp), contentAlignment = Alignment.Center) {
@@ -253,52 +289,44 @@ fun HomeScreen(
         } else if (recommendationState is RecommendationState.Success) {
             val recData = recommendationState as RecommendationState.Success
             
-            // Recommended For You
-            if (recData.personalized.isNotEmpty()) {
-                item {
-                    SectionHeader(title = "Recommended For You \uD83C\uDFAF", onActionClick = {})
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+            item {
+                SectionHeader(title = "AI Personalized Picks \uD83E\uDDE0", onActionClick = {})
+                if (recData.reasoning.isNotEmpty()) {
+                    Text(
+                        text = recData.reasoning,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                        color = Color.LightGray,
+                        fontSize = 14.sp,
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                    )
+                }
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(recData.personalized) { scoredMeal ->
+                        PopularMealCard(scoredMeal = scoredMeal, onClick = { 
+                            user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "view_meal", scoredMeal.mealId, context = "ai_picks") }
+                            onNavigateToDetails(scoredMeal.mealId) 
+                        })
+                    }
+                }
+                if (recData.nutritionSummary.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
                     ) {
-                        items(recData.personalized) { scoredMeal ->
-                            PopularMealCard(scoredMeal = scoredMeal, onClick = { onNavigateToDetails(scoredMeal.mealId) })
-                        }
+                        Text(
+                            text = "Nutrition Insight: ${recData.nutritionSummary}",
+                            modifier = Modifier.padding(16.dp),
+                            color = Color(0xFF4CAF50),
+                            fontSize = 12.sp
+                        )
                     }
                 }
             }
-            
-            // Trending
-            if (recData.trending.isNotEmpty()) {
-                item {
-                    SectionHeader(title = "Trending Ethiopian Meals \uD83D\uDD25", onActionClick = {})
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(recData.trending) { scoredMeal ->
-                            PopularMealCard(scoredMeal = scoredMeal, onClick = { onNavigateToDetails(scoredMeal.mealId) })
-                        }
-                    }
-                }
-            }
-            
-            // Fasting Picks
-            if (recData.fastingPicks.isNotEmpty()) {
-                item {
-                    SectionHeader(title = "Fasting Picks \uD83C\uDF3F", onActionClick = {})
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(recData.fastingPicks) { scoredMeal ->
-                            PopularMealCard(scoredMeal = scoredMeal, onClick = { onNavigateToDetails(scoredMeal.mealId) })
-                        }
-                    }
-                }
-            }
-        } else if (recommendationState is RecommendationState.Error) {
-            // Fallback to local meals if API fails
+        } else {
+            // Fallback to local meals if API fails or is in error state
             item {
                 SectionHeader(title = "Popular Meals", onActionClick = {})
                 LazyRow(
@@ -306,7 +334,10 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(meals) { meal ->
-                        PopularMealCard(meal = meal, onClick = { onNavigateToDetails(meal.id) })
+                        PopularMealCard(meal = meal, onClick = { 
+                            user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "view_meal", meal.id, context = "popular_meals") }
+                            onNavigateToDetails(meal.id) 
+                        })
                     }
                 }
             }
@@ -329,40 +360,38 @@ fun HomeScreen(
 fun PopularMealCard(scoredMeal: ScoredMealResponse, onClick: () -> Unit) {
     Card(
         modifier = Modifier
-            .width(160.dp)
+            .width(200.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
     ) {
         Column {
-            Box(modifier = Modifier.fillMaxWidth().height(140.dp)) {
-                AsyncImage(
-                    model = scoredMeal.imageUrl,
-                    contentDescription = scoredMeal.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+            Box(modifier = Modifier.fillMaxWidth().height(120.dp).background(Color(0xFF252525))) {
+                Icon(
+                    imageVector = Icons.Default.Restaurant,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp).align(Alignment.Center),
+                    tint = Color(0xFFF16B24).copy(alpha = 0.5f)
                 )
                 // Score Badge
-                if (scoredMeal.matchScore > 0) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(8.dp)
-                            .background(Color(0xFF4CAF50).copy(alpha = 0.9f), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "${(scoredMeal.matchScore * 100).toInt()}% Match",
-                            color = Color.White,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(8.dp)
+                        .background(Color(0xFF4CAF50).copy(alpha = 0.9f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "${scoredMeal.score.toInt()}% Match",
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(
-                    text = scoredMeal.name,
+                    text = scoredMeal.mealName,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -370,21 +399,13 @@ fun PopularMealCard(scoredMeal: ScoredMealResponse, onClick: () -> Unit) {
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFC107), modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "4.8", fontSize = 12.sp, color = Color.Gray) // Stub rating for now
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "ETB ${scoredMeal.price.toInt()}", fontSize = 12.sp, color = Color(0xFFF16B24), fontWeight = FontWeight.Bold)
-                }
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = scoredMeal.reason,
-                    fontSize = 11.sp,
-                    color = Color.Gray,
-                    maxLines = 2,
+                    fontSize = 12.sp,
+                    color = Color.LightGray,
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
-                    lineHeight = 14.sp
+                    lineHeight = 16.sp
                 )
             }
         }
@@ -418,6 +439,40 @@ fun PopularMealCard(meal: Meal, onClick: () -> Unit) {
 }
 
 data class ExploreItem(val name: String, val icon: String)
+data class FoodFilter(
+    val name: String, 
+    val icon: String, 
+    val foodType: com.example.food.data.model.FoodType?, 
+    val dietType: com.example.food.data.model.DietType?
+)
+
+@Composable
+fun FilterChip(
+    filter: FoodFilter,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.clickable { onClick() },
+        shape = RoundedCornerShape(24.dp),
+        color = if (isSelected) Color(0xFFF16B24) else Color(0xFF1A1A1A),
+        border = if (isSelected) null else BorderStroke(1.dp, Color.Gray.copy(alpha = 0.3f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = filter.icon, fontSize = 16.sp)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = filter.name,
+                color = if (isSelected) Color.White else Color.LightGray,
+                fontSize = 14.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+            )
+        }
+    }
+}
 
 @Composable
 fun HomeSearchBar(onSearchClick: () -> Unit) {
@@ -682,6 +737,10 @@ fun ImmersiveLargeCard(plan: MealPlan, onClick: () -> Unit) {
 
 @Composable
 fun SectionHeader(title: String, onActionClick: () -> Unit) {
+    val userViewModel: com.example.food.ui.viewmodel.UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val recommendationViewModel: com.example.food.ui.viewmodel.RecommendationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val user by userViewModel.user.collectAsState()
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -700,7 +759,10 @@ fun SectionHeader(title: String, onActionClick: () -> Unit) {
             fontSize = 14.sp,
             color = Color(0xFFF16B24),
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.clickable { onActionClick() }
+            modifier = Modifier.clickable { 
+                user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "see_all_clicked", context = title) }
+                onActionClick() 
+            }
         )
     }
 }

@@ -1,5 +1,8 @@
 package com.example.food.ui.viewmodel
 
+import com.example.food.core.util.AnalyticsTracker
+import com.example.food.data.model.InteractionType
+
 import androidx.lifecycle.ViewModel
 import com.example.food.data.model.Meal
 import com.example.food.data.model.MealPlan
@@ -20,7 +23,7 @@ class CartViewModel : ViewModel() {
     private val _cartState = MutableStateFlow(CartState())
     val cartState: StateFlow<CartState> = _cartState.asStateFlow()
 
-    fun addMeal(meal: Meal) {
+    fun addMeal(meal: Meal, userId: String? = null) {
         _cartState.update { state ->
             val existing = state.meals.find { it.first.id == meal.id }
             if (existing != null) {
@@ -30,6 +33,9 @@ class CartViewModel : ViewModel() {
             } else {
                 state.copy(meals = state.meals + (meal to 1))
             }
+        }
+        userId?.let { uid ->
+            AnalyticsTracker.logEvent(uid, InteractionType.CART_ADD, meal)
         }
     }
 

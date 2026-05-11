@@ -53,3 +53,14 @@ enum class EthiopianFoodCategory {
     CULTURAL_FEASTS,
     GENERAL
 }
+
+enum class FoodType {
+    FASTING,
+    NON_FASTING
+}
+
+enum class DietType {
+    VEGAN,
+    VEGETARIAN,
+    MEAT
+}

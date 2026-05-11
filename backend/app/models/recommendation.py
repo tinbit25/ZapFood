@@ -10,6 +10,8 @@ class Meal(BaseModel):
     vendorName: str
     fastingFriendly: bool = False
     veganFriendly: bool = False
+    foodType: str = "NON_FASTING"
+    dietType: str = "MEAT"
     spiceLevel: str = "MEDIUM"
     proteinLevel: str = "MEDIUM"
     mealTime: List[str] = []

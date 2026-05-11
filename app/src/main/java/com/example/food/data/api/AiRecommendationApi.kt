@@ -30,17 +30,8 @@ class AiRecommendationApi(
 
     // ── Recommendations ─────────────────────────────────────────
 
-    suspend fun getPersonalized(request: AIPersonalizedRequest): Result<AIRecommendationResponse> =
-        postRequest("/api/ai/recommendations", request, AIRecommendationResponse::class.java)
-
-    suspend fun getTrending(): Result<AIRecommendationResponse> =
-        getRequest("/api/ai/trending", AIRecommendationResponse::class.java)
-
-    suspend fun getFasting(): Result<AIRecommendationResponse> =
-        getRequest("/api/ai/fasting", AIRecommendationResponse::class.java)
-        
-    suspend fun getBreakfast(): Result<AIRecommendationResponse> =
-        getRequest("/api/ai/breakfast", AIRecommendationResponse::class.java)
+    suspend fun getAIRecommendations(userId: String): Result<AIRecommendationResponse> =
+        getRequest("/api/recommendations/ai/$userId", AIRecommendationResponse::class.java)
 
     // ── Similarity ──────────────────────────────────────────────
 

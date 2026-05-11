@@ -105,7 +105,7 @@ fun VendorMenuManagementScreen(
     if (showAddDialog) {
         AddMealDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { name, price, category, fasting, vegan, spice, protein, mealTime, tags, ingredients, mealRegion ->
+            onConfirm = { name, price, category, foodType, dietType, fasting, vegan, spice, protein, mealTime, tags, ingredients, mealRegion ->
                 user?.let { vendor ->
                     val newMeal = com.example.food.data.model.Meal(
                         name = name,
@@ -114,6 +114,8 @@ fun VendorMenuManagementScreen(
                         vendorId = vendor.userId,
                         vendorName = vendor.displayName ?: "Vendor",
                         imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop",
+                        foodType = foodType,
+                        dietType = dietType,
                         fastingFriendly = fasting,
                         veganFriendly = vegan,
                         spiceLevel = spice,
@@ -145,13 +147,15 @@ fun VendorMenuManagementScreen(
 @Composable
 fun AddMealDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, Double, EthiopianFoodCategory, Boolean, Boolean, SpiceLevel, ProteinLevel, MealTime, String, List<String>, String) -> Unit
+    onConfirm: (String, Double, EthiopianFoodCategory, com.example.food.data.model.FoodType, com.example.food.data.model.DietType, Boolean, Boolean, SpiceLevel, ProteinLevel, MealTime, String, List<String>, String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
     var category by remember { mutableStateOf(EthiopianFoodCategory.GENERAL) }
     
     // AI Metadata State
+    var foodType by remember { mutableStateOf(com.example.food.data.model.FoodType.NON_FASTING) }
+    var dietType by remember { mutableStateOf(com.example.food.data.model.DietType.MEAT) }
     var fastingFriendly by remember { mutableStateOf(false) }
     var veganFriendly by remember { mutableStateOf(false) }
     var spiceLevel by remember { mutableStateOf(SpiceLevel.MEDIUM) }
@@ -165,6 +169,8 @@ fun AddMealDialog(
     var proteinExpanded by remember { mutableStateOf(false) }
     var timeExpanded by remember { mutableStateOf(false) }
     var categoryExpanded by remember { mutableStateOf(false) }
+    var foodTypeExpanded by remember { mutableStateOf(false) }
+    var dietTypeExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -182,6 +188,8 @@ fun AddMealDialog(
                                 category = suggestion.category
                                 fastingFriendly = suggestion.fastingFriendly
                                 veganFriendly = suggestion.veganFriendly
+                                foodType = suggestion.foodType
+                                dietType = suggestion.dietType
                                 proteinLevel = suggestion.proteinLevel
                                 spiceLevel = suggestion.spiceLevel
                                 tags = suggestion.tags.joinToString(", ")
@@ -222,6 +230,38 @@ fun AddMealDialog(
                         }
                     }
                     
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Classification", color = Color.LightGray, fontWeight = FontWeight.Bold)
+                    
+                    Box {
+                        OutlinedButton(onClick = { foodTypeExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(foodType.name, color = Color.White)
+                        }
+                        DropdownMenu(expanded = foodTypeExpanded, onDismissRequest = { foodTypeExpanded = false }) {
+                            com.example.food.data.model.FoodType.values().forEach { type ->
+                                DropdownMenuItem(
+                                    text = { Text(type.name) },
+                                    onClick = { foodType = type; foodTypeExpanded = false }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box {
+                        OutlinedButton(onClick = { dietTypeExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(dietType.name, color = Color.White)
+                        }
+                        DropdownMenu(expanded = dietTypeExpanded, onDismissRequest = { dietTypeExpanded = false }) {
+                            com.example.food.data.model.DietType.values().forEach { type ->
+                                DropdownMenuItem(
+                                    text = { Text(type.name) },
+                                    onClick = { dietType = type; dietTypeExpanded = false }
+                                )
+                            }
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Dietary Info", color = Color.LightGray, fontWeight = FontWeight.Bold)
                     
@@ -300,7 +340,7 @@ fun AddMealDialog(
             TextButton(
                 onClick = {
                     val priceVal = price.toDoubleOrNull() ?: 0.0
-                    onConfirm(name, priceVal, category, fastingFriendly, veganFriendly, spiceLevel, proteinLevel, mealTime, tags, ingredients, mealRegion)
+                    onConfirm(name, priceVal, category, foodType, dietType, fastingFriendly, veganFriendly, spiceLevel, proteinLevel, mealTime, tags, ingredients, mealRegion)
                 }
             ) {
                 Text("Add", color = Color(0xFFF16B24))
