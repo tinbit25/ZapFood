@@ -88,4 +88,16 @@ class UserViewModel(
     fun clearError() {
         _errorMessage.value = null
     }
+
+    fun deleteAccount(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            val result = userRepository.deleteAccount()
+            if (result.isSuccess) {
+                _user.value = null
+                onSuccess()
+            } else {
+                _errorMessage.value = "Failed to delete account: ${result.exceptionOrNull()?.localizedMessage}"
+            }
+        }
+    }
 }

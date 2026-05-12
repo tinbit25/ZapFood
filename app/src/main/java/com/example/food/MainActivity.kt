@@ -19,7 +19,14 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.core.content.ContextCompat
+import com.example.food.data.datastore.AppTheme
+import com.example.food.data.datastore.SettingsRepository
+import com.example.food.ui.theme.ThemeManager
 
 class MainActivity : ComponentActivity() {
 
@@ -68,7 +75,10 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
 
         setContent {
-            FoodTheme {
+            val settingsRepo = remember { SettingsRepository(applicationContext) }
+            val appTheme by settingsRepo.theme.collectAsState(initial = AppTheme.DARK)
+            val isDark = ThemeManager.shouldUserDarkTheme(appTheme)
+            FoodTheme(darkTheme = isDark) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

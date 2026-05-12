@@ -46,6 +46,10 @@ import com.example.food.ui.screens.feedback.FeedbackScreen
 import com.example.food.ui.screens.onboarding.OnboardingScreen
 import com.example.food.ui.viewmodel.OnboardingViewModel
 import com.example.food.data.datastore.OnboardingDataStore
+import com.example.food.ui.screens.settings.SettingsScreen
+import com.example.food.ui.viewmodel.SettingsViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.getInstance
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
@@ -66,7 +70,8 @@ fun AppNavigation(
     paymentViewModel: com.example.food.ui.viewmodel.PaymentViewModel = viewModel(),
     recommendationViewModel: RecommendationViewModel = viewModel(),
     authViewModel: AuthViewModel = viewModel(),
-    addressViewModel: com.example.food.ui.viewmodel.AddressViewModel = viewModel()
+    addressViewModel: com.example.food.ui.viewmodel.AddressViewModel = viewModel(),
+    settingsViewModel: SettingsViewModel = viewModel()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -368,7 +373,7 @@ fun AppNavigation(
                     onNavigateToEdit = { navController.navigate(Screen.ProfileEdit.route) },
                     onNavigateToOrders = { navController.navigate(Screen.OrderHistory.route) },
                     onNavigateToAddresses = { navController.navigate(Screen.Addresses.route) },
-                    onNavigateToSettings = { /* Add settings route if needed */ },
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     onNavigateToAdmin = { navController.navigate(Screen.AdminDashboard.route) },
                     onNavigateToVendorDashboard = { navController.navigate(Screen.VendorDashboard.route) },
                     onNavigateToVendorMenu = { navController.navigate(Screen.VendorMenuManagement.route) },
@@ -565,6 +570,18 @@ fun AppNavigation(
                 OrderTrackingScreen(
                     orderId = orderId,
                     onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable(route = Screen.Settings.route) {
+                SettingsScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onLogout = {
+                        navController.navigate(Screen.Welcome.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    settingsViewModel = settingsViewModel,
+                    userViewModel = userViewModel
                 )
             }
         }

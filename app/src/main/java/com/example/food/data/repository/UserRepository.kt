@@ -71,4 +71,21 @@ open class UserRepository {
             false
         }
     }
+
+    suspend fun deleteAccount(): Result<Unit> {
+        return try {
+            val user = auth.currentUser ?: throw Exception("No user logged in")
+            val userId = user.uid
+            
+            // 1. Delete Firestore document
+            firestore.collection("users").document(userId).delete().await()
+            
+            // 2. Delete Firebase Auth user
+            user.delete().await()
+            
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
