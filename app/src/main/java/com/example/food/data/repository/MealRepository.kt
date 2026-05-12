@@ -75,7 +75,14 @@ class MealRepository {
                 return@addSnapshotListener
             }
 
-            val meals = snapshot?.documents?.mapNotNull { it.toObject(Meal::class.java) } ?: emptyList()
+            val meals = snapshot?.documents?.mapNotNull { doc ->
+                try {
+                    doc.toObject(Meal::class.java)
+                } catch (e: Exception) {
+                    android.util.Log.e("MealRepository", "Error parsing meal ${doc.id}: ${e.message}")
+                    null
+                }
+            } ?: emptyList()
             trySend(Resource.Success(meals))
         }
 

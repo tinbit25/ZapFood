@@ -81,7 +81,14 @@ class VendorRepository {
                 return@addSnapshotListener
             }
 
-            val vendors = snapshot?.documents?.mapNotNull { it.toObject(Vendor::class.java) } ?: emptyList()
+            val vendors = snapshot?.documents?.mapNotNull { doc ->
+                try {
+                    doc.toObject(Vendor::class.java)
+                } catch (e: Exception) {
+                    Log.e("VendorRepository", "Error parsing vendor ${doc.id}: ${e.message}")
+                    null
+                }
+            } ?: emptyList()
             trySend(Resource.Success(vendors))
         }
 

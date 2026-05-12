@@ -393,7 +393,7 @@ fun VendorSearchResultCard(vendor: Vendor, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(vendor.businessName, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Text(
-                    vendor.businessTypes.joinToString(", ") { it.displayName },
+                    vendor.businessTypes.filterNotNull().joinToString(", ") { it.displayName },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

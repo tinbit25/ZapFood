@@ -6,10 +6,12 @@ import com.example.food.data.model.MealFilters
 import com.example.food.data.model.User
 import com.example.food.data.model.UserRole
 import com.example.food.data.repository.MealRepository
+import com.example.food.data.repository.VendorRepository
 import kotlinx.coroutines.flow.Flow
 
 class MealUseCase(
-    private val mealRepository: MealRepository = MealRepository()
+    private val mealRepository: MealRepository = MealRepository(),
+    private val vendorRepository: VendorRepository = VendorRepository()
 ) {
     suspend fun createMeal(user: User, meal: Meal): Resource<Unit> {
         // 1. Check user role = VENDOR and status = APPROVED
@@ -24,13 +26,17 @@ class MealUseCase(
         if (meal.name.isBlank()) return Resource.Error("Meal name cannot be empty")
         if (meal.price <= 0) return Resource.Error("Price must be greater than zero")
 
-        // 3. Attach vendorId automatically
+        // 3. Fetch Vendor for Business Name
+        val vendor = vendorRepository.getVendorByUserId(user.userId)
+        val businessName = vendor?.businessName ?: user.displayName ?: "Unknown Vendor"
+
+        // 4. Attach vendorId automatically
         val mealToSave = meal.copy(
             vendorId = user.userId,
-            vendorName = user.displayName ?: "Unknown Vendor"
+            vendorName = businessName
         )
 
-        // 4. Save meal
+        // 5. Save meal
         return mealRepository.saveMeal(mealToSave)
     }
 
@@ -44,5 +50,11 @@ class MealUseCase(
 
     suspend fun seedMeals(vendorIds: List<String>): Resource<Unit> {
         return mealRepository.seedMeals(vendorIds)
+    }
+
+    suspend fun seedMealsForVendor(user: User): Resource<Unit> {
+        val vendor = vendorRepository.getVendorByUserId(user.userId)
+        val businessName = vendor?.businessName ?: user.displayName ?: "Unknown Vendor"
+        return mealRepository.seedMealsForVendor(user.userId, businessName)
     }
 }

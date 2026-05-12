@@ -76,11 +76,17 @@ fun VendorDashboardScreen(
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(text = "No incoming orders", color = Color.Gray)
                                 Spacer(modifier = Modifier.height(16.dp))
+                                val mealViewModel: com.example.food.ui.viewmodel.MealViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
                                 Button(
                                     onClick = {
                                         scope.launch {
-                                            com.example.food.data.repository.MealRepository().seedMealsForVendor(user!!.userId, user!!.displayName ?: "My Shop")
-                                            snackbarHostState.showSnackbar("Meals seeded! Restart app to see them.")
+                                            mealViewModel.seedMealsForVendor(user!!) { result ->
+                                                if (result is Resource.Success) {
+                                                    scope.launch {
+                                                        snackbarHostState.showSnackbar("Meals seeded with your business name!")
+                                                    }
+                                                }
+                                            }
                                         }
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24))

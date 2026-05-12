@@ -68,4 +68,14 @@ class MealViewModel(
             onResult(result)
         }
     }
+
+    fun seedMealsForVendor(user: com.example.food.data.model.User, onResult: (Resource<Unit>) -> Unit) {
+        viewModelScope.launch {
+            val result = mealUseCase.seedMealsForVendor(user)
+            if (result is Resource.Success) {
+                fetchMeals()
+            }
+            onResult(result)
+        }
+    }
 }
