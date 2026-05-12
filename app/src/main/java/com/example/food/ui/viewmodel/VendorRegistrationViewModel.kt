@@ -2,7 +2,6 @@ package com.example.food.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.food.core.util.Resource
 import com.example.food.data.model.*
 import com.example.food.data.repository.VendorRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,16 +25,40 @@ class VendorRegistrationViewModel(
 
     // Form State
     var businessName = MutableStateFlow("")
-    var businessType = MutableStateFlow(VendorType.RESTAURANT)
+    // Hybrid: Multiple types
+    var businessTypes = MutableStateFlow(setOf(VendorType.RESTAURANT))
     var description = MutableStateFlow("")
     var phoneNumber = MutableStateFlow("")
     var deliveryRadius = MutableStateFlow(5.0)
     var cuisineTypes = MutableStateFlow(listOf<String>())
     
+    // Service Tags
+    var serviceTags = MutableStateFlow(setOf<ServiceTag>())
+    
     // Legal/Verification
     var taxId = MutableStateFlow("")
     var bankInfo = MutableStateFlow("")
     var mobileMoney = MutableStateFlow("")
+
+    fun toggleBusinessType(type: VendorType) {
+        val current = businessTypes.value.toMutableSet()
+        if (current.contains(type)) {
+            if (current.size > 1) current.remove(type)
+        } else {
+            current.add(type)
+        }
+        businessTypes.value = current
+    }
+
+    fun toggleServiceTag(tag: ServiceTag) {
+        val current = serviceTags.value.toMutableSet()
+        if (current.contains(tag)) {
+            current.remove(tag)
+        } else {
+            current.add(tag)
+        }
+        serviceTags.value = current
+    }
 
     fun register(userId: String) {
         if (businessName.value.isBlank() || phoneNumber.value.isBlank()) {
@@ -49,11 +72,12 @@ class VendorRegistrationViewModel(
             val vendor = Vendor(
                 userId = userId,
                 businessName = businessName.value,
-                businessType = businessType.value,
+                businessTypes = businessTypes.value,
                 description = description.value,
                 phoneNumber = phoneNumber.value,
                 deliveryRadiusKm = deliveryRadius.value,
                 cuisineTypes = cuisineTypes.value,
+                serviceTags = serviceTags.value,
                 verificationInfo = VendorVerificationInfo(
                     taxId = taxId.value,
                     bankAccountInfo = bankInfo.value,

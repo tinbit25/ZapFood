@@ -280,6 +280,9 @@ fun AppNavigation(
                     },
                     onNavigateToNotifications = {
                         navController.navigate(Screen.Notifications.route)
+                    },
+                    onNavigateToVendorDiscovery = {
+                        navController.navigate(Screen.VendorDiscovery.route)
                     }
                 )
             }
@@ -605,6 +608,15 @@ fun AppNavigation(
                         navController.navigate(Screen.Profile.route) {
                             popUpTo(Screen.VendorRegistration.route) { inclusive = true }
                         }
+                    }
+                )
+            }
+            composable(route = Screen.VendorDiscovery.route) {
+                com.example.food.ui.screens.discovery.VendorDiscoveryScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToVendor = { vendorId ->
+                        // Navigate to vendor detail or menu
+                        navController.navigate(Screen.Home.route) // Placeholder
                     }
                 )
             }

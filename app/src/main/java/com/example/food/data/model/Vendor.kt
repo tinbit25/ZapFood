@@ -10,6 +10,13 @@ enum class VendorType(val displayName: String) {
     CHEF_SERVICE("Chef Service")
 }
 
+enum class ServiceTag(val displayName: String, val icon: String) {
+    DELIVERY("Delivery", "🚚"),
+    DINE_IN("Dine-in", "🍽️"),
+    TAKEAWAY("Takeaway", "🥡"),
+    CHEF_AT_HOME("Chef at Home", "👨‍🍳")
+}
+
 enum class VerificationStatus {
     PENDING,
     REJECTED,
@@ -26,19 +33,20 @@ data class Vendor(
     val id: String = UUID.randomUUID().toString(),
     val userId: String,
     val businessName: String,
-    val businessType: VendorType = VendorType.RESTAURANT,
+    // Hybrid Support: Set of types instead of a single type
+    val businessTypes: Set<VendorType> = setOf(VendorType.RESTAURANT),
     val description: String,
     val cuisineTypes: List<String> = emptyList(),
     val operatingHours: Map<String, OperatingHours> = emptyMap(),
     val deliveryRadiusKm: Double = 5.0,
     val phoneNumber: String,
+    val serviceTags: Set<ServiceTag> = emptySet(),
     val logoUrl: String? = null,
     val rating: Float = 0f,
     val totalOrders: Int = 0,
     val isVerified: Boolean = false,
     val verificationStatus: VerificationStatus = VerificationStatus.PENDING,
     val createdAt: Long = System.currentTimeMillis(),
-    // Private/Admin-only verification info (stored in main doc or sub-collection)
     val verificationInfo: VendorVerificationInfo? = null
 )
 

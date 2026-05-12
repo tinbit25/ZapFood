@@ -49,7 +49,8 @@ fun HomeScreen(
     onNavigateToMealPlanDetails: (String) -> Unit,
     onNavigateToSmartPreference: () -> Unit,
     onNavigateToSearch: () -> Unit,
-    onNavigateToNotifications: () -> Unit
+    onNavigateToNotifications: () -> Unit,
+    onNavigateToVendorDiscovery: () -> Unit
 ) {
     val user by userViewModel.user.collectAsState()
     val discoverPlansState by mealPlanViewModel.discoverPlansState.collectAsState()

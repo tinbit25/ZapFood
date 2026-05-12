@@ -1,5 +1,6 @@
 package com.example.food.ui.screens.vendor
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.food.data.model.VendorType
+import com.example.food.data.model.ServiceTag
 import com.example.food.ui.components.PrimaryButton
 import com.example.food.ui.components.TopNavBar
 import com.example.food.ui.viewmodel.VendorRegistrationState
@@ -190,7 +192,7 @@ fun RowScope.StepperLine(active: Boolean) {
 fun BasicInfoStep(viewModel: VendorRegistrationViewModel) {
     val businessName by viewModel.businessName.collectAsState()
     val description by viewModel.description.collectAsState()
-    val businessType by viewModel.businessType.collectAsState()
+    val businessTypes by viewModel.businessTypes.collectAsState()
 
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text("Tell us about your business", fontSize = 20.sp, fontWeight = FontWeight.Bold)
@@ -203,32 +205,25 @@ fun BasicInfoStep(viewModel: VendorRegistrationViewModel) {
             shape = RoundedCornerShape(12.dp)
         )
 
-        Text("Business Type", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-        Row(
+        Text("Business Categories (Select all that apply)", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        @OptIn(ExperimentalLayoutApi::class)
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             VendorType.entries.forEach { type ->
-                val selected = businessType == type
-                Surface(
-                    onClick = { viewModel.businessType.value = type },
-                    shape = RoundedCornerShape(12.dp),
-                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.weight(1f).height(80.dp)
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier.padding(4.dp)
-                    ) {
-                        Text(
-                            text = type.displayName,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                val selected = businessTypes.contains(type)
+                FilterChip(
+                    selected = selected,
+                    onClick = { viewModel.toggleBusinessType(type) },
+                    label = { Text(type.displayName) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                )
             }
         }
 
@@ -247,6 +242,7 @@ fun BasicInfoStep(viewModel: VendorRegistrationViewModel) {
 fun OperationsStep(viewModel: VendorRegistrationViewModel) {
     val phone by viewModel.phoneNumber.collectAsState()
     val radius by viewModel.deliveryRadius.collectAsState()
+    val selectedTags by viewModel.serviceTags.collectAsState()
 
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text("Operational Details", fontSize = 20.sp, fontWeight = FontWeight.Bold)
@@ -260,6 +256,39 @@ fun OperationsStep(viewModel: VendorRegistrationViewModel) {
             leadingIcon = { Text("+251 ", modifier = Modifier.padding(start = 12.dp), fontWeight = FontWeight.Bold) }
         )
 
+        Text("Services Offered", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            ServiceTag.entries.forEach { tag ->
+                val selected = selectedTags.contains(tag)
+                Surface(
+                    onClick = { viewModel.toggleServiceTag(tag) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant,
+                    border = if (selected) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(tag.icon, fontSize = 20.sp)
+                        Spacer(Modifier.width(16.dp))
+                        Text(
+                            text = tag.displayName,
+                            modifier = Modifier.weight(1f),
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                        Checkbox(
+                            checked = selected,
+                            onCheckedChange = { viewModel.toggleServiceTag(tag) },
+                            colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
+                        )
+                    }
+                }
+            }
+        }
+
         Column {
             Text("Delivery Radius: ${radius.toInt()} km", fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Slider(
@@ -269,20 +298,6 @@ fun OperationsStep(viewModel: VendorRegistrationViewModel) {
                 steps = 49,
                 colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary)
             )
-        }
-
-        // Placeholder for Operating Hours (Simplified for now)
-        Text("Operating Hours", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.AccessTime, contentDescription = null)
-                Spacer(Modifier.width(12.dp))
-                Text("Default: 08:00 AM - 10:00 PM", fontSize = 14.sp)
-            }
         }
     }
 }
