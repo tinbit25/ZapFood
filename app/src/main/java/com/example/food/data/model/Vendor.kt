@@ -7,7 +7,9 @@ enum class VendorType(val displayName: String) {
     CAFE("Cafe"),
     BAKERY("Bakery"),
     GROCERY("Grocery"),
-    CHEF_SERVICE("Chef Service")
+    CHEF_SERVICE("Chef Service"),
+    JUICE_SHOP("Juice Shop"),
+    FAST_FOOD("Fast Food")
 }
 
 enum class ServiceTag(val displayName: String, val icon: String) {
@@ -33,7 +35,6 @@ data class Vendor(
     val id: String = UUID.randomUUID().toString(),
     val userId: String,
     val businessName: String,
-    // Hybrid Support: List of types instead of a single type
     val businessTypes: List<VendorType> = listOf(VendorType.RESTAURANT),
     val description: String,
     val cuisineTypes: List<String> = emptyList(),
@@ -42,8 +43,13 @@ data class Vendor(
     val phoneNumber: String,
     val serviceTags: List<ServiceTag> = emptyList(),
     val logoUrl: String? = null,
+    val coverImageUrl: String? = null, // Header image for discovery
     val rating: Float = 0f,
+    val reviewCount: Int = 0,
     val totalOrders: Int = 0,
+    val deliveryTimeMin: Int = 20,
+    val deliveryTimeMax: Int = 45,
+    val deliveryFee: Double = 0.0,
     val isVerified: Boolean = false,
     val verificationStatus: VerificationStatus = VerificationStatus.PENDING,
     val createdAt: Long = System.currentTimeMillis(),

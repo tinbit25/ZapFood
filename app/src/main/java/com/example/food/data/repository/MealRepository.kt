@@ -14,6 +14,8 @@ class MealRepository {
     private val firestore = FirebaseFirestore.getInstance()
     private val mealsCollection = firestore.collection("meals")
 
+    fun getMeals(): Flow<Resource<List<Meal>>> = getFilteredMeals(MealFilters())
+
     suspend fun saveMeal(meal: Meal): Resource<Unit> {
         if (!meal.isValid()) {
             return Resource.Error("Invalid meal data: please check the name, price, vendor, and tags.")

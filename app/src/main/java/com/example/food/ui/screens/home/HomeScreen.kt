@@ -145,7 +145,7 @@ fun HomeScreen(
                     com.example.food.ui.components.onboarding.FeatureDiscoveryHint(
                         text = "Find restaurants nearby",
                         icon = "📍",
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).clickable { onNavigateToVendorDiscovery() }
                     )
                     com.example.food.ui.components.onboarding.FeatureDiscoveryHint(
                         text = "Track your order live",
@@ -260,6 +260,44 @@ fun HomeScreen(
         } else if (recommendationState is RecommendationState.Success) {
             val recData = recommendationState as RecommendationState.Success
             
+            // NEW: Top Restaurants Section
+            item {
+                SectionHeader(
+                    title = "Top Restaurants 🏆", 
+                    onActionClick = onNavigateToVendorDiscovery 
+                )
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Using discovery UI style for consistency
+                    items(recData.popularInAddis.take(5)) { scoredMeal ->
+                        // Since we don't have the full vendor list here yet, 
+                        // we show a simplified placeholder or just link to discovery
+                        Surface(
+                            modifier = Modifier
+                                .width(280.dp)
+                                .height(100.dp)
+                                .clickable { onNavigateToVendorDiscovery() },
+                            shape = RoundedCornerShape(16.dp),
+                            color = colorScheme.primary.copy(alpha = 0.1f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Restaurant, contentDescription = null, tint = colorScheme.primary)
+                                Spacer(Modifier.width(12.dp))
+                                Column {
+                                    Text("Explore Local Favorites", fontWeight = FontWeight.Bold)
+                                    Text("Find the best stews & combos", fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             if (recData.smartPicks.isNotEmpty()) {
                 item {
                     SectionHeader(title = "Smart Picks For You ✨", onActionClick = {})

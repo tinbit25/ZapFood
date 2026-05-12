@@ -31,7 +31,10 @@ import com.example.food.ui.screens.orders.OrderTrackingScreen
 import com.example.food.ui.viewmodel.UserViewModel
 import com.example.food.ui.viewmodel.MealPlanViewModel
 import com.example.food.ui.viewmodel.CartViewModel
+import com.example.food.ui.viewmodel.SearchViewModel
 import com.example.food.ui.viewmodel.RecommendationViewModel
+import com.example.food.data.repository.RecentSearchRepository
+import com.example.food.ui.screens.search.GlobalSearchScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.food.ui.screens.auth.PreferencesOnboardingScreen
 import com.example.food.ui.screens.menu.SmartPreferenceScreen
@@ -49,7 +52,6 @@ import com.example.food.data.datastore.OnboardingDataStore
 import com.example.food.ui.screens.settings.SettingsScreen
 import com.example.food.ui.screens.settings.NotificationSettingsScreen
 import com.example.food.ui.viewmodel.SettingsViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.getInstance
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -58,6 +60,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.food.ui.components.BottomNavBar
+import com.example.food.ui.screens.vendor.VendorDiscoveryScreen
 import androidx.compose.runtime.LaunchedEffect
 import com.example.food.MainActivity
 
@@ -599,12 +602,42 @@ fun AppNavigation(
                     userViewModel = userViewModel
                 )
             }
+            composable(route = Screen.Search.route) {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val searchViewModel: SearchViewModel = viewModel(
+                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                            return SearchViewModel(
+                                recentSearchRepository = RecentSearchRepository(context)
+                            ) as T
+                        }
+                    }
+                )
+                GlobalSearchScreen(
+                    onNavigateToMeal = { mealId -> 
+                        navController.navigate(Screen.ProductDetails.createRoute(mealId))
+                    },
+                    onNavigateToVendor = { vendorId -> /* Navigate to Vendor Detail */ },
+                    onNavigateBack = { navController.popBackStack() },
+                    viewModel = searchViewModel
+                )
+            }
+
             composable(route = Screen.NotificationSettings.route) {
                 NotificationSettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
                     settingsViewModel = settingsViewModel
                 )
             }
+            composable(route = Screen.VendorDiscovery.route) {
+                VendorDiscoveryScreen(
+                    onNavigateToVendor = { vendorId ->
+                        // Future: Navigate to Vendor Detail/Menu
+                    },
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
             composable(route = Screen.VendorRegistration.route) {
                 val user by userViewModel.user.collectAsState()
                 com.example.food.ui.screens.vendor.VendorRegistrationScreen(
@@ -614,15 +647,6 @@ fun AppNavigation(
                         navController.navigate(Screen.Profile.route) {
                             popUpTo(Screen.VendorRegistration.route) { inclusive = true }
                         }
-                    }
-                )
-            }
-            composable(route = Screen.VendorDiscovery.route) {
-                com.example.food.ui.screens.discovery.VendorDiscoveryScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToVendor = { vendorId ->
-                        // Navigate to vendor detail or menu
-                        navController.navigate(Screen.Home.route) // Placeholder
                     }
                 )
             }

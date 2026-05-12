@@ -18,9 +18,6 @@ class VendorRepository {
     private val firestore = FirebaseFirestore.getInstance()
     private val vendorsCollection = firestore.collection("vendors")
 
-    /**
-     * Registers a new vendor or updates an existing one.
-     */
     suspend fun registerVendor(vendor: Vendor): Boolean {
         return try {
             vendorsCollection.document(vendor.id).set(vendor).await()
@@ -31,9 +28,6 @@ class VendorRepository {
         }
     }
 
-    /**
-     * Retrieves a vendor by their User ID.
-     */
     suspend fun getVendorByUserId(userId: String): Vendor? {
         return try {
             val query = vendorsCollection.whereEqualTo("userId", userId).get().await()
@@ -44,9 +38,6 @@ class VendorRepository {
         }
     }
 
-    /**
-     * Retrieves a vendor by their ID.
-     */
     suspend fun getVendorById(vendorId: String): Vendor? {
         return try {
             vendorsCollection.document(vendorId).get().await().toObject(Vendor::class.java)
@@ -57,27 +48,32 @@ class VendorRepository {
     }
 
     /**
-     * Hybrid Search: Filter vendors by type or service tag.
+     * Comprehensive Search and Filter
      */
-    fun getFilteredVendors(
+    fun getVendors(
         type: VendorType? = null,
         tag: ServiceTag? = null,
-        queryText: String? = null
+        queryText: String? = null,
+        sortBy: String? = null, // "rating", "createdAt", "totalOrders"
+        limit: Long = 20
     ): Flow<Resource<List<Vendor>>> = callbackFlow {
         trySend(Resource.Loading())
 
         var query: Query = vendorsCollection
 
-        // Multi-type support: businessTypes is a Set, so we use array-contains
         type?.let { query = query.whereArrayContains("businessTypes", it.name) }
-        
-        // Multi-service support: serviceTags is a Set
         tag?.let { query = query.whereArrayContains("serviceTags", it.name) }
 
         if (!queryText.isNullOrBlank()) {
             query = query.whereGreaterThanOrEqualTo("businessName", queryText)
                 .whereLessThanOrEqualTo("businessName", queryText + "\uf8ff")
         }
+
+        sortBy?.let {
+            query = query.orderBy(it, Query.Direction.DESCENDING)
+        }
+
+        query = query.limit(limit)
 
         val listener = query.addSnapshotListener { snapshot, error ->
             if (error != null) {
@@ -93,8 +89,12 @@ class VendorRepository {
     }
 
     /**
-     * Updates specific verification info (Admin-only capability).
+     * Specific Section Queries
      */
+    fun getTopRatedVendors() = getVendors(sortBy = "rating", limit = 10)
+    fun getPopularVendors() = getVendors(sortBy = "totalOrders", limit = 10)
+    fun getNewVendors() = getVendors(sortBy = "createdAt", limit = 10)
+    
     suspend fun updateVerificationStatus(vendorId: String, status: com.example.food.data.model.VerificationStatus): Boolean {
         return try {
             vendorsCollection.document(vendorId).update("verificationStatus", status).await()
