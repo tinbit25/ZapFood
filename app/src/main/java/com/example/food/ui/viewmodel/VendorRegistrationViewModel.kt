@@ -26,22 +26,24 @@ class VendorRegistrationViewModel(
     // Form State
     var businessName = MutableStateFlow("")
     // Hybrid: Multiple types
-    var businessTypes = MutableStateFlow(setOf(VendorType.RESTAURANT))
+    var businessTypes = MutableStateFlow(listOf(VendorType.RESTAURANT))
     var description = MutableStateFlow("")
     var phoneNumber = MutableStateFlow("")
     var deliveryRadius = MutableStateFlow(5.0)
     var cuisineTypes = MutableStateFlow(listOf<String>())
     
     // Service Tags
-    var serviceTags = MutableStateFlow(setOf<ServiceTag>())
+    var serviceTags = MutableStateFlow(listOf<ServiceTag>())
     
     // Legal/Verification
     var taxId = MutableStateFlow("")
     var bankInfo = MutableStateFlow("")
     var mobileMoney = MutableStateFlow("")
+    var licenseUri = MutableStateFlow<android.net.Uri?>(null)
+    var sanitationUri = MutableStateFlow<android.net.Uri?>(null)
 
     fun toggleBusinessType(type: VendorType) {
-        val current = businessTypes.value.toMutableSet()
+        val current = businessTypes.value.toMutableList()
         if (current.contains(type)) {
             if (current.size > 1) current.remove(type)
         } else {
@@ -51,7 +53,7 @@ class VendorRegistrationViewModel(
     }
 
     fun toggleServiceTag(tag: ServiceTag) {
-        val current = serviceTags.value.toMutableSet()
+        val current = serviceTags.value.toMutableList()
         if (current.contains(tag)) {
             current.remove(tag)
         } else {

@@ -121,6 +121,31 @@ fun ProfileScreen(
                 ProfileMenuItem(icon = Icons.Default.RestaurantMenu, title = "Manage Menu", onClick = onNavigateToVendorMenu)
             }
             
+            val isVendorComplete by userViewModel.isVendorProfileComplete.collectAsState()
+            
+            if (user?.role == UserRole.VENDOR && isVendorComplete == false) {
+                Surface(
+                    onClick = onNavigateToVendorRegistration,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    color = colorScheme.errorContainer.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(12.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.error.copy(alpha = 0.5f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Warning, contentDescription = null, tint = colorScheme.error)
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Complete Business Profile", fontWeight = FontWeight.Bold, color = colorScheme.onErrorContainer)
+                            Text("Essential info missing to start selling", fontSize = 12.sp, color = colorScheme.onErrorContainer.copy(alpha = 0.7f))
+                        }
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colorScheme.error)
+                    }
+                }
+            }
+
             if (user?.role == UserRole.CUSTOMER) {
                 ProfileMenuItem(icon = Icons.Default.Favorite, title = "Favorite Meals", onClick = { /* Navigate to Favorites */ })
                 ProfileMenuItem(icon = Icons.Default.Stars, title = "Reward Points: $pointsBalance", onClick = { /* Show points details */ })

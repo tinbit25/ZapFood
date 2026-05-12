@@ -203,9 +203,15 @@ fun AppNavigation(
             
             composable(route = Screen.SignUp.route) {
                 SignUpScreen(
-                    onNavigateToOnboarding = {
-                        navController.navigate(Screen.PreferencesOnboarding.route) {
-                            popUpTo(Screen.Welcome.route) { inclusive = true }
+                    onNavigateToOnboarding = { role ->
+                        if (role == com.example.food.data.model.UserRole.VENDOR) {
+                            navController.navigate(Screen.VendorRegistration.route) {
+                                popUpTo(Screen.Welcome.route) { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate(Screen.PreferencesOnboarding.route) {
+                                popUpTo(Screen.Welcome.route) { inclusive = true }
+                            }
                         }
                     },
                     onNavigateToLogin = { navController.navigate(Screen.Login.route) }

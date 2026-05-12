@@ -33,14 +33,14 @@ data class Vendor(
     val id: String = UUID.randomUUID().toString(),
     val userId: String,
     val businessName: String,
-    // Hybrid Support: Set of types instead of a single type
-    val businessTypes: Set<VendorType> = setOf(VendorType.RESTAURANT),
+    // Hybrid Support: List of types instead of a single type
+    val businessTypes: List<VendorType> = listOf(VendorType.RESTAURANT),
     val description: String,
     val cuisineTypes: List<String> = emptyList(),
     val operatingHours: Map<String, OperatingHours> = emptyMap(),
     val deliveryRadiusKm: Double = 5.0,
     val phoneNumber: String,
-    val serviceTags: Set<ServiceTag> = emptySet(),
+    val serviceTags: List<ServiceTag> = emptyList(),
     val logoUrl: String? = null,
     val rating: Float = 0f,
     val totalOrders: Int = 0,

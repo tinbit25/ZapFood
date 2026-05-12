@@ -206,24 +206,32 @@ fun BasicInfoStep(viewModel: VendorRegistrationViewModel) {
         )
 
         Text("Business Categories (Select all that apply)", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-        @OptIn(ExperimentalLayoutApi::class)
-        FlowRow(
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            VendorType.entries.forEach { type ->
-                val selected = businessTypes.contains(type)
-                FilterChip(
-                    selected = selected,
-                    onClick = { viewModel.toggleBusinessType(type) },
-                    label = { Text(type.displayName) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primary,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                )
+            val chunks = VendorType.values().toList().chunked(2)
+            chunks.forEach { rowTypes ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    rowTypes.forEach { type ->
+                        val selected = businessTypes.contains(type)
+                        FilterChip(
+                            selected = selected,
+                            onClick = { viewModel.toggleBusinessType(type) },
+                            label = { Text(type.displayName) },
+                            modifier = Modifier.weight(1f),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                    if (rowTypes.size < 2) Spacer(Modifier.weight(1f))
+                }
             }
         }
 
@@ -342,30 +350,73 @@ fun VerificationStep(viewModel: VendorRegistrationViewModel) {
             leadingIcon = { Text("+251 ", modifier = Modifier.padding(start = 12.dp), fontWeight = FontWeight.Bold) }
         )
 
-        // Document Upload Placeholders
-        DocumentUploadItem(title = "Business License", icon = Icons.Default.Description)
-        DocumentUploadItem(title = "Sanitation Certificate", icon = Icons.Default.HealthAndSafety)
+        val licenseUri by viewModel.licenseUri.collectAsState()
+        val sanitationUri by viewModel.sanitationUri.collectAsState()
+
+        val licenseLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+        ) { uri ->
+            viewModel.licenseUri.value = uri
+        }
+
+        val sanitationLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+        ) { uri ->
+            viewModel.sanitationUri.value = uri
+        }
+
+        // Document Upload
+        DocumentUploadItem(
+            title = if (licenseUri != null) "License Attached" else "Business License", 
+            icon = Icons.Default.Info,
+            isSelected = licenseUri != null,
+            onClick = { licenseLauncher.launch("image/*") }
+        )
+        
+        Spacer(Modifier.height(12.dp))
+
+        DocumentUploadItem(
+            title = if (sanitationUri != null) "Certificate Attached" else "Sanitation Certificate", 
+            icon = Icons.Default.Check,
+            isSelected = sanitationUri != null,
+            onClick = { sanitationLauncher.launch("image/*") }
+        )
     }
 }
 
 @Composable
-fun DocumentUploadItem(title: String, icon: ImageVector) {
+fun DocumentUploadItem(title: String, icon: ImageVector, isSelected: Boolean, onClick: () -> Unit) {
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { /* Handle Upload */ },
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp, 
+            if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+        )
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Icon(
+                if (isSelected) Icons.Default.CheckCircle else icon, 
+                contentDescription = null, 
+                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Spacer(Modifier.width(16.dp))
-            Text(title, modifier = Modifier.weight(1f), fontSize = 14.sp)
-            Icon(Icons.Default.CloudUpload, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                title, 
+                modifier = Modifier.weight(1f), 
+                fontSize = 14.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+            )
+            Icon(
+                if (isSelected) Icons.Default.Done else Icons.Default.CloudUpload, 
+                contentDescription = null, 
+                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

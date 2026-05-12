@@ -29,15 +29,16 @@ import com.example.food.ui.components.TopNavBar
 
 @Composable
 fun SignUpScreen(
-    onNavigateToOnboarding: () -> Unit,
+    onNavigateToOnboarding: (com.example.food.data.model.UserRole) -> Unit,
     onNavigateToLogin: () -> Unit,
     viewModel: AuthViewModel = viewModel()
 ) {
     val authState by viewModel.authState.collectAsState()
+    var selectedRole by remember { mutableStateOf(com.example.food.data.model.UserRole.CUSTOMER) }
 
     LaunchedEffect(authState) {
         if (authState is AdvancedAuthState.Success) {
-            onNavigateToOnboarding()
+            onNavigateToOnboarding(selectedRole)
         }
     }
 
@@ -45,7 +46,6 @@ fun SignUpScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var selectedRole by remember { mutableStateOf(UserRole.CUSTOMER) }
     var passwordVisible by remember { mutableStateOf(false) }
 
     Column(

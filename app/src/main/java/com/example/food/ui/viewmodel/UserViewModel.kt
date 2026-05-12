@@ -20,8 +20,13 @@ class UserViewModel(
     private val _user = MutableStateFlow<User?>(null)
     val user: StateFlow<User?> = _user.asStateFlow()
 
+    private val _isVendorProfileComplete = MutableStateFlow<Boolean?>(null)
+    val isVendorProfileComplete: StateFlow<Boolean?> = _isVendorProfileComplete.asStateFlow()
+
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private val vendorRepository = com.example.food.data.repository.VendorRepository()
 
     init {
         fetchUser()
@@ -31,6 +36,21 @@ class UserViewModel(
         viewModelScope.launch {
             userRepository.getUserProfile().collect { profile ->
                 _user.value = profile
+                if (profile?.role == com.example.food.data.model.UserRole.VENDOR) {
+                    checkVendorProfile(profile.userId)
+                }
+            }
+        }
+    }
+
+    private fun checkVendorProfile(userId: String) {
+        if (userId.isBlank()) return
+        viewModelScope.launch {
+            try {
+                val vendor = vendorRepository.getVendorByUserId(userId)
+                _isVendorProfileComplete.value = vendor != null
+            } catch (e: Exception) {
+                _isVendorProfileComplete.value = false
             }
         }
     }
