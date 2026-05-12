@@ -42,11 +42,12 @@ fun CartScreen(
     val userViewModel: com.example.food.ui.viewmodel.UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     val user by userViewModel.user.collectAsState()
     
-    // Load recommendations when cart changes
+    val colorScheme = MaterialTheme.colorScheme
+    
     LaunchedEffect(cartState.meals) {
         val cartMeals = cartState.meals.map { it.first }
         if (cartMeals.isNotEmpty()) {
-            recommendationViewModel.loadCartSuggestions("current_user_id", cartMeals)
+            recommendationViewModel.loadCartSuggestions(user?.userId ?: "guest", cartMeals)
         }
     }
     
@@ -56,13 +57,13 @@ fun CartScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F0F0F))
+            .background(colorScheme.background)
     ) {
         TopNavBar(title = "My Cart")
 
         if (cartState.meals.isEmpty() && cartState.mealPlans.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "Your cart is empty", fontSize = 18.sp, color = Color.Gray)
+                Text(text = "Your cart is empty", fontSize = 18.sp, color = colorScheme.onSurfaceVariant)
             }
         } else {
             LazyColumn(
@@ -76,10 +77,7 @@ fun CartScreen(
                         price = plan.price,
                         imageUrl = plan.imageUrl,
                         quantity = quantity,
-                        onIncrease = { 
-                            cartViewModel.addMealPlan(plan) 
-                            user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "add_to_cart", plan.id, context = "cart_meal_plan") }
-                        },
+                        onIncrease = { cartViewModel.addMealPlan(plan) },
                         onDecrease = { /* Implement decrease in VM */ }
                     )
                 }
@@ -90,17 +88,14 @@ fun CartScreen(
                         price = meal.price,
                         imageUrl = meal.imageUrl,
                         quantity = quantity,
-                        onIncrease = { 
-                            cartViewModel.addMeal(meal) 
-                            user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "add_to_cart", meal.id, context = "cart_meal") }
-                        },
+                        onIncrease = { cartViewModel.addMeal(meal) },
                         onDecrease = { /* Implement decrease in VM */ }
                     )
                 }
 
                 item {
                     Spacer(modifier = Modifier.height(24.dp))
-                    HorizontalDivider(color = Color.Gray.copy(alpha = 0.3f))
+                    HorizontalDivider(color = colorScheme.outline.copy(alpha = 0.3f))
                     Spacer(modifier = Modifier.height(24.dp))
 
                     ReceiptRow("Subtotal", "ETB ${"%,.0f".format(cartState.subtotal * 1000)}")
@@ -112,7 +107,6 @@ fun CartScreen(
                     Spacer(modifier = Modifier.height(32.dp))
                 }
                 
-                // Smart Cart Suggestions
                 if (suggestionsState is RecommendationState.CartSuggestionsLoaded) {
                     val suggestions = (suggestionsState as RecommendationState.CartSuggestionsLoaded).suggestions
                     if (suggestions.isNotEmpty()) {
@@ -121,7 +115,7 @@ fun CartScreen(
                                 text = "Frequently Ordered Together ✨",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                color = colorScheme.onBackground,
                                 modifier = Modifier.padding(bottom = 16.dp)
                             )
                         }
@@ -130,7 +124,6 @@ fun CartScreen(
                             ComboRecommendationCard(
                                 recommendation = combo,
                                 onAddClick = { 
-                                    // Construct dummy Meal for cart insertion
                                     val dummyMeal = com.example.food.data.model.Meal(
                                         id = combo.mealId,
                                         name = combo.mealName,
@@ -146,12 +139,6 @@ fun CartScreen(
                                         popularityScore = 50.0
                                     )
                                     cartViewModel.addMeal(dummyMeal) 
-                                    recommendationViewModel.trackAnalyticsEvent(
-                                        userId = "user123",
-                                        eventType = "combo_accepted",
-                                        mealId = combo.mealId,
-                                        context = "cart"
-                                    )
                                 }
                             )
                         }
@@ -167,7 +154,7 @@ fun CartScreen(
                 PrimaryButton(
                     text = "Checkout | ETB ${"%,.0f".format(total)}",
                     onClick = onNavigateToCheckout,
-                    backgroundColor = Color(0xFFF16B24)
+                    backgroundColor = colorScheme.primary
                 )
             }
         }
@@ -183,11 +170,12 @@ fun CartItemRow(
     onIncrease: () -> Unit,
     onDecrease: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        color = Color(0xFF1A1A1A),
+        color = colorScheme.surfaceVariant,
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -201,22 +189,22 @@ fun CartItemRow(
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(text = "ETB ${"%,.0f".format(price * 1000)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF16B24))
+                Text(text = name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colorScheme.onSurface)
+                Text(text = "ETB ${"%,.0f".format(price * 1000)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = colorScheme.primary)
             }
             
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onDecrease, modifier = Modifier.size(32.dp)) {
-                    Icon(imageVector = Icons.Default.Remove, contentDescription = "Decrease", tint = Color.White)
+                    Icon(imageVector = Icons.Default.Remove, contentDescription = "Decrease", tint = colorScheme.onSurface)
                 }
-                Text(text = quantity.toString(), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(horizontal = 8.dp))
+                Text(text = quantity.toString(), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colorScheme.onSurface, modifier = Modifier.padding(horizontal = 8.dp))
                 IconButton(
                     onClick = onIncrease,
                     modifier = Modifier
                         .size(32.dp)
-                        .background(Color(0xFFF16B24), CircleShape)
+                        .background(colorScheme.primary, CircleShape)
                 ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Increase", tint = Color.White)
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Increase", tint = colorScheme.onPrimary)
                 }
             }
         }
@@ -225,6 +213,7 @@ fun CartItemRow(
 
 @Composable
 fun ReceiptRow(label: String, amount: String, isTotal: Boolean = false) {
+    val colorScheme = MaterialTheme.colorScheme
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
@@ -233,13 +222,13 @@ fun ReceiptRow(label: String, amount: String, isTotal: Boolean = false) {
             text = label,
             fontSize = if (isTotal) 18.sp else 14.sp,
             fontWeight = if (isTotal) FontWeight.Bold else FontWeight.Medium,
-            color = if (isTotal) Color.White else Color.Gray
+            color = if (isTotal) colorScheme.onBackground else colorScheme.onSurfaceVariant
         )
         Text(
             text = amount,
             fontSize = if (isTotal) 18.sp else 14.sp,
             fontWeight = if (isTotal) FontWeight.Bold else FontWeight.Medium,
-            color = if (isTotal) Color(0xFFF16B24) else Color.White
+            color = if (isTotal) colorScheme.primary else colorScheme.onBackground
         )
     }
 }
@@ -249,11 +238,12 @@ fun ComboRecommendationCard(
     recommendation: ScoredMealResponse,
     onAddClick: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        color = Color(0xFF1A1A1A),
+        color = colorScheme.surfaceVariant,
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -261,28 +251,28 @@ fun ComboRecommendationCard(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFF252525)),
+                    .background(colorScheme.surface.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Restaurant,
                     contentDescription = null,
-                    tint = Color(0xFFF16B24).copy(alpha = 0.5f)
+                    tint = colorScheme.primary.copy(alpha = 0.5f)
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = recommendation.mealName, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(text = recommendation.reason, fontSize = 12.sp, color = Color.LightGray, maxLines = 2)
+                Text(text = recommendation.mealName, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colorScheme.onSurface)
+                Text(text = recommendation.reason, fontSize = 12.sp, color = colorScheme.onSurfaceVariant, maxLines = 2)
             }
             
             Button(
                 onClick = onAddClick,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24)),
+                colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
                 shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
             ) {
-                Text(text = "Add", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(text = "Add", color = colorScheme.onPrimary, fontWeight = FontWeight.Bold)
             }
         }
     }

@@ -47,12 +47,14 @@ import com.example.food.ui.screens.onboarding.OnboardingScreen
 import com.example.food.ui.viewmodel.OnboardingViewModel
 import com.example.food.data.datastore.OnboardingDataStore
 import com.example.food.ui.screens.settings.SettingsScreen
+import com.example.food.ui.screens.settings.NotificationSettingsScreen
 import com.example.food.ui.viewmodel.SettingsViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.getInstance
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.food.ui.components.BottomNavBar
@@ -381,6 +383,9 @@ fun AppNavigation(
                     onNavigateToAdminSupport = { navController.navigate(Screen.AdminSupportDashboard.route) },
                     onNavigateToLinkPhone = {
                         navController.navigate(Screen.PhoneLogin.createRoute(true))
+                    },
+                    onNavigateToVendorRegistration = {
+                        navController.navigate(Screen.VendorRegistration.route)
                     }
                 )
             }
@@ -575,6 +580,7 @@ fun AppNavigation(
             composable(route = Screen.Settings.route) {
                 SettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
+                    onNavigateToNotifications = { navController.navigate(Screen.NotificationSettings.route) },
                     onLogout = {
                         navController.navigate(Screen.Welcome.route) {
                             popUpTo(0) { inclusive = true }
@@ -582,6 +588,24 @@ fun AppNavigation(
                     },
                     settingsViewModel = settingsViewModel,
                     userViewModel = userViewModel
+                )
+            }
+            composable(route = Screen.NotificationSettings.route) {
+                NotificationSettingsScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    settingsViewModel = settingsViewModel
+                )
+            }
+            composable(route = Screen.VendorRegistration.route) {
+                val user by userViewModel.user.collectAsState()
+                com.example.food.ui.screens.vendor.VendorRegistrationScreen(
+                    userId = user?.userId ?: "",
+                    onNavigateBack = { navController.popBackStack() },
+                    onRegistrationSuccess = {
+                        navController.navigate(Screen.Profile.route) {
+                            popUpTo(Screen.VendorRegistration.route) { inclusive = true }
+                        }
+                    }
                 )
             }
         }

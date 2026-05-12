@@ -1,5 +1,7 @@
 package com.example.food.ui.screens.auth
 
+import com.example.food.data.remote.FCMTokenManager
+
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
@@ -55,6 +57,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     is Resource.Success -> {
                         loginAttempts = 0
                         val (user, tokens) = resource.data!!
+                        FCMTokenManager().syncToken()
                         _authState.value = AdvancedAuthState.Success(user.userId, user.role)
                     }
                     is Resource.Error -> {
@@ -73,6 +76,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 when (resource) {
                     is Resource.Loading -> _authState.value = AdvancedAuthState.Loading
                     is Resource.Success -> {
+                        FCMTokenManager().syncToken()
                         _authState.value = AdvancedAuthState.Success(resource.data!!.userId, resource.data.role)
                     }
                     is Resource.Error -> {
@@ -183,6 +187,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     is Resource.Loading -> _phoneAuthState.value = PhoneAuthState.Loading
                     is Resource.Success -> {
                         _phoneAuthState.value = PhoneAuthState.Verified
+                        FCMTokenManager().syncToken()
                         _authState.value = AdvancedAuthState.Success(resource.data!!.userId, resource.data.role)
                     }
                     is Resource.Error -> {
@@ -232,6 +237,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         val authResult = FirebaseAuth.getInstance().signInWithCredential(firebaseCredential).await()
                         val user = authResult.user
                         if (user != null) {
+                            FCMTokenManager().syncToken()
                             _authState.value = AdvancedAuthState.Success(user.uid, UserRole.CUSTOMER)
                         } else {
                             _authState.value = AdvancedAuthState.Error("Google Sign-In failed: No user returned")

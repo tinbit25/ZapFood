@@ -27,8 +27,6 @@ import com.example.food.data.model.PaymentStatus
 import com.example.food.data.model.PaymentMethod
 import com.example.food.ui.viewmodel.PaymentViewModel
 import com.example.food.ui.viewmodel.PaymentState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 
 @Composable
 fun OrderHistoryScreen(
@@ -41,6 +39,7 @@ fun OrderHistoryScreen(
 ) {
     val user by userViewModel.user.collectAsState()
     val ordersState by orderViewModel.userOrders.collectAsState()
+    val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(user) {
         user?.let { orderViewModel.fetchUserOrders(it.userId) }
@@ -71,26 +70,26 @@ fun OrderHistoryScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F0F0F))
+            .background(colorScheme.background)
     ) {
         TopNavBar(title = "Order History", onBackClick = onNavigateBack)
 
         when (val state = ordersState) {
             is Resource.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color(0xFFF16B24))
+                    CircularProgressIndicator(color = colorScheme.primary)
                 }
             }
             is Resource.Error -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = state.message ?: "An error occurred", color = Color.Red)
+                    Text(text = state.message ?: "An error occurred", color = colorScheme.error)
                 }
             }
             is Resource.Success -> {
                 val orders = state.data ?: emptyList()
                 if (orders.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(text = "No orders found", color = Color.Gray)
+                        Text(text = "No orders found", color = colorScheme.onSurfaceVariant)
                     }
                 } else {
                     LazyColumn(
@@ -139,9 +138,10 @@ fun OrderHistoryCard(
     onLeaveFeedback: () -> Unit,
     onNavigateToTracking: (String) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color(0xFF1A1A1A),
+        color = colorScheme.surfaceVariant,
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -149,13 +149,13 @@ fun OrderHistoryCard(
                 Text(
                     text = "Order #${(order.orderId ?: "id").take(8).uppercase()}",
                     fontWeight = FontWeight.Bold,
-                    color = Color.White,
+                    color = colorScheme.onSurface,
                     fontSize = 14.sp
                 )
                 Text(
                     text = dateFormat.format(Date(order.createdAt)),
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = colorScheme.onSurfaceVariant
                 )
             }
             
@@ -165,23 +165,23 @@ fun OrderHistoryCard(
                 Text(
                     text = "${item.quantity}x ${item.name ?: "Item"}",
                     fontSize = 13.sp,
-                    color = Color.LightGray,
+                    color = colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 2.dp)
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = Color(0xFF2A2A2A), thickness = 1.dp)
+            HorizontalDivider(color = colorScheme.outline.copy(alpha = 0.2f), thickness = 1.dp)
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column {
-                    Text(text = "Total Amount", fontSize = 11.sp, color = Color.Gray)
+                    Text(text = "Total Amount", fontSize = 11.sp, color = colorScheme.onSurfaceVariant)
                     Text(
                         text = "ETB ${order.totalAmount}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFF16B24)
+                        color = colorScheme.primary
                     )
                 }
                 
@@ -197,7 +197,7 @@ fun OrderHistoryCard(
                 Button(
                     onClick = onRetryPayment,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24)),
+                    colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("Retry Payment", fontSize = 14.sp, fontWeight = FontWeight.Bold)
@@ -209,8 +209,8 @@ fun OrderHistoryCard(
                 OutlinedButton(
                     onClick = onCancel,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.Red.copy(alpha = 0.5f)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colorScheme.error),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.error.copy(alpha = 0.5f)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("Cancel Order", fontSize = 14.sp, fontWeight = FontWeight.Bold)

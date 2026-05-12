@@ -29,35 +29,27 @@ import com.example.food.ui.components.TopNavBar
 import com.example.food.ui.viewmodel.SettingsViewModel
 import com.example.food.ui.viewmodel.UserViewModel
 
-private val Orange = Color(0xFFF16B24)
-private val DarkBg = Color(0xFF0F0F0F)
-private val CardBg = Color(0xFF1A1A1A)
-private val DividerGray = Color(0xFF2A2A2A)
-private val TextWhite = Color(0xFFFFFFFF)
-private val TextGray = Color(0xFF9E9E9E)
-private val RedDelete = Color(0xFFE53935)
-
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     onLogout: () -> Unit,
     settingsViewModel: SettingsViewModel = viewModel(),
     userViewModel: UserViewModel
 ) {
     val theme by settingsViewModel.theme.collectAsState()
-    val notifOrder by settingsViewModel.notificationsOrder.collectAsState()
-    val notifPromo by settingsViewModel.notificationsPromo.collectAsState()
-    val notifSystem by settingsViewModel.notificationsSystem.collectAsState()
     val language by settingsViewModel.language.collectAsState()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showLanguagePicker by remember { mutableStateOf(false) }
 
+    val colorScheme = MaterialTheme.colorScheme
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBg)
+            .background(colorScheme.background)
     ) {
         TopNavBar(title = "Settings", onBackClick = onNavigateBack)
 
@@ -72,7 +64,7 @@ fun SettingsScreen(
             SectionHeader("🎨  Appearance")
             Spacer(Modifier.height(12.dp))
 
-            Text("Theme", color = TextGray, fontSize = 13.sp, modifier = Modifier.padding(bottom = 10.dp))
+            Text("Theme", color = colorScheme.onSurfaceVariant, fontSize = 13.sp, modifier = Modifier.padding(bottom = 10.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -107,28 +99,12 @@ fun SettingsScreen(
             Spacer(Modifier.height(12.dp))
 
             SettingsCard {
-                ToggleRow(
-                    icon = Icons.Default.ShoppingBag,
-                    title = "Order Updates",
-                    subtitle = "Status changes, delivery alerts",
-                    checked = notifOrder,
-                    onCheckedChange = { settingsViewModel.setNotificationsOrder(it) }
-                )
-                SettingsDivider()
-                ToggleRow(
-                    icon = Icons.Default.LocalOffer,
-                    title = "Promotions & Deals",
-                    subtitle = "Special offers and discounts",
-                    checked = notifPromo,
-                    onCheckedChange = { settingsViewModel.setNotificationsPromo(it) }
-                )
-                SettingsDivider()
-                ToggleRow(
-                    icon = Icons.Default.Campaign,
-                    title = "System Announcements",
-                    subtitle = "App updates and important info",
-                    checked = notifSystem,
-                    onCheckedChange = { settingsViewModel.setNotificationsSystem(it) }
+                ActionRow(
+                    icon = Icons.Default.NotificationsActive,
+                    title = "Notification Preferences",
+                    subtitle = "Manage alerts for orders, promos, and more",
+                    trailingIcon = Icons.Default.ChevronRight,
+                    onClick = onNavigateToNotifications
                 )
             }
 
@@ -168,7 +144,7 @@ fun SettingsScreen(
                     title = "Delete Account",
                     subtitle = "Permanently remove your account",
                     trailingIcon = Icons.Default.ChevronRight,
-                    titleColor = RedDelete,
+                    titleColor = colorScheme.error,
                     onClick = { showDeleteDialog = true }
                 )
             }
@@ -178,7 +154,7 @@ fun SettingsScreen(
             // Version info
             Text(
                 text = "ZapFood v1.0.0",
-                color = TextGray,
+                color = colorScheme.onSurfaceVariant,
                 fontSize = 12.sp,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
@@ -190,9 +166,9 @@ fun SettingsScreen(
     if (showLanguagePicker) {
         AlertDialog(
             onDismissRequest = { showLanguagePicker = false },
-            containerColor = CardBg,
+            containerColor = colorScheme.surface,
             title = {
-                Text("Select Language", color = TextWhite, fontWeight = FontWeight.Bold)
+                Text("Select Language", color = colorScheme.onSurface, fontWeight = FontWeight.Bold)
             },
             text = {
                 Column {
@@ -202,7 +178,7 @@ fun SettingsScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) Orange.copy(alpha = 0.15f) else Color.Transparent)
+                                .background(if (isSelected) colorScheme.primary.copy(alpha = 0.15f) else Color.Transparent)
                                 .clickable {
                                     settingsViewModel.setLanguage(lang)
                                     showLanguagePicker = false
@@ -212,12 +188,12 @@ fun SettingsScreen(
                         ) {
                             Text(
                                 text = lang.displayName,
-                                color = if (isSelected) Orange else TextWhite,
+                                color = if (isSelected) colorScheme.primary else colorScheme.onSurface,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                 modifier = Modifier.weight(1f)
                             )
                             if (isSelected) {
-                                Icon(Icons.Default.Check, contentDescription = null, tint = Orange, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.Check, contentDescription = null, tint = colorScheme.primary, modifier = Modifier.size(18.dp))
                             }
                         }
                     }
@@ -233,7 +209,7 @@ fun SettingsScreen(
             title = "Logout",
             message = "Are you sure you want to sign out?",
             confirmLabel = "Logout",
-            confirmColor = Orange,
+            confirmColor = colorScheme.primary,
             onConfirm = { showLogoutDialog = false; onLogout() },
             onDismiss = { showLogoutDialog = false }
         )
@@ -245,7 +221,7 @@ fun SettingsScreen(
             title = "Delete Account",
             message = "This action is permanent and cannot be undone. All your data will be lost.",
             confirmLabel = "Delete",
-            confirmColor = RedDelete,
+            confirmColor = colorScheme.error,
             onConfirm = {
                 showDeleteDialog = false
                 userViewModel.deleteAccount {
@@ -257,13 +233,11 @@ fun SettingsScreen(
     }
 }
 
-// ─── HELPER COMPOSABLES ───────────────────────────────────────────────────────
-
 @Composable
 private fun SectionHeader(title: String) {
     Text(
         text = title,
-        color = Orange,
+        color = MaterialTheme.colorScheme.primary,
         fontSize = 13.sp,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = 0.5.sp
@@ -276,7 +250,7 @@ private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(CardBg)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(vertical = 4.dp),
         content = content
     )
@@ -287,7 +261,7 @@ private fun SettingsDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(horizontal = 16.dp),
         thickness = 0.5.dp,
-        color = DividerGray
+        color = MaterialTheme.colorScheme.outline
     )
 }
 
@@ -299,18 +273,19 @@ private fun ThemeChip(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     val bgColor by animateColorAsState(
-        targetValue = if (selected) Orange else CardBg,
+        targetValue = if (selected) colorScheme.primary else colorScheme.surfaceVariant,
         animationSpec = tween(300),
         label = "theme_chip_bg"
     )
-    val contentColor = if (selected) Color.White else TextGray
+    val contentColor = if (selected) colorScheme.onPrimary else colorScheme.onSurfaceVariant
 
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .background(bgColor)
-            .border(1.dp, if (selected) Orange else DividerGray, RoundedCornerShape(12.dp))
+            .border(1.dp, if (selected) colorScheme.primary else colorScheme.outline, RoundedCornerShape(12.dp))
             .clickable { onClick() }
             .padding(vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -323,55 +298,17 @@ private fun ThemeChip(
 }
 
 @Composable
-private fun ToggleRow(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(38.dp)
-                .clip(CircleShape)
-                .background(Orange.copy(alpha = 0.12f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, contentDescription = null, tint = Orange, modifier = Modifier.size(20.dp))
-        }
-        Spacer(Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, color = TextWhite, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-            Text(subtitle, color = TextGray, fontSize = 12.sp)
-        }
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = Orange,
-                uncheckedThumbColor = TextGray,
-                uncheckedTrackColor = DividerGray
-            )
-        )
-    }
-}
-
-@Composable
 private fun ActionRow(
     icon: ImageVector,
     title: String,
     subtitle: String,
     trailingIcon: ImageVector,
-    titleColor: Color = TextWhite,
+    titleColor: Color? = null,
     onClick: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+    val finalTitleColor = titleColor ?: colorScheme.onSurface
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -383,17 +320,17 @@ private fun ActionRow(
             modifier = Modifier
                 .size(38.dp)
                 .clip(CircleShape)
-                .background(titleColor.copy(alpha = 0.10f)),
+                .background(finalTitleColor.copy(alpha = 0.10f)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, contentDescription = null, tint = titleColor, modifier = Modifier.size(20.dp))
+            Icon(icon, contentDescription = null, tint = finalTitleColor, modifier = Modifier.size(20.dp))
         }
         Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, color = titleColor, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-            Text(subtitle, color = TextGray, fontSize = 12.sp)
+            Text(title, color = finalTitleColor, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            Text(subtitle, color = colorScheme.onSurfaceVariant, fontSize = 12.sp)
         }
-        Icon(trailingIcon, contentDescription = null, tint = TextGray, modifier = Modifier.size(20.dp))
+        Icon(trailingIcon, contentDescription = null, tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
     }
 }
 
@@ -406,11 +343,12 @@ private fun ConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = CardBg,
-        title = { Text(title, color = TextWhite, fontWeight = FontWeight.Bold) },
-        text = { Text(message, color = TextGray, fontSize = 14.sp) },
+        containerColor = colorScheme.surface,
+        title = { Text(title, color = colorScheme.onSurface, fontWeight = FontWeight.Bold) },
+        text = { Text(message, color = colorScheme.onSurfaceVariant, fontSize = 14.sp) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(confirmLabel, color = confirmColor, fontWeight = FontWeight.Bold)
@@ -418,7 +356,7 @@ private fun ConfirmDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = TextGray)
+                Text("Cancel", color = colorScheme.onSurfaceVariant)
             }
         }
     )

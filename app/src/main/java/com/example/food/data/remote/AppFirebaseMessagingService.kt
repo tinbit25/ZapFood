@@ -1,14 +1,6 @@
 package com.example.food.data.remote
 
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import com.example.food.MainActivity
-import com.example.food.R
-import com.example.food.core.util.NotificationChannelManager
 import com.example.food.core.util.NotificationRenderer
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -28,20 +20,28 @@ class AppFirebaseMessagingService : FirebaseMessagingService() {
         super.onMessageReceived(remoteMessage)
         Log.d("FCMService", "Message received from: ${remoteMessage.from}")
 
-        // Handle data payload if present
-        if (remoteMessage.data.isNotEmpty()) {
-            Log.d("FCMService", "Data payload: ${remoteMessage.data}")
-            // Process custom data here if needed
-        }
-
-        // Handle notification payload if present
+        // 1. Handle notification payload (sent via Firebase Console or simple API)
         remoteMessage.notification?.let {
+            Log.d("FCMService", "Notification payload: title=${it.title}, body=${it.body}")
             NotificationRenderer(this).render(
-                it.title ?: "Notification",
+                it.title ?: "ZapFood",
                 it.body ?: "",
                 remoteMessage.data["type"] ?: "SYSTEM",
                 remoteMessage.data
             )
+            return // Skip data payload if notification was handled
+        }
+
+        // 2. Handle data payload (sent via backend API for custom handling)
+        if (remoteMessage.data.isNotEmpty()) {
+            Log.d("FCMService", "Data payload: ${remoteMessage.data}")
+            val title = remoteMessage.data["title"] ?: "ZapFood"
+            val body = remoteMessage.data["body"] ?: remoteMessage.data["message"] ?: ""
+            val type = remoteMessage.data["type"] ?: "SYSTEM"
+            
+            if (body.isNotEmpty()) {
+                NotificationRenderer(this).render(title, body, type, remoteMessage.data)
+            }
         }
     }
 }

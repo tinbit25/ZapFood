@@ -1,6 +1,7 @@
 package com.example.food.ui.screens.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,11 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.*
@@ -36,7 +33,6 @@ import com.example.food.ui.viewmodel.RecommendationState
 import com.example.food.domain.model.ScoredMealResponse
 import com.example.food.R
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.material.icons.filled.Star
 import com.example.food.data.model.MealPlan
 import com.example.food.data.model.Meal
 import com.example.food.ui.components.MPCodeDialog
@@ -63,6 +59,7 @@ fun HomeScreen(
     val mealPlans = (discoverPlansState as? Resource.Success)?.data ?: emptyList()
     val meals = (mealsState as? Resource.Success)?.data ?: emptyList()
     
+    val colorScheme = MaterialTheme.colorScheme
 
     val foodFilters = listOf(
         FoodFilter("Fasting", "🌱", com.example.food.data.model.FoodType.FASTING, null),
@@ -85,7 +82,7 @@ fun HomeScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0A0A0A)),
+            .background(colorScheme.background),
         contentPadding = PaddingValues(bottom = 100.dp)
     ) {
         // Top Header
@@ -97,12 +94,12 @@ fun HomeScreen(
             )
         }
 
-        // Search Bar - Moved Higher for accessibility
+        // Search Bar
         item {
             HomeSearchBar(onSearchClick = onNavigateToSearch)
         }
 
-        // Ethiopian Classification Filters - Directly under Search
+        // Ethiopian Classification Filters
         item {
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
@@ -126,7 +123,7 @@ fun HomeScreen(
             }
         }
 
-        // Discovery Center - Premium Layout
+        // Discovery Center
         item {
             Column(
                 modifier = Modifier
@@ -137,7 +134,7 @@ fun HomeScreen(
                     text = "Discovery Center",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(
@@ -156,7 +153,6 @@ fun HomeScreen(
                     )
                 }
                 
-                // Contextual Tooltip for AI Picks - Integrated into Discovery Center
                 var showTooltip by remember { mutableStateOf(true) }
                 com.example.food.ui.components.onboarding.ContextualTooltip(
                     text = "New: Personalized AI picks based on your fasting habits!",
@@ -175,7 +171,7 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp, vertical = 8.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E3A2F))
+                    colors = CardDefaults.cardColors(containerColor = if (isSystemInDarkTheme()) Color(0xFF1E3A2F) else Color(0xFFE8F5E9))
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -183,7 +179,7 @@ fun HomeScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
                                 "Today is a fasting day",
-                                color = Color.White,
+                                color = if (isSystemInDarkTheme()) Color.White else Color(0xFF2E7D32),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp
                             )
@@ -191,7 +187,7 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             "Looking for the best fasting stews in the city?",
-                            color = Color.LightGray,
+                            color = if (isSystemInDarkTheme()) Color.LightGray else Color(0xFF555555),
                             fontSize = 14.sp
                         )
                         Spacer(modifier = Modifier.height(12.dp))
@@ -200,17 +196,13 @@ fun HomeScreen(
                                 onClick = { 
                                     showFastingPrompt = false 
                                     mealViewModel.applyCategory(com.example.food.data.model.EthiopianFoodCategory.FASTING_FOODS)
-                                    user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "fasting_prompt_accepted", context = "home_fasting_card") }
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                             ) {
                                 Text("Show Me")
                             }
-                            TextButton(onClick = { 
-                                showFastingPrompt = false 
-                                user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId ?: "guest", "fasting_prompt_ignored", context = "home_fasting_card") }
-                            }) {
-                                Text("Maybe later", color = Color.LightGray)
+                            TextButton(onClick = { showFastingPrompt = false }) {
+                                Text("Maybe later", color = if (isSystemInDarkTheme()) Color.LightGray else Color.Gray)
                             }
                         }
                     }
@@ -231,7 +223,7 @@ fun HomeScreen(
                     .padding(horizontal = 20.dp, vertical = 8.dp)
                     .clickable { onNavigateToSmartPreference() },
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant)
             ) {
                 Row(
                     modifier = Modifier.padding(20.dp),
@@ -240,34 +232,33 @@ fun HomeScreen(
                     Surface(
                         modifier = Modifier.size(48.dp),
                         shape = CircleShape,
-                        color = Color(0xFFF16B24).copy(alpha = 0.1f)
+                        color = colorScheme.primary.copy(alpha = 0.1f)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = Color(0xFFF16B24))
+                            Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = colorScheme.primary)
                         }
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
-                        Text(text = "Smart Picks", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                        Text(text = "Personalized Ethiopian favorites", fontSize = 12.sp, color = Color.Gray)
+                        Text(text = "Smart Picks", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colorScheme.onSurface)
+                        Text(text = "Personalized Ethiopian favorites", fontSize = 12.sp, color = colorScheme.onSurfaceVariant)
                     }
                     Spacer(modifier = Modifier.weight(1f))
-                    Icon(imageVector = Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
+                    Icon(imageVector = Icons.Default.ChevronRight, contentDescription = null, tint = colorScheme.onSurfaceVariant)
                 }
             }
         }
 
-        // Smart Picks For You (Personalized)
+        // Smart Picks Logic
         if (recommendationState is RecommendationState.Loading) {
             item {
                 Box(modifier = Modifier.fillMaxWidth().height(150.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color(0xFFF16B24))
+                    CircularProgressIndicator(color = colorScheme.primary)
                 }
             }
         } else if (recommendationState is RecommendationState.Success) {
             val recData = recommendationState as RecommendationState.Success
             
-            // 1. Smart Picks For You
             if (recData.smartPicks.isNotEmpty()) {
                 item {
                     SectionHeader(title = "Smart Picks For You ✨", onActionClick = {})
@@ -276,16 +267,12 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(recData.smartPicks) { scoredMeal ->
-                            PopularMealCard(scoredMeal = scoredMeal, onClick = { 
-                                user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "view_meal", scoredMeal.mealId, context = "smart_picks") }
-                                onNavigateToDetails(scoredMeal.mealId) 
-                            })
+                            PopularMealCard(scoredMeal = scoredMeal, onClick = { onNavigateToDetails(scoredMeal.mealId) })
                         }
                     }
                 }
             }
 
-            // 2. Today's Fasting Specials (Contextual)
             if (recData.fastingMeals.isNotEmpty()) {
                 item {
                     SectionHeader(title = "Today's Fasting Specials 🌱", onActionClick = {})
@@ -294,16 +281,12 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(recData.fastingMeals) { scoredMeal ->
-                            PopularMealCard(scoredMeal = scoredMeal, onClick = { 
-                                user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "view_meal", scoredMeal.mealId, context = "fasting_specials") }
-                                onNavigateToDetails(scoredMeal.mealId) 
-                            })
+                            PopularMealCard(scoredMeal = scoredMeal, onClick = { onNavigateToDetails(scoredMeal.mealId) })
                         }
                     }
                 }
             }
 
-            // 3. Popular in Addis (Community Fallback)
             item {
                 SectionHeader(title = "Popular in Addis Ababa \uD83D\uDCCD", onActionClick = {})
                 LazyRow(
@@ -311,15 +294,11 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(recData.popularInAddis) { scoredMeal ->
-                        PopularMealCard(scoredMeal = scoredMeal, onClick = { 
-                            user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "view_meal", scoredMeal.mealId, context = "popular_addis") }
-                            onNavigateToDetails(scoredMeal.mealId) 
-                        })
+                        PopularMealCard(scoredMeal = scoredMeal, onClick = { onNavigateToDetails(scoredMeal.mealId) })
                     }
                 }
             }
         } else {
-            // Fallback: Best Ethiopian Meals
             item {
                 SectionHeader(title = "Recommended Ethiopian Meals", onActionClick = {})
                 LazyRow(
@@ -327,35 +306,32 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(meals) { meal ->
-                        PopularMealCard(meal = meal, onClick = { 
-                            onNavigateToDetails(meal.id) 
-                        })
+                        PopularMealCard(meal = meal, onClick = { onNavigateToDetails(meal.id) })
                     }
                 }
             }
         }
-
     }
 }
 
 @Composable
 fun PopularMealCard(scoredMeal: ScoredMealResponse, onClick: () -> Unit) {
+    val colorScheme = MaterialTheme.colorScheme
     Card(
         modifier = Modifier
             .width(200.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant)
     ) {
         Column {
-            Box(modifier = Modifier.fillMaxWidth().height(120.dp).background(Color(0xFF252525))) {
+            Box(modifier = Modifier.fillMaxWidth().height(120.dp).background(colorScheme.surface.copy(alpha = 0.5f))) {
                 Icon(
                     imageVector = Icons.Default.Restaurant,
                     contentDescription = null,
                     modifier = Modifier.size(48.dp).align(Alignment.Center),
-                    tint = Color(0xFFF16B24).copy(alpha = 0.5f)
+                    tint = colorScheme.primary.copy(alpha = 0.5f)
                 )
-                // Score Badge
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
@@ -376,7 +352,7 @@ fun PopularMealCard(scoredMeal: ScoredMealResponse, onClick: () -> Unit) {
                     text = scoredMeal.mealName,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White,
+                    color = colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -384,7 +360,7 @@ fun PopularMealCard(scoredMeal: ScoredMealResponse, onClick: () -> Unit) {
                 Text(
                     text = scoredMeal.reason,
                     fontSize = 12.sp,
-                    color = Color.LightGray,
+                    color = colorScheme.onSurfaceVariant,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                     lineHeight = 16.sp
@@ -396,12 +372,13 @@ fun PopularMealCard(scoredMeal: ScoredMealResponse, onClick: () -> Unit) {
 
 @Composable
 fun PopularMealCard(meal: Meal, onClick: () -> Unit) {
+    val colorScheme = MaterialTheme.colorScheme
     Card(
         modifier = Modifier
             .width(160.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant)
     ) {
         Column {
             AsyncImage(
@@ -413,20 +390,12 @@ fun PopularMealCard(meal: Meal, onClick: () -> Unit) {
                     .height(100.dp)
             )
             Column(modifier = Modifier.padding(12.dp)) {
-                Text(text = meal.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1)
-                Text(text = "ETB ${"%,.0f".format(meal.price * 1000)}", fontSize = 12.sp, color = Color(0xFFF16B24))
+                Text(text = meal.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = colorScheme.onSurface, maxLines = 1)
+                Text(text = "ETB ${"%,.0f".format(meal.price * 1000)}", fontSize = 12.sp, color = colorScheme.primary)
             }
         }
     }
 }
-
-data class ExploreItem(val name: String, val icon: String)
-data class FoodFilter(
-    val name: String, 
-    val icon: String, 
-    val foodType: com.example.food.data.model.FoodType?, 
-    val dietType: com.example.food.data.model.DietType?
-)
 
 @Composable
 fun FilterChip(
@@ -434,11 +403,12 @@ fun FilterChip(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Surface(
         modifier = Modifier.clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
-        color = if (isSelected) Color(0xFFF16B24) else Color(0xFF1A1A1A),
-        border = if (isSelected) null else BorderStroke(1.dp, Color.Gray.copy(alpha = 0.3f))
+        color = if (isSelected) colorScheme.primary else colorScheme.surfaceVariant,
+        border = if (isSelected) null else BorderStroke(1.dp, colorScheme.outline.copy(alpha = 0.3f))
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -448,7 +418,7 @@ fun FilterChip(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = filter.name,
-                color = if (isSelected) Color.White else Color.LightGray,
+                color = if (isSelected) colorScheme.onPrimary else colorScheme.onSurfaceVariant,
                 fontSize = 14.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
             )
@@ -458,6 +428,7 @@ fun FilterChip(
 
 @Composable
 fun HomeSearchBar(onSearchClick: () -> Unit) {
+    val colorScheme = MaterialTheme.colorScheme
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -465,7 +436,7 @@ fun HomeSearchBar(onSearchClick: () -> Unit) {
             .height(56.dp)
             .clickable { onSearchClick() },
         shape = RoundedCornerShape(16.dp),
-        color = Color(0xFF1A1A1A)
+        color = colorScheme.surfaceVariant
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp),
@@ -474,13 +445,13 @@ fun HomeSearchBar(onSearchClick: () -> Unit) {
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = null,
-                tint = Color.Gray,
+                tint = colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = "Search for food or restaurants",
-                color = Color.Gray,
+                color = colorScheme.onSurfaceVariant,
                 fontSize = 14.sp
             )
         }
@@ -493,6 +464,7 @@ fun HomeHeader(
     userPhotoUrl: String?,
     onNotificationClick: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -511,12 +483,12 @@ fun HomeHeader(
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(text = "Deliver to", fontSize = 11.sp, color = Color.Gray)
+                Text(text = "Deliver to", fontSize = 11.sp, color = colorScheme.onSurfaceVariant)
                 Text(
                     text = userName, 
                     fontSize = 16.sp, 
                     fontWeight = FontWeight.Bold, 
-                    color = Color.White
+                    color = colorScheme.onBackground
                 )
             }
         }
@@ -526,13 +498,12 @@ fun HomeHeader(
                 Icon(
                     imageVector = Icons.Outlined.Notifications,
                     contentDescription = "Notifications",
-                    tint = Color.White,
+                    tint = colorScheme.onBackground,
                     modifier = Modifier.size(28.dp)
                 )
             }
-            // Badge
             Surface(
-                color = Color(0xFFF16B24),
+                color = colorScheme.primary,
                 shape = CircleShape,
                 modifier = Modifier
                     .size(16.dp)
@@ -540,7 +511,7 @@ fun HomeHeader(
                     .offset(x = (-8).dp, y = 8.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(text = "1", fontSize = 10.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(text = "1", fontSize = 10.sp, color = colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -611,118 +582,8 @@ fun FeaturedPromoBanner() {
 }
 
 @Composable
-fun ModernCategoryItem(item: ExploreItem) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(
-            modifier = Modifier.size(75.dp),
-            shape = RoundedCornerShape(20.dp),
-            color = Color(0xFF1A1A1A)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(text = item.icon, fontSize = 32.sp)
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = item.name, fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Medium)
-    }
-}
-
-@Composable
-fun PremiumHottestCard(plan: MealPlan, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .width(280.dp)
-            .height(200.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(32.dp)
-    ) {
-        Box {
-            AsyncImage(
-                model = plan.imageUrl,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.9f)),
-                            startY = 200f
-                        )
-                    )
-            )
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(20.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Restaurant,
-                        contentDescription = null,
-                        tint = Color(0xFFF16B24),
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = plan.vendorName, fontSize = 12.sp, color = Color.LightGray)
-                }
-                Text(text = plan.name, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
-            }
-        }
-    }
-}
-
-@Composable
-fun ImmersiveLargeCard(plan: MealPlan, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 12.dp)
-            .height(240.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(36.dp)
-    ) {
-        Box {
-            AsyncImage(
-                model = plan.imageUrl,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.95f)),
-                            startY = 300f
-                        )
-                    )
-            )
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(24.dp)
-            ) {
-                Text(text = "BY ${plan.vendorName.uppercase()}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF16B24), letterSpacing = 1.sp)
-                Text(text = plan.name, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "Starting from ETB 45,000", fontSize = 12.sp, color = Color.LightGray)
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun SectionHeader(title: String, onActionClick: () -> Unit) {
-    val userViewModel: com.example.food.ui.viewmodel.UserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-    val recommendationViewModel: com.example.food.ui.viewmodel.RecommendationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-    val user by userViewModel.user.collectAsState()
-
+    val colorScheme = MaterialTheme.colorScheme
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -734,28 +595,21 @@ fun SectionHeader(title: String, onActionClick: () -> Unit) {
             text = title,
             fontSize = 20.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = Color.White
+            color = colorScheme.onBackground
         )
         Text(
             text = "See all",
             fontSize = 14.sp,
-            color = Color(0xFFF16B24),
+            color = colorScheme.primary,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.clickable { 
-                user?.let { recommendationViewModel.trackAnalyticsEvent(it.userId, "see_all_clicked", context = title) }
-                onActionClick() 
-            }
+            modifier = Modifier.clickable { onActionClick() }
         )
     }
 }
 
-@Composable
-fun SectionTitle(title: String) {
-    Text(
-        text = title,
-        fontSize = 20.sp,
-        fontWeight = FontWeight.ExtraBold,
-        color = Color.White,
-        modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
-    )
-}
+data class FoodFilter(
+    val name: String, 
+    val icon: String, 
+    val foodType: com.example.food.data.model.FoodType?, 
+    val dietType: com.example.food.data.model.DietType?
+)

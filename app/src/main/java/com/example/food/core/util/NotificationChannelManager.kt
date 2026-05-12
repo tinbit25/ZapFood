@@ -12,6 +12,9 @@ object NotificationChannelManager {
     const val CHANNEL_ORDERS_ID = "orders_channel"
     const val CHANNEL_SUPPORT_ID = "support_channel"
     const val CHANNEL_SYSTEM_ID = "system_channel"
+    const val CHANNEL_PROMO_ID = "promo_channel"
+    const val CHANNEL_VENDOR_ID = "vendor_channel"
+    const val CHANNEL_CHEF_ID = "chef_channel"
 
     /**
      * Initializes all notification channels for the app.
@@ -41,6 +44,27 @@ object NotificationChannelManager {
                     NotificationManager.IMPORTANCE_LOW
                 ).apply {
                     description = "General updates and announcements"
+                },
+                NotificationChannel(
+                    CHANNEL_PROMO_ID,
+                    "Promotions",
+                    NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = "Special offers and discounts"
+                },
+                NotificationChannel(
+                    CHANNEL_VENDOR_ID,
+                    "Vendor Updates",
+                    NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = "Updates from your favorite vendors"
+                },
+                NotificationChannel(
+                    CHANNEL_CHEF_ID,
+                    "Chef Bookings",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Notifications for private chef sessions"
                 }
             )
 
