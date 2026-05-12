@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.food.ui.components.ProfileImage
 import com.example.food.data.model.UserRole
 import com.example.food.ui.components.CustomTextField
 import com.example.food.ui.components.PrimaryButton
@@ -87,34 +88,13 @@ fun AdvancedProfileEditScreen(
                         .size(120.dp)
                         .clickable { imagePickerLauncher.launch("image/*") }
                 ) {
-                    if (user?.photoUrl != null) {
-                        AsyncImage(
-                            model = user?.photoUrl,
-                            contentDescription = "Profile Picture",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape)
-                                .border(2.dp, Color(0xFFF16B24), CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        // Fallback to Initials
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape)
-                                .background(Color(0xFF1E88E5))
-                                .border(2.dp, Color(0xFFF16B24), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = user?.displayName?.take(2)?.uppercase() ?: "??",
-                                color = Color.White,
-                                fontSize = 32.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+                    ProfileImage(
+                        photoUrl = user?.photoUrl,
+                        displayName = user?.displayName,
+                        modifier = Modifier.fillMaxSize(),
+                        borderWidth = 2.dp,
+                        borderColor = Color(0xFFF16B24)
+                    )
                     
                     Box(
                         modifier = Modifier

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.food.ui.components.ProfileImage
 import com.example.food.ui.components.TopNavBar
 import com.example.food.ui.viewmodel.UserViewModel
 import com.example.food.ui.screens.auth.AuthViewModel
@@ -66,10 +67,9 @@ fun ProfileScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AsyncImage(
-                model = user?.photoUrl ?: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500&auto=format&fit=crop",
-                contentDescription = "Profile Picture",
-                contentScale = ContentScale.Crop,
+            ProfileImage(
+                photoUrl = user?.photoUrl,
+                displayName = user?.displayName,
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
