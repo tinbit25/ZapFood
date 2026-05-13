@@ -1,5 +1,8 @@
 package com.example.food.ui.viewmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.food.data.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +24,11 @@ class CheckoutViewModel @Inject constructor() : ViewModel() {
     private val _uiState = MutableStateFlow(CheckoutUiState())
     val uiState: StateFlow<CheckoutUiState> = _uiState.asStateFlow()
 
+    private val _isPlacingOrder = MutableStateFlow(false)
+    val isPlacingOrder: StateFlow<Boolean> = _isPlacingOrder.asStateFlow()
+
+    var pointsToRedeem by mutableIntStateOf(0)
+
     fun setOrderType(type: OrderType) {
         _uiState.value = _uiState.value.copy(orderType = type)
     }
@@ -39,5 +47,9 @@ class CheckoutViewModel @Inject constructor() : ViewModel() {
 
     fun setPaymentMethod(method: PaymentMethod) {
         _uiState.value = _uiState.value.copy(paymentMethod = method)
+    }
+
+    fun setPlacingOrder(placing: Boolean) {
+        _isPlacingOrder.value = placing
     }
 }

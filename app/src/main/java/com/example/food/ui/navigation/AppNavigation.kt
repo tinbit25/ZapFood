@@ -39,7 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.food.ui.screens.auth.PreferencesOnboardingScreen
 import com.example.food.ui.screens.menu.SmartPreferenceScreen
 import com.example.food.ui.screens.menu.CustomPlanCreatorScreen
-import com.example.food.ui.screens.cart.CheckoutScreen
+import com.example.food.ui.screens.checkout.CheckoutScreen
 import com.example.food.ui.screens.cart.OrderSuccessScreen
 import com.example.food.ui.screens.details.MealPlanDetailsScreen
 import com.example.food.ui.screens.vendor.VendorDashboardScreen
@@ -342,12 +342,14 @@ fun AppNavigation(
 
             composable(route = Screen.Checkout.route) {
                 val rewardViewModel: com.example.food.ui.viewmodel.RewardViewModel = viewModel()
+                val checkoutViewModel: com.example.food.ui.viewmodel.CheckoutViewModel = viewModel()
                 CheckoutScreen(
                     userViewModel = userViewModel,
                     orderViewModel = orderViewModel,
                     cartViewModel = cartViewModel,
                     rewardViewModel = rewardViewModel,
                     paymentViewModel = paymentViewModel,
+                    checkoutViewModel = checkoutViewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onOrderSuccess = { orderId ->
                         navController.navigate(Screen.OrderSuccess.createRoute(orderId)) {
