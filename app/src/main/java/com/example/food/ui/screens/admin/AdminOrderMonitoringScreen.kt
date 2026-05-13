@@ -94,15 +94,19 @@ fun AdminOrderCard(order: Order) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(text = "Order #${order.orderId.takeLast(6)}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
-                OrderStatusBadge(order.status)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OrderTypeBadge(order.orderType)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    OrderStatusBadge(order.status)
+                }
             }
             
             Spacer(modifier = Modifier.height(12.dp))
             
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
-                    Text(text = "Customer ID", color = Color.Gray, fontSize = 10.sp)
-                    Text(text = order.customerId.take(8), color = Color.White, fontSize = 12.sp)
+                    Text(text = "Customer", color = Color.Gray, fontSize = 10.sp)
+                    Text(text = order.customerName.ifEmpty { order.customerId.take(8) }, color = Color.White, fontSize = 12.sp)
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(text = "Total Amount", color = Color.Gray, fontSize = 10.sp)
@@ -149,3 +153,25 @@ fun OrderStatusBadge(status: OrderStatus) {
         )
     }
 }
+
+@Composable
+fun OrderTypeBadge(type: OrderType) {
+    val color = when (type) {
+        OrderType.DELIVERY -> Color(0xFF2196F3)
+        OrderType.TAKEAWAY -> Color(0xFFFFC107)
+        OrderType.DINE_IN -> Color(0xFF4CAF50)
+    }
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = color.copy(alpha = 0.1f)
+    ) {
+        Text(
+            text = type.name,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            color = color,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+

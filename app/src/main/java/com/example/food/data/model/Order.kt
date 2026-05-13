@@ -21,6 +21,12 @@ enum class DeliveryStatus {
 
 // Enums are now managed in Payment.kt to maintain a single source of truth for the payment domain
 
+enum class OrderType {
+    DELIVERY,
+    TAKEAWAY,
+    DINE_IN
+}
+
 data class OrderItem(
     val mealId: String = "",
     val name: String = "",
@@ -28,6 +34,29 @@ data class OrderItem(
     val quantity: Int = 1,
     val category: String = "GENERAL",
     val fastingFriendly: Boolean = false
+)
+
+data class DeliveryDetails(
+    val address: String = "",
+    val city: String = "Addis Ababa",
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val instructions: String? = null,
+    val estimatedArrival: Long? = null
+)
+
+data class TakeawayDetails(
+    val pickupBranch: String = "",
+    val pickupTime: Long? = null,
+    val readyNotificationSent: Boolean = false
+)
+
+data class DineInDetails(
+    val arrivalTime: Long? = null,
+    val tableNumber: String? = null,
+    val guestCount: Int = 1,
+    val preorderReadyTime: Long? = null,
+    val reservationConfirmed: Boolean = false
 )
 
 data class Order(
@@ -43,6 +72,13 @@ data class Order(
     val status: OrderStatus = OrderStatus.PENDING,
     val paymentStatus: PaymentStatus = PaymentStatus.INITIATED,
     val paymentMethod: PaymentMethod = PaymentMethod.CARD,
+    val orderType: OrderType = OrderType.DELIVERY,
+    
+    // Type-specific details
+    val deliveryDetails: DeliveryDetails? = null,
+    val takeawayDetails: TakeawayDetails? = null,
+    val dineInDetails: DineInDetails? = null,
+    
     val deliveryTrackingId: String = "",
     val deliveryStatus: DeliveryStatus = DeliveryStatus.IDLE,
     val statusHistory: List<OrderStatusHistory> = emptyList(),
