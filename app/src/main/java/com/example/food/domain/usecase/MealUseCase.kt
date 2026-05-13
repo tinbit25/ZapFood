@@ -4,15 +4,18 @@ import com.example.food.core.util.Resource
 import com.example.food.data.model.*
 import com.example.food.data.repository.MealRepository
 import com.example.food.data.repository.VendorRepository
+import com.example.food.domain.util.VendorRelationResolver
+import com.example.food.domain.mapper.MealVendorMapper
 import kotlinx.coroutines.flow.Flow
 
 class MealUseCase(
     private val mealRepository: MealRepository = MealRepository(),
-    private val vendorRepository: VendorRepository = VendorRepository()
+    private val vendorRepository: VendorRepository = VendorRepository(),
+    private val vendorRelationResolver: VendorRelationResolver = VendorRelationResolver(vendorRepository)
 ) {
     suspend fun createMeal(user: User, meal: Meal): Resource<Unit> {
         // 1. Fetch Vendor for Business Name and Status
-        val vendor = vendorRepository.getVendorByUserId(user.userId)
+        val vendor = vendorRelationResolver.resolveVendor(user.userId)
         val businessName = vendor?.businessName ?: user.displayName ?: "Unknown Vendor"
         val status = vendor?.verificationStatus ?: VerificationStatus.PENDING_REVIEW
 
@@ -28,11 +31,12 @@ class MealUseCase(
         if (meal.name.isBlank()) return Resource.Error("Meal name cannot be empty")
         if (meal.price <= 0) return Resource.Error("Price must be greater than zero")
 
-        // 4. Attach vendorId and businessName automatically
-        val mealToSave = meal.copy(
-            vendorId = user.userId,
-            businessName = businessName
-        )
+        // 4. Attach vendorId and businessName automatically using Mapper
+        val mealToSave = if (vendor != null) {
+            MealVendorMapper.mapToBusinessIdentity(meal, vendor)
+        } else {
+            MealVendorMapper.mapWithFallback(meal, user.userId, businessName)
+        }
 
         // 5. Save meal
         return mealRepository.saveMeal(mealToSave)
@@ -51,7 +55,7 @@ class MealUseCase(
     }
 
     suspend fun seedMealsForVendor(user: User): Resource<Unit> {
-        val vendor = vendorRepository.getVendorByUserId(user.userId)
+        val vendor = vendorRelationResolver.resolveVendor(user.userId)
         val businessName = vendor?.businessName ?: user.displayName ?: "Unknown Vendor"
         return mealRepository.seedMealsForVendor(user.userId, businessName)
     }

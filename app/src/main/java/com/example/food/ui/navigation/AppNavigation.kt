@@ -500,22 +500,9 @@ fun AppNavigation(
                     vendorStateManager.startObserving(user?.userId)
                 }
 
-                when (vendorUIState) {
-                    is com.example.food.ui.viewmodel.VendorUIState.Loading -> {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                            CircularProgressIndicator()
-                        }
-                    }
-                    is com.example.food.ui.viewmodel.VendorUIState.OnboardingRequired -> {
-                        com.example.food.ui.screens.vendor.VendorRegistrationScreen(
-                            userId = user?.userId ?: "",
-                            onNavigateBack = { navController.popBackStack() },
-                            onRegistrationSuccess = {
-                                // Realtime listener will automatically switch UI to PendingReview
-                            }
-                        )
-                    }
-                    is com.example.food.ui.viewmodel.VendorUIState.Active -> {
+                com.example.food.ui.components.VendorStateGuard(
+                    state = vendorUIState,
+                    onActive = {
                         VendorDashboardScreen(
                             userViewModel = userViewModel,
                             orderViewModel = orderViewModel,
@@ -525,11 +512,8 @@ fun AppNavigation(
                                 }
                             }
                         )
-                    }
-                    is com.example.food.ui.viewmodel.VendorUIState.PendingReview,
-                    is com.example.food.ui.viewmodel.VendorUIState.Verifying,
-                    is com.example.food.ui.viewmodel.VendorUIState.Suspended,
-                    is com.example.food.ui.viewmodel.VendorUIState.Rejected -> {
+                    },
+                    onPending = {
                         com.example.food.ui.screens.vendor.VendorVerificationStateScreen(
                             state = vendorUIState,
                             onNavigateBack = { navController.popBackStack() },
@@ -537,12 +521,30 @@ fun AppNavigation(
                                 navController.navigate(Screen.SupportTickets.route)
                             }
                         )
+                    },
+                    onOnboarding = {
+                        com.example.food.ui.screens.vendor.VendorRegistrationScreen(
+                            userId = user?.userId ?: "",
+                            onNavigateBack = { navController.popBackStack() },
+                            onRegistrationSuccess = {}
+                        )
+                    },
+                    onRestricted = { restrictedState ->
+                        if (restrictedState is com.example.food.ui.viewmodel.VendorUIState.Loading) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                                CircularProgressIndicator()
+                            }
+                        } else {
+                            com.example.food.ui.screens.vendor.VendorVerificationStateScreen(
+                                state = restrictedState,
+                                onNavigateBack = { navController.popBackStack() },
+                                onContactSupport = {
+                                    navController.navigate(Screen.SupportTickets.route)
+                                }
+                            )
+                        }
                     }
-                    else -> {
-                        // Fallback
-                        navController.popBackStack()
-                    }
-                }
+                )
             }
 
             composable(route = Screen.VendorMenuManagement.route) {

@@ -21,7 +21,8 @@ sealed class VendorUIState {
 }
 
 class VendorStateManager @Inject constructor(
-    private val repository: VendorRealtimeRepository = VendorRealtimeRepository()
+    private val repository: VendorRealtimeRepository = VendorRealtimeRepository(),
+    private val statusListener: com.example.food.data.repository.VendorStatusListener = com.example.food.data.repository.VendorStatusListener()
 ) : ViewModel() {
 
     private val _vendor = MutableStateFlow<Vendor?>(null)
@@ -40,7 +41,7 @@ class VendorStateManager @Inject constructor(
 
         observationJob?.cancel()
         observationJob = viewModelScope.launch {
-            repository.observeVendorState(userId).collect { vendor ->
+            statusListener.listenToStatusChanges(userId).collect { vendor: com.example.food.data.model.Vendor? ->
                 _vendor.value = vendor
                 _uiState.value = mapVendorToUIState(vendor)
             }
