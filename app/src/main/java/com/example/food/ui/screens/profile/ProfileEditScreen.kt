@@ -35,8 +35,6 @@ fun ProfileEditScreen(
     val profileState by profileViewModel.profileState.collectAsState()
 
     var displayName by remember { mutableStateOf(user?.displayName ?: "") }
-    var cuisineType by remember { mutableStateOf(user?.cuisineType ?: "") }
-    var businessAddress by remember { mutableStateOf(user?.businessAddress ?: "") }
     var dietaryNeeds by remember { mutableStateOf(user?.dietaryNeeds?.joinToString(", ") ?: "") }
 
     LaunchedEffect(profileState) {
@@ -79,31 +77,6 @@ fun ProfileEditScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Role Specific Section
-            if (user?.role == UserRole.VENDOR) {
-                Text(
-                    text = "Business Information",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.align(Alignment.Start)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                CustomTextField(
-                    value = cuisineType,
-                    onValueChange = { cuisineType = it },
-                    placeholder = "Cuisine Type (e.g. Italian, Thai)",
-                    leadingIcon = Icons.Default.Restaurant
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                CustomTextField(
-                    value = businessAddress,
-                    onValueChange = { businessAddress = it },
-                    placeholder = "Business Address",
-                    leadingIcon = Icons.Default.Business
-                )
-            } else {
                 Text(
                     text = "Dietary Preferences",
                     fontSize = 18.sp,
@@ -119,7 +92,6 @@ fun ProfileEditScreen(
                     placeholder = "Dietary Needs (comma separated)",
                     leadingIcon = Icons.Default.Restaurant
                 )
-            }
 
             Spacer(modifier = Modifier.height(48.dp))
 
@@ -128,8 +100,6 @@ fun ProfileEditScreen(
                 onClick = {
                     val updatedUser = user?.copy(
                         displayName = displayName,
-                        cuisineType = cuisineType,
-                        businessAddress = businessAddress,
                         dietaryNeeds = dietaryNeeds.split(",").map { it.trim() }.filter { it.isNotEmpty() }
                     )
                     if (updatedUser != null) {

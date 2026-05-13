@@ -5,7 +5,7 @@ import java.util.UUID
 data class Meal(
     val id: String = java.util.UUID.randomUUID().toString(),
     val vendorId: String = "",
-    val vendorName: String = "",
+    val businessName: String = "",
     val name: String = "",
     val description: String = "",
     val category: String = "General",

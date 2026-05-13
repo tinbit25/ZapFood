@@ -35,7 +35,7 @@ data class Order(
     val customerId: String = "",
     val customerName: String = "",
     val vendorId: String = "",
-    val vendorName: String = "",
+    val businessName: String = "",
     val mealPlanId: String? = null,
     val items: List<OrderItem> = emptyList(),
     val totalAmount: Double = 0.0,

@@ -48,60 +48,88 @@ fun VendorDiscoveryScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(bottom = 24.dp)
-        ) {
-            // Category Filter
-            item {
-                CategoryFilterRow(
+        if (uiState.isLoading) {
+            ShimmerDiscoveryContent(padding)
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = PaddingValues(bottom = 24.dp)
+            ) {
+                // Category Filter
+                item {
+                VendorCategoryFilter(
                     selectedCategory = selectedCategory,
                     onCategorySelected = viewModel::onCategorySelected
                 )
-            }
-
-            if (searchQuery.isNotBlank() || selectedCategory != null) {
-                // Search Results
-                item {
-                    SectionHeader(title = "Results", showViewAll = false)
-                }
-                items(uiState.filteredVendors) { vendor ->
-                    VendorListCard(vendor = vendor, onClick = { onNavigateToVendor(vendor.id) })
-                }
-            } else {
-                // Main Discovery Sections
-                item {
-                    VendorSectionRow(
-                        title = "Top Rated",
-                        vendors = uiState.topRated,
-                        onVendorClick = onNavigateToVendor
-                    )
                 }
 
-                item {
-                    VendorSectionRow(
-                        title = "Popular Near You",
-                        vendors = uiState.popular,
-                        onVendorClick = onNavigateToVendor
-                    )
-                }
+                if (searchQuery.isNotBlank() || selectedCategory != null) {
+                    // Search Results
+                    item {
+                        SectionHeader(title = "Results", showViewAll = false)
+                    }
+                    items(uiState.filteredVendors) { vendor ->
+                        VendorListCard(vendor = vendor, onClick = { onNavigateToVendor(vendor.userId) })
+                    }
+                } else {
+                    // Main Discovery Sections
+                    item {
+                        VendorSectionRow(
+                            title = "Top Rated",
+                            vendors = uiState.topRated,
+                            onVendorClick = onNavigateToVendor
+                        )
+                    }
 
-                item {
-                    VendorSectionRow(
-                        title = "Fast Delivery",
-                        vendors = uiState.fastDelivery,
-                        onVendorClick = onNavigateToVendor
-                    )
-                }
+                    item {
+                        VendorSectionRow(
+                            title = "Popular Near You",
+                            vendors = uiState.popular,
+                            onVendorClick = onNavigateToVendor
+                        )
+                    }
 
-                item {
-                    VendorSectionRow(
-                        title = "New on ZapFood",
-                        vendors = uiState.newVendors,
-                        onVendorClick = onNavigateToVendor
-                    )
+                    item {
+                        VendorSectionRow(
+                            title = "Traditional Ethiopian",
+                            vendors = uiState.traditional,
+                            onVendorClick = onNavigateToVendor
+                        )
+                    }
+
+                    item {
+                        VendorSectionRow(
+                            title = "Fast Delivery",
+                            vendors = uiState.fastDelivery,
+                            onVendorClick = onNavigateToVendor
+                        )
+                    }
+
+                    item {
+                        VendorSectionRow(
+                            title = "Cafes & Coffee",
+                            vendors = uiState.cafes,
+                            onVendorClick = onNavigateToVendor
+                        )
+                    }
+
+                    item {
+                        VendorSectionRow(
+                            title = "New on ZapFood",
+                            vendors = uiState.newVendors,
+                            onVendorClick = onNavigateToVendor
+                        )
+                    }
+
+                    item {
+                        VendorSectionRow(
+                            title = "Budget Friendly",
+                            vendors = uiState.budget,
+                            onVendorClick = onNavigateToVendor
+                        )
+                    }
                 }
             }
         }
@@ -163,7 +191,7 @@ fun DiscoveryTopBar(
 }
 
 @Composable
-fun CategoryFilterRow(
+fun VendorCategoryFilter(
     selectedCategory: VendorType?,
     onCategorySelected: (VendorType?) -> Unit
 ) {
@@ -205,7 +233,7 @@ fun VendorSectionRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(vendors) { vendor ->
-                VendorCard(vendor = vendor, onClick = { onVendorClick(vendor.id) })
+                VendorCard(vendor = vendor, onClick = { onVendorClick(vendor.userId) })
             }
         }
     }
@@ -242,7 +270,7 @@ fun VendorCard(vendor: Vendor, onClick: () -> Unit) {
         modifier = Modifier
             .width(280.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -255,6 +283,33 @@ fun VendorCard(vendor: Vendor, onClick: () -> Unit) {
                     contentScale = ContentScale.Crop
                 )
                 
+                // Ethiopian Flag Accent Overlay (Subtle)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .align(Alignment.TopStart)
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color(0xFF009B4D), Color(0xFFFED100), Color(0xFFEF3340))
+                            )
+                        )
+                )
+
+                // Logo Overlay
+                AsyncImage(
+                    model = vendor.logoUrl ?: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100",
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White)
+                        .padding(2.dp)
+                        .align(Alignment.BottomEnd),
+                    contentScale = ContentScale.Crop
+                )
+
                 // Status Badge
                 val isOpen = true // To be replaced with real check
                 Box(
@@ -322,11 +377,24 @@ fun VendorCard(vendor: Vendor, onClick: () -> Unit) {
 
                 Spacer(Modifier.height(4.dp))
                 
-                Text(
-                    text = vendor.businessTypes.joinToString(" • ") { it.displayName },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = vendor.businessTypes.joinToString(" • ") { it.displayName },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    // Distance (Simulated)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Place, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(12.dp))
+                        Text(
+                            "1.2 km",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
 
                 Spacer(Modifier.height(8.dp))
 
@@ -343,6 +411,55 @@ fun VendorCard(vendor: Vendor, onClick: () -> Unit) {
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ShimmerDiscoveryContent(padding: PaddingValues) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+    ) {
+        // Shimmer Categories
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(5) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 80.dp, height = 32.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.LightGray.copy(alpha = 0.3f))
+                )
+            }
+        }
+
+        // Shimmer Sections
+        repeat(3) {
+            Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .size(width = 120.dp, height = 24.dp)
+                        .background(Color.LightGray.copy(alpha = 0.3f))
+                )
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(3) {
+                        Box(
+                            modifier = Modifier
+                                .size(width = 280.dp, height = 240.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Color.LightGray.copy(alpha = 0.3f))
+                        )
+                    }
                 }
             }
         }

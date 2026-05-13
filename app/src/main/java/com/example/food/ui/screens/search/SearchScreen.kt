@@ -42,7 +42,7 @@ fun SearchScreen(
             price = 8.99,
             imageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop",
             vendorId = vendorId,
-            vendorName = "Burger King"
+            businessName = "Burger King"
         ),
         Meal(
             id = java.util.UUID.randomUUID().toString(),
@@ -51,7 +51,7 @@ fun SearchScreen(
             price = 12.99,
             imageUrl = "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&auto=format&fit=crop",
             vendorId = vendorId,
-            vendorName = "Pizza Hut"
+            businessName = "Pizza Hut"
         ),
         Meal(
             id = java.util.UUID.randomUUID().toString(),
@@ -60,7 +60,7 @@ fun SearchScreen(
             price = 10.50,
             imageUrl = "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=500&auto=format&fit=crop",
             vendorId = vendorId,
-            vendorName = "Sushi Zen"
+            businessName = "Sushi Zen"
         ),
         Meal(
             id = java.util.UUID.randomUUID().toString(),
@@ -69,7 +69,7 @@ fun SearchScreen(
             price = 9.99,
             imageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&auto=format&fit=crop",
             vendorId = vendorId,
-            vendorName = "Fresh Grill"
+            businessName = "Fresh Grill"
         )
     )
 
@@ -141,7 +141,7 @@ fun MealSearchItem(meal: Meal, onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = meal.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(text = meal.vendorName, fontSize = 12.sp, color = Color.Gray)
+                Text(text = meal.businessName, fontSize = 12.sp, color = Color.Gray)
             }
             Text(
                 text = "ETB ${"%,.0f".format(meal.price * 1000)}",

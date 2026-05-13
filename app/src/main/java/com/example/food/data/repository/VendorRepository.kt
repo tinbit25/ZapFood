@@ -20,7 +20,8 @@ class VendorRepository {
 
     suspend fun registerVendor(vendor: Vendor): Boolean {
         return try {
-            vendorsCollection.document(vendor.id).set(vendor).await()
+            // Use userId as the document ID to prevent duplicates
+            vendorsCollection.document(vendor.userId).set(vendor).await()
             true
         } catch (e: Exception) {
             Log.e("VendorRepository", "Error registering vendor: ${e.message}")
@@ -36,6 +37,24 @@ class VendorRepository {
             Log.e("VendorRepository", "Error fetching vendor by userId: ${e.message}")
             null
         }
+    }
+
+    /** Real-time listener — emits every time the vendor doc changes in Firestore */
+    fun listenToVendorByUserId(userId: String): kotlinx.coroutines.flow.Flow<Vendor?> = callbackFlow {
+        val listener = vendorsCollection
+            .whereEqualTo("userId", userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("VendorRepository", "Vendor listener error: ${error.message}")
+                    trySend(null)
+                    return@addSnapshotListener
+                }
+                val vendor = snapshot?.documents?.firstOrNull()?.let { doc ->
+                    try { doc.toObject(Vendor::class.java) } catch (e: Exception) { null }
+                }
+                trySend(vendor)
+            }
+        awaitClose { listener.remove() }
     }
 
     suspend fun getVendorById(vendorId: String): Vendor? {

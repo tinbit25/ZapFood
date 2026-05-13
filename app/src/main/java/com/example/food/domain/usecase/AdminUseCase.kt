@@ -32,17 +32,31 @@ class AdminUseCase(
         return result
     }
 
+    suspend fun getVendorApplications(): Resource<List<VendorApplication>> {
+        val usersResult = getUsers(roleFilter = UserRole.VENDOR)
+        val profilesResult = adminRepository.getAllVendorProfiles()
+        
+        if (usersResult is Resource.Success && profilesResult is Resource.Success) {
+            val users = usersResult.data ?: emptyList()
+            val profiles = profilesResult.data ?: emptyList()
+            
+            val applications = users.map { user ->
+                VendorApplication(
+                    user = user,
+                    vendor = profiles.find { it.userId == user.userId }
+                )
+            }
+            return Resource.Success(applications)
+        }
+        return Resource.Error(usersResult.message ?: profilesResult.message ?: "Failed to fetch vendor applications")
+    }
+
     suspend fun toggleUserStatus(user: User): Resource<Unit> {
         return adminRepository.updateUserStatus(user.userId, !user.isActive)
     }
 
     suspend fun manageVendor(userId: String, action: VendorAction): Resource<Unit> {
-        val status = when (action) {
-            VendorAction.APPROVE -> VendorStatus.APPROVED
-            VendorAction.REJECT -> VendorStatus.REJECTED
-            VendorAction.SUSPEND -> VendorStatus.SUSPENDED
-        }
-        return adminRepository.updateVendorStatus(userId, status)
+        return adminRepository.updateVendorStatus(userId, action)
     }
 
     suspend fun getDashboardData(): Resource<AdminDashboardData> {

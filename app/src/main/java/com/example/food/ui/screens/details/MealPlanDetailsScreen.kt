@@ -142,7 +142,7 @@ fun MealPlanDetailsScreen(
                         fontWeight = FontWeight.Medium,
                         color = Color.White
                     )
-                    Text(text = "by ${plan.vendorName}", fontSize = 14.sp, color = Color.Gray)
+                    Text(text = "by ${plan.businessName}", fontSize = 14.sp, color = Color.Gray)
 
                     Spacer(modifier = Modifier.height(24.dp))
 

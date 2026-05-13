@@ -35,7 +35,7 @@ class OrderUseCase(
         val orderItems = mutableListOf<OrderItem>()
         var subtotal = 0.0
         var vendorId: String? = null
-        var vendorName: String? = null
+        var businessName: String? = null
 
         for ((id, quantity) in idCounts) {
             val meal = mealRepository.getMealById(id) ?: return Resource.Error("Meal not found: $id")
@@ -44,7 +44,7 @@ class OrderUseCase(
             // Enforce single-vendor per order for simplicity
             if (vendorId == null) {
                 vendorId = meal.vendorId
-                vendorName = meal.vendorName
+                businessName = meal.businessName
             } else if (vendorId != meal.vendorId) {
                 return Resource.Error("Orders must contain meals from a single vendor")
             }
@@ -59,7 +59,7 @@ class OrderUseCase(
             customerId = user.userId,
             customerName = user.displayName ?: "Unknown",
             vendorId = vendorId ?: "",
-            vendorName = vendorName ?: "",
+            businessName = businessName ?: "",
             mealPlanId = mealPlanId,
             items = orderItems,
             totalAmount = subtotal + deliveryFee,

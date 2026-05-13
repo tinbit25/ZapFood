@@ -313,7 +313,7 @@ fun SearchResultsContent(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(vendorResults) { vendor ->
-                VendorSearchResultCard(vendor = vendor, onClick = { onVendorClick(vendor.id) })
+                VendorSearchResultCard(vendor = vendor, onClick = { onVendorClick(vendor.userId) })
             }
         }
     }
@@ -346,7 +346,7 @@ fun FoodSearchResultCard(meal: Meal, onClick: () -> Unit) {
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    meal.vendorName, 
+                    meal.businessName, 
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

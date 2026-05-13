@@ -2,6 +2,7 @@ package com.example.food.data.repository
 
 import com.example.food.core.util.Resource
 import com.example.food.data.model.*
+import com.example.food.domain.usecase.VendorAction
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
@@ -26,6 +27,16 @@ class AdminRepository {
         }
     }
 
+    suspend fun getAllVendorProfiles(): Resource<List<Vendor>> {
+        return try {
+            val snapshot = firestore.collection("vendors").get().await()
+            val vendors = snapshot.documents.mapNotNull { it.toObject(Vendor::class.java) }
+            Resource.Success(vendors)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Failed to fetch vendor profiles")
+        }
+    }
+
     suspend fun updateUserStatus(userId: String, isActive: Boolean): Resource<Unit> {
         return try {
             usersCollection.document(userId).update("isActive", isActive).await()
@@ -35,9 +46,29 @@ class AdminRepository {
         }
     }
 
-    suspend fun updateVendorStatus(userId: String, status: VendorStatus): Resource<Unit> {
+    suspend fun updateVendorStatus(userId: String, action: VendorAction): Resource<Unit> {
         return try {
-            usersCollection.document(userId).update("vendorStatus", status).await()
+            val updateMap = when (action) {
+                VendorAction.APPROVE -> mapOf(
+                    "verificationStatus" to "APPROVED",
+                    "verified" to true,
+                    "active" to true
+                )
+                VendorAction.REJECT -> mapOf(
+                    "verificationStatus" to "REJECTED",
+                    "verified" to false,
+                    "active" to false
+                )
+                VendorAction.SUSPEND -> mapOf(
+                    "verificationStatus" to "SUSPENDED",
+                    "verified" to true, // Profile still exists/verified but not active
+                    "active" to false
+                )
+            }
+            
+            firestore.collection("vendors").document(userId)
+                .update(updateMap).await()
+
             Resource.Success(Unit)
         } catch (e: Exception) {
             Resource.Error(e.localizedMessage ?: "Failed to update vendor status")
@@ -64,7 +95,7 @@ class AdminRepository {
                 val allUsers = usersSnapshot?.documents?.mapNotNull { it.toObject(User::class.java) } ?: emptyList()
                 
                 val totalRevenue = allOrders.filter { it.status == OrderStatus.DELIVERED }.sumOf { it.totalAmount }
-                val pendingVendors = allUsers.count { it.role == UserRole.VENDOR && it.vendorStatus == VendorStatus.PENDING }
+                    val pendingVendors = allUsers.count { it.role == UserRole.VENDOR } // Status filter moved to Vendor collection
                 val recentOrders = allOrders.sortedByDescending { it.createdAt }.take(10)
                 
                 val allItems = allOrders.flatMap { it.items }
@@ -104,7 +135,7 @@ class AdminRepository {
             val allUsers = usersCollection.get().await().documents.mapNotNull { it.toObject(User::class.java) }
             
             val totalRevenue = allOrders.filter { it.status == OrderStatus.DELIVERED }.sumOf { it.totalAmount }
-            val pendingVendors = allUsers.count { it.role == UserRole.VENDOR && it.vendorStatus == VendorStatus.PENDING }
+                val pendingVendors = allUsers.count { it.role == UserRole.VENDOR } // Status filter moved to Vendor collection
             
             val recentOrders = allOrders.sortedByDescending { it.createdAt }.take(10)
             

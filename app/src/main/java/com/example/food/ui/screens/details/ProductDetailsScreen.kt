@@ -52,7 +52,7 @@ fun ProductDetailsScreen(
         price = 8.99,
         imageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop",
         vendorId = "mock-vendor",
-        vendorName = "Burger King"
+        businessName = "Burger King"
     )
 
     LaunchedEffect(productId) {
@@ -115,7 +115,7 @@ fun ProductDetailsScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Delicious ${product.name} prepared by ${product.vendorName} with premium ingredients.",
+                    text = "Delicious ${product.name} prepared by ${product.businessName} with premium ingredients.",
                     fontSize = 14.sp,
                     color = Color.Gray,
                     lineHeight = 20.sp

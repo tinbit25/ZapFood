@@ -6,10 +6,11 @@ enum class VendorType(val displayName: String) {
     RESTAURANT("Restaurant"),
     CAFE("Cafe"),
     BAKERY("Bakery"),
-    GROCERY("Grocery"),
-    CHEF_SERVICE("Chef Service"),
+    TRADITIONAL_ETHIOPIAN("Traditional Ethiopian"),
     JUICE_SHOP("Juice Shop"),
-    FAST_FOOD("Fast Food")
+    FAST_FOOD("Fast Food"),
+    PRIVATE_CHEF("Private Chef"),
+    GROCERY("Grocery")
 }
 
 enum class ServiceTag(val displayName: String, val icon: String) {
@@ -20,8 +21,14 @@ enum class ServiceTag(val displayName: String, val icon: String) {
 }
 
 enum class VerificationStatus {
-    PENDING,
+    PENDING_REVIEW,
+    VERIFYING,
+    ACTIVE,
+    APPROVED,
+    SUSPENDED,
     REJECTED,
+    // Legacy support
+    PENDING,
     VERIFIED
 }
 
@@ -33,14 +40,14 @@ data class OperatingHours(
 
 data class Vendor(
     val id: String = UUID.randomUUID().toString(),
-    val userId: String,
-    val businessName: String,
+    val userId: String = "",
+    val businessName: String = "",
     val businessTypes: List<VendorType> = listOf(VendorType.RESTAURANT),
-    val description: String,
+    val description: String = "",
     val cuisineTypes: List<String> = emptyList(),
     val operatingHours: Map<String, OperatingHours> = emptyMap(),
     val deliveryRadiusKm: Double = 5.0,
-    val phoneNumber: String,
+    val phoneNumber: String = "",
     val serviceTags: List<ServiceTag> = emptyList(),
     val logoUrl: String? = null,
     val coverImageUrl: String? = null, // Header image for discovery
@@ -50,8 +57,10 @@ data class Vendor(
     val deliveryTimeMin: Int = 20,
     val deliveryTimeMax: Int = 45,
     val deliveryFee: Double = 0.0,
-    val isVerified: Boolean = false,
-    val verificationStatus: VerificationStatus = VerificationStatus.PENDING,
+    val verified: Boolean = false,
+    val verificationStatus: VerificationStatus = VerificationStatus.PENDING_REVIEW,
+    val profileCompleted: Boolean = false,
+    val isActive: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val verificationInfo: VendorVerificationInfo? = null
 )

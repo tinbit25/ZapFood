@@ -88,7 +88,7 @@ class MealPlanRepository {
                     description = "A professionally curated meal plan by our experts.",
                     ownerId = vendorId,
                     vendorId = vendorId,
-                    vendorName = "Demo Vendor ${vIndex + 1}",
+                    businessName = "Demo Vendor ${vIndex + 1}",
                     imageUrl = if (vIndex % 2 == 0) "https://images.unsplash.com/photo-1547573854-74d2a71d0827?w=800" else "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800",
                     price = 45.0 + vIndex,
                     meals = Day.entries.associateWith { day ->

@@ -18,7 +18,7 @@ data class MealPlan(
     val imageUrl: String = "",
     val ownerId: String = "",
     val vendorId: String = "", // For vendor-created plans
-    val vendorName: String = "",
+    val businessName: String = "",
     val sourceType: PlanSourceType = PlanSourceType.CUSTOMER,
     val meals: Map<Day, List<String>> = emptyMap(), // Map of Day to List of Meal IDs
     val price: Double = 0.0,

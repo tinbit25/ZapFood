@@ -17,6 +17,9 @@ data class DiscoveryUiState(
     val popular: List<Vendor> = emptyList(),
     val fastDelivery: List<Vendor> = emptyList(),
     val newVendors: List<Vendor> = emptyList(),
+    val traditional: List<Vendor> = emptyList(),
+    val cafes: List<Vendor> = emptyList(),
+    val budget: List<Vendor> = emptyList(),
     val filteredVendors: List<Vendor> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
@@ -43,41 +46,51 @@ class VendorDiscoveryViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             
-            // Parallel loading or sequential for simplicity here
-            launch {
-                vendorRepository.getTopRatedVendors().collectLatest { resource ->
-                    if (resource is Resource.Success) {
-                        _uiState.value = _uiState.value.copy(topRated = resource.data ?: emptyList())
+            // Parallel loading of discovery sections
+            val discoveryJobs = listOf(
+                launch { fetchSection("rating") { _uiState.value = _uiState.value.copy(topRated = it) } },
+                launch { fetchSection("totalOrders") { _uiState.value = _uiState.value.copy(popular = it) } },
+                launch { fetchSection("createdAt") { _uiState.value = _uiState.value.copy(newVendors = it) } },
+                launch { 
+                    vendorRepository.getVendors(sortBy = "deliveryTimeMin", limit = 10).collectLatest { resource ->
+                        if (resource is Resource.Success) {
+                            _uiState.value = _uiState.value.copy(fastDelivery = resource.data ?: emptyList())
+                        }
+                    }
+                },
+                launch {
+                    vendorRepository.getVendors(type = VendorType.TRADITIONAL_ETHIOPIAN, limit = 10).collectLatest { resource ->
+                        if (resource is Resource.Success) {
+                            _uiState.value = _uiState.value.copy(traditional = resource.data ?: emptyList())
+                        }
+                    }
+                },
+                launch {
+                    vendorRepository.getVendors(type = VendorType.CAFE, limit = 10).collectLatest { resource ->
+                        if (resource is Resource.Success) {
+                            _uiState.value = _uiState.value.copy(cafes = resource.data ?: emptyList())
+                        }
+                    }
+                },
+                launch {
+                    // Budget friendly simulated by low delivery fee for now
+                    vendorRepository.getVendors(sortBy = "deliveryFee", limit = 10).collectLatest { resource ->
+                        if (resource is Resource.Success) {
+                            _uiState.value = _uiState.value.copy(budget = resource.data?.reversed() ?: emptyList())
+                        }
                     }
                 }
-            }
+            )
             
-            launch {
-                vendorRepository.getPopularVendors().collectLatest { resource ->
-                    if (resource is Resource.Success) {
-                        _uiState.value = _uiState.value.copy(popular = resource.data ?: emptyList())
-                    }
-                }
-            }
-
-            launch {
-                vendorRepository.getNewVendors().collectLatest { resource ->
-                    if (resource is Resource.Success) {
-                        _uiState.value = _uiState.value.copy(newVendors = resource.data ?: emptyList())
-                    }
-                }
-            }
-            
-            // Fast Delivery (simulated by sorting by deliveryTimeMin)
-            launch {
-                vendorRepository.getVendors(sortBy = "deliveryTimeMin", limit = 10).collectLatest { resource ->
-                    if (resource is Resource.Success) {
-                        _uiState.value = _uiState.value.copy(fastDelivery = resource.data ?: emptyList())
-                    }
-                }
-            }
-
             _uiState.value = _uiState.value.copy(isLoading = false)
+        }
+    }
+
+    private suspend fun fetchSection(sortBy: String, update: (List<Vendor>) -> Unit) {
+        vendorRepository.getVendors(sortBy = sortBy, limit = 10).collectLatest { resource ->
+            if (resource is Resource.Success) {
+                update(resource.data ?: emptyList())
+            }
         }
     }
 

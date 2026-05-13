@@ -6,10 +6,6 @@ enum class UserRole {
     CUSTOMER, VENDOR, ADMIN
 }
 
-enum class VendorStatus {
-    PENDING, APPROVED, REJECTED, SUSPENDED
-}
-
 data class User(
     @get:Exclude val id: String = java.util.UUID.randomUUID().toString(), // Local-only, excluded from Firestore
     val userId: String = "", // Firebase UID — used for all Firestore identity
@@ -30,8 +26,5 @@ data class User(
 
     // Role-specific extensions
     val preferences: List<String> = emptyList(), // For Customer
-    val dietaryNeeds: List<String> = emptyList(), // For Customer
-    val cuisineType: String = "", // For Vendor
-    val businessAddress: String = "", // For Vendor
-    val vendorStatus: VendorStatus = VendorStatus.PENDING // For Vendor lifecycle
+    val dietaryNeeds: List<String> = emptyList() // For Customer
 )

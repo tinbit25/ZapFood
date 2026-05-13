@@ -72,6 +72,7 @@ class VendorRegistrationViewModel(
             _uiState.value = VendorRegistrationState.Loading
             
             val vendor = Vendor(
+                id = userId,
                 userId = userId,
                 businessName = businessName.value,
                 businessTypes = businessTypes.value,
@@ -80,6 +81,8 @@ class VendorRegistrationViewModel(
                 deliveryRadiusKm = deliveryRadius.value,
                 cuisineTypes = cuisineTypes.value,
                 serviceTags = serviceTags.value,
+                profileCompleted = true,
+                verificationStatus = VerificationStatus.PENDING_REVIEW,
                 verificationInfo = VendorVerificationInfo(
                     taxId = taxId.value,
                     bankAccountInfo = bankInfo.value,

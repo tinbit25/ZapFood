@@ -28,7 +28,7 @@ fun VendorManagementScreen(
     onNavigateBack: () -> Unit,
     viewModel: AdminViewModel = viewModel()
 ) {
-    val usersState by viewModel.usersState.collectAsState()
+    val applicationsState by viewModel.vendorsApplicationsState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.fetchUsers(role = UserRole.VENDOR)
@@ -53,25 +53,25 @@ fun VendorManagementScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                when (usersState) {
+                when (applicationsState) {
                     is Resource.Loading -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(color = Color(0xFFF16B24))
                         }
                     }
                     is Resource.Error -> {
-                        Text(text = usersState.message ?: "Error loading vendors", color = Color.Red)
+                        Text(text = (applicationsState as Resource.Error).message ?: "Error loading vendors", color = Color.Red)
                     }
                     is Resource.Success -> {
-                        val vendors = usersState.data ?: emptyList()
-                        if (vendors.isEmpty()) {
+                        val applications = (applicationsState as Resource.Success).data ?: emptyList()
+                        if (applications.isEmpty()) {
                             EmptyState("No vendor applications found")
                         } else {
                             LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                items(vendors) { vendor ->
+                                items(applications) { application ->
                                     VendorApprovalCard(
-                                        vendor = vendor,
-                                        onAction = { action -> viewModel.updateVendorStatus(vendor.userId, action) }
+                                        application = application,
+                                        onAction = { action -> viewModel.updateVendorStatus(application.user.userId, action) }
                                     )
                                 }
                             }
@@ -84,7 +84,11 @@ fun VendorManagementScreen(
 }
 
 @Composable
-fun VendorApprovalCard(vendor: User, onAction: (VendorAction) -> Unit) {
+fun VendorApprovalCard(application: VendorApplication, onAction: (VendorAction) -> Unit) {
+    val user = application.user
+    val vendor = application.vendor
+    val status = vendor?.verificationStatus ?: VerificationStatus.PENDING_REVIEW
+    
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -100,17 +104,34 @@ fun VendorApprovalCard(vendor: User, onAction: (VendorAction) -> Unit) {
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(text = vendor.displayName ?: "Unnamed Vendor", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                    Text(text = vendor.businessAddress, fontSize = 12.sp, color = Color.Gray)
+                    Text(text = vendor?.businessName ?: user.displayName ?: "Unnamed Vendor", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(text = "Vendor: ${user.displayName}", fontSize = 12.sp, color = Color.Gray)
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                StatusChip(vendor.vendorStatus)
+                StatusChip(status)
+            }
+            
+            if (vendor != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column {
+                        Text("Business Phone", fontSize = 10.sp, color = Color.Gray)
+                        Text(vendor.phoneNumber, fontSize = 12.sp, color = Color.White)
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("Tax ID", fontSize = 10.sp, color = Color.Gray)
+                        Text(vendor.verificationInfo?.taxId ?: "N/A", fontSize = 12.sp, color = Color.White)
+                    }
+                }
             }
             
             Spacer(modifier = Modifier.height(16.dp))
             
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (vendor.vendorStatus == VendorStatus.PENDING || vendor.vendorStatus == VendorStatus.REJECTED) {
+                if (status == VerificationStatus.PENDING_REVIEW || status == VerificationStatus.PENDING || status == VerificationStatus.REJECTED) {
                     Button(
                         onClick = { onAction(VendorAction.APPROVE) },
                         modifier = Modifier.weight(1f),
@@ -123,7 +144,7 @@ fun VendorApprovalCard(vendor: User, onAction: (VendorAction) -> Unit) {
                     }
                 }
                 
-                if (vendor.vendorStatus == VendorStatus.PENDING) {
+                if (status == VerificationStatus.PENDING_REVIEW || status == VerificationStatus.PENDING || status == VerificationStatus.VERIFYING) {
                     OutlinedButton(
                         onClick = { onAction(VendorAction.REJECT) },
                         modifier = Modifier.weight(1f),
@@ -135,7 +156,7 @@ fun VendorApprovalCard(vendor: User, onAction: (VendorAction) -> Unit) {
                     }
                 }
 
-                if (vendor.vendorStatus == VendorStatus.APPROVED) {
+                if (status == VerificationStatus.ACTIVE || status == VerificationStatus.APPROVED || status == VerificationStatus.VERIFIED) {
                     OutlinedButton(
                         onClick = { onAction(VendorAction.SUSPEND) },
                         modifier = Modifier.weight(1f),
@@ -152,12 +173,12 @@ fun VendorApprovalCard(vendor: User, onAction: (VendorAction) -> Unit) {
 }
 
 @Composable
-fun StatusChip(status: VendorStatus) {
+fun StatusChip(status: VerificationStatus) {
     val color = when(status) {
-        VendorStatus.PENDING -> Color(0xFFFF9800)
-        VendorStatus.APPROVED -> Color(0xFF4CAF50)
-        VendorStatus.REJECTED -> Color.Red
-        VendorStatus.SUSPENDED -> Color.Gray
+        VerificationStatus.PENDING_REVIEW, VerificationStatus.PENDING, VerificationStatus.VERIFYING -> Color(0xFFFF9800)
+        VerificationStatus.ACTIVE, VerificationStatus.APPROVED, VerificationStatus.VERIFIED -> Color(0xFF4CAF50)
+        VerificationStatus.REJECTED -> Color.Red
+        VerificationStatus.SUSPENDED -> Color.Gray
     }
     Surface(
         shape = RoundedCornerShape(8.dp),

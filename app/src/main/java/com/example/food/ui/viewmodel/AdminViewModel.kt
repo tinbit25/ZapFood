@@ -26,6 +26,9 @@ class AdminViewModel(
     private val _vendorsState = MutableStateFlow<Resource<List<User>>>(Resource.Loading())
     val vendorsState: StateFlow<Resource<List<User>>> = _vendorsState.asStateFlow()
 
+    private val _vendorsApplicationsState = MutableStateFlow<Resource<List<VendorApplication>>>(Resource.Loading())
+    val vendorsApplicationsState: StateFlow<Resource<List<VendorApplication>>> = _vendorsApplicationsState.asStateFlow()
+
     private val _systemHealth = MutableStateFlow(analyticsUseCase.getSystemHealth())
     val systemHealth: StateFlow<SystemHealth> = _systemHealth.asStateFlow()
 
@@ -53,6 +56,9 @@ class AdminViewModel(
             if (role == UserRole.VENDOR) {
                 _vendorsState.value = Resource.Loading()
                 _vendorsState.value = adminUseCase.getUsers(query, role)
+                
+                _vendorsApplicationsState.value = Resource.Loading()
+                _vendorsApplicationsState.value = adminUseCase.getVendorApplications()
             } else {
                 _usersState.value = Resource.Loading()
                 _usersState.value = adminUseCase.getUsers(query, role)

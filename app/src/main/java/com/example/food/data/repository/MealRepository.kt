@@ -112,6 +112,8 @@ class MealRepository {
     
     fun getHealthyMeals() = getMealsByCategory(com.example.food.data.model.EthiopianFoodCategory.HEALTHY)
 
+    fun getMealsByVendor(vendorId: String) = getFilteredMeals(MealFilters(vendorId = vendorId))
+
     suspend fun deleteMeal(id: String): Resource<Unit> {
         return try {
             mealsCollection.document(id).delete().await()
@@ -142,7 +144,7 @@ class MealRepository {
                     price = data.second,
                     imageUrl = data.third,
                     vendorId = vendorId,
-                    vendorName = "Demo Vendor ${index + 1}",
+                    businessName = "Demo Vendor ${index + 1}",
                     category = if (index % 2 == 0) com.example.food.data.model.EthiopianFoodCategory.MEAT_FOODS.name else com.example.food.data.model.EthiopianFoodCategory.HEALTHY.name,
                     isAvailable = true
                 )
@@ -153,7 +155,7 @@ class MealRepository {
             Resource.Error(e.localizedMessage ?: "Seeding failed")
         }
     }
-    suspend fun seedMealsForVendor(vendorId: String, vendorName: String): Resource<Unit> {
+    suspend fun seedMealsForVendor(vendorId: String, businessName: String): Resource<Unit> {
         val seedData = listOf(
             Triple("Classic Injera Combo", 8.99, "https://images.unsplash.com/photo-1541014741259-df549af00c67?w=800"),
             Triple("Spicy Shiro", 7.50, "https://images.unsplash.com/photo-1589647363585-f4a7d3877b10?w=800"),
@@ -168,7 +170,7 @@ class MealRepository {
                     price = data.second,
                     imageUrl = data.third,
                     vendorId = vendorId,
-                    vendorName = vendorName,
+                    businessName = businessName,
                     category = com.example.food.data.model.EthiopianFoodCategory.TRADITIONAL.name,
                     isAvailable = true
                 )

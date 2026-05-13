@@ -1,10 +1,7 @@
 package com.example.food.domain.usecase
 
 import com.example.food.core.util.Resource
-import com.example.food.data.model.Meal
-import com.example.food.data.model.MealFilters
-import com.example.food.data.model.User
-import com.example.food.data.model.UserRole
+import com.example.food.data.model.*
 import com.example.food.data.repository.MealRepository
 import com.example.food.data.repository.VendorRepository
 import kotlinx.coroutines.flow.Flow
@@ -14,26 +11,27 @@ class MealUseCase(
     private val vendorRepository: VendorRepository = VendorRepository()
 ) {
     suspend fun createMeal(user: User, meal: Meal): Resource<Unit> {
-        // 1. Check user role = VENDOR and status = APPROVED
-        if (user.role == UserRole.VENDOR && user.vendorStatus != com.example.food.data.model.VendorStatus.APPROVED) {
-            return Resource.Error("Your account is not approved to create meals yet. Status: ${user.vendorStatus}")
+        // 1. Fetch Vendor for Business Name and Status
+        val vendor = vendorRepository.getVendorByUserId(user.userId)
+        val businessName = vendor?.businessName ?: user.displayName ?: "Unknown Vendor"
+        val status = vendor?.verificationStatus ?: VerificationStatus.PENDING_REVIEW
+
+        // 2. Check user role = VENDOR and status = APPROVED
+        if (user.role == UserRole.VENDOR && status != VerificationStatus.APPROVED && status != VerificationStatus.ACTIVE) {
+            return Resource.Error("Your account is not approved to create meals yet. Status: $status")
         }
         if (user.role != UserRole.VENDOR && user.role != UserRole.ADMIN) {
             return Resource.Error("Unauthorized: Only vendors can create meals")
         }
 
-        // 2. Validate input
+        // 3. Validate input
         if (meal.name.isBlank()) return Resource.Error("Meal name cannot be empty")
         if (meal.price <= 0) return Resource.Error("Price must be greater than zero")
 
-        // 3. Fetch Vendor for Business Name
-        val vendor = vendorRepository.getVendorByUserId(user.userId)
-        val businessName = vendor?.businessName ?: user.displayName ?: "Unknown Vendor"
-
-        // 4. Attach vendorId automatically
+        // 4. Attach vendorId and businessName automatically
         val mealToSave = meal.copy(
             vendorId = user.userId,
-            vendorName = businessName
+            businessName = businessName
         )
 
         // 5. Save meal

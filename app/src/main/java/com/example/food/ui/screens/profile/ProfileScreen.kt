@@ -28,6 +28,7 @@ import com.example.food.ui.viewmodel.UserViewModel
 import com.example.food.ui.screens.auth.AuthViewModel
 import com.example.food.data.model.UserRole
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     userViewModel: UserViewModel,
@@ -44,14 +45,22 @@ fun ProfileScreen(
     onNavigateToAdminSupport: () -> Unit,
     onNavigateToLinkPhone: () -> Unit,
     onNavigateToVendorRegistration: () -> Unit,
-    authViewModel: AuthViewModel = viewModel()
+    authViewModel: AuthViewModel = viewModel(),
+    vendorStateManager: com.example.food.ui.viewmodel.VendorStateManager = viewModel()
 ) {
     val user by userViewModel.user.collectAsState()
     val pointsBalance by rewardViewModel.pointsBalance.collectAsState()
     val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(user) {
-        user?.let { rewardViewModel.fetchBalance(it.userId) }
+        user?.let { 
+            rewardViewModel.fetchBalance(it.userId)
+            try {
+                vendorStateManager.startObserving(it.userId)
+            } catch (e: Exception) {
+                android.util.Log.e("ProfileScreen", "Error starting vendor observation: ${e.message}")
+            }
+        }
     }
 
     Column(
@@ -121,11 +130,11 @@ fun ProfileScreen(
                 ProfileMenuItem(icon = Icons.Default.RestaurantMenu, title = "Manage Menu", onClick = onNavigateToVendorMenu)
             }
             
-            val isVendorComplete by userViewModel.isVendorProfileComplete.collectAsState()
+            val vendorUIState by vendorStateManager.uiState.collectAsState()
             
-            if (user?.role == UserRole.VENDOR && isVendorComplete == false) {
+            if (user?.role == UserRole.VENDOR && vendorUIState == com.example.food.ui.viewmodel.VendorUIState.OnboardingRequired) {
                 Surface(
-                    onClick = onNavigateToVendorRegistration,
+                    onClick = onNavigateToVendorDashboard, // Now routes through state manager
                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                     color = colorScheme.errorContainer.copy(alpha = 0.3f),
                     shape = RoundedCornerShape(12.dp),
@@ -142,6 +151,27 @@ fun ProfileScreen(
                             Text("Essential info missing to start selling", fontSize = 12.sp, color = colorScheme.onErrorContainer.copy(alpha = 0.7f))
                         }
                         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colorScheme.error)
+                    }
+                }
+            } else if (user?.role == UserRole.VENDOR && (vendorUIState is com.example.food.ui.viewmodel.VendorUIState.PendingReview || vendorUIState is com.example.food.ui.viewmodel.VendorUIState.Verifying)) {
+                Surface(
+                    onClick = onNavigateToVendorDashboard,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    color = colorScheme.primaryContainer.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(12.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.primary.copy(alpha = 0.5f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Refresh, contentDescription = null, tint = colorScheme.primary)
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Verification in Progress", fontWeight = FontWeight.Bold, color = colorScheme.onPrimaryContainer)
+                            Text("We are reviewing your profile", fontSize = 12.sp, color = colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                        }
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colorScheme.primary)
                     }
                 }
             }

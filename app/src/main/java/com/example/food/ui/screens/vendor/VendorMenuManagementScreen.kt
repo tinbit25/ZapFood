@@ -112,7 +112,7 @@ fun VendorMenuManagementScreen(
                         price = price,
                         category = category.name,
                         vendorId = vendor.userId,
-                        vendorName = "", // Will be set by UseCase from businessName
+                        businessName = "", // Will be set by UseCase from businessName
                         imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop",
                         foodType = foodType,
                         dietType = dietType,

@@ -37,7 +37,7 @@ class MealPlanUseCase(
             ownerId = user.userId,
             sourceType = if (user.role == UserRole.VENDOR) PlanSourceType.VENDOR else PlanSourceType.CUSTOMER,
             vendorId = if (user.role == UserRole.VENDOR) user.userId else "",
-            vendorName = if (user.role == UserRole.VENDOR) (user.displayName ?: "") else "",
+            businessName = if (user.role == UserRole.VENDOR) (user.displayName ?: "") else "",
             updatedAt = System.currentTimeMillis()
         )
 

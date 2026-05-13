@@ -54,7 +54,10 @@ import com.example.food.ui.screens.settings.NotificationSettingsScreen
 import com.example.food.ui.viewmodel.SettingsViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.getInstance
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
@@ -76,7 +79,8 @@ fun AppNavigation(
     recommendationViewModel: RecommendationViewModel = viewModel(),
     authViewModel: AuthViewModel = viewModel(),
     addressViewModel: com.example.food.ui.viewmodel.AddressViewModel = viewModel(),
-    settingsViewModel: SettingsViewModel = viewModel()
+    settingsViewModel: SettingsViewModel = viewModel(),
+    vendorStateManager: com.example.food.ui.viewmodel.VendorStateManager = viewModel()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -409,14 +413,6 @@ fun AppNavigation(
                 )
             }
 
-            composable(route = Screen.Search.route) {
-                SearchScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToDetails = { productId ->
-                        navController.navigate(Screen.ProductDetails.createRoute(productId))
-                    }
-                )
-            }
 
             composable(route = Screen.Notifications.route) {
                 NotificationScreen(
@@ -497,15 +493,56 @@ fun AppNavigation(
             }
 
             composable(route = Screen.VendorDashboard.route) {
-                VendorDashboardScreen(
-                    userViewModel = userViewModel,
-                    orderViewModel = orderViewModel,
-                    onLogout = {
-                        navController.navigate(Screen.Welcome.route) {
-                            popUpTo(0) { inclusive = true }
+                val user by userViewModel.user.collectAsState()
+                val vendorUIState by vendorStateManager.uiState.collectAsState()
+
+                LaunchedEffect(user?.userId) {
+                    vendorStateManager.startObserving(user?.userId)
+                }
+
+                when (vendorUIState) {
+                    is com.example.food.ui.viewmodel.VendorUIState.Loading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                            CircularProgressIndicator()
                         }
                     }
-                )
+                    is com.example.food.ui.viewmodel.VendorUIState.OnboardingRequired -> {
+                        com.example.food.ui.screens.vendor.VendorRegistrationScreen(
+                            userId = user?.userId ?: "",
+                            onNavigateBack = { navController.popBackStack() },
+                            onRegistrationSuccess = {
+                                // Realtime listener will automatically switch UI to PendingReview
+                            }
+                        )
+                    }
+                    is com.example.food.ui.viewmodel.VendorUIState.Active -> {
+                        VendorDashboardScreen(
+                            userViewModel = userViewModel,
+                            orderViewModel = orderViewModel,
+                            onLogout = {
+                                navController.navigate(Screen.Welcome.route) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            }
+                        )
+                    }
+                    is com.example.food.ui.viewmodel.VendorUIState.PendingReview,
+                    is com.example.food.ui.viewmodel.VendorUIState.Verifying,
+                    is com.example.food.ui.viewmodel.VendorUIState.Suspended,
+                    is com.example.food.ui.viewmodel.VendorUIState.Rejected -> {
+                        com.example.food.ui.screens.vendor.VendorVerificationStateScreen(
+                            state = vendorUIState,
+                            onNavigateBack = { navController.popBackStack() },
+                            onContactSupport = {
+                                navController.navigate(Screen.SupportTickets.route)
+                            }
+                        )
+                    }
+                    else -> {
+                        // Fallback
+                        navController.popBackStack()
+                    }
+                }
             }
 
             composable(route = Screen.VendorMenuManagement.route) {
@@ -617,7 +654,9 @@ fun AppNavigation(
                     onNavigateToMeal = { mealId -> 
                         navController.navigate(Screen.ProductDetails.createRoute(mealId))
                     },
-                    onNavigateToVendor = { vendorId -> /* Navigate to Vendor Detail */ },
+                    onNavigateToVendor = { vendorId -> 
+                        navController.navigate(Screen.VendorStorefront.createRoute(vendorId))
+                    },
                     onNavigateBack = { navController.popBackStack() },
                     viewModel = searchViewModel
                 )
@@ -632,9 +671,23 @@ fun AppNavigation(
             composable(route = Screen.VendorDiscovery.route) {
                 VendorDiscoveryScreen(
                     onNavigateToVendor = { vendorId ->
-                        // Future: Navigate to Vendor Detail/Menu
+                        navController.navigate(Screen.VendorStorefront.createRoute(vendorId))
                     },
                     onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = Screen.VendorStorefront.route,
+                arguments = listOf(navArgument("vendorId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val vendorId = backStackEntry.arguments?.getString("vendorId") ?: ""
+                com.example.food.ui.screens.vendor.VendorStorefrontScreen(
+                    vendorId = vendorId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onMealClick = { mealId ->
+                        navController.navigate(Screen.ProductDetails.createRoute(mealId))
+                    }
                 )
             }
 

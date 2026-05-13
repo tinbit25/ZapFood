@@ -47,9 +47,6 @@ fun AdvancedProfileEditScreen(
     var bio by remember { mutableStateOf(user?.bio ?: "") }
     var gender by remember { mutableStateOf(user?.gender ?: "") }
     
-    // Vendor specific
-    var cuisineType by remember { mutableStateOf(user?.cuisineType ?: "") }
-    var businessAddress by remember { mutableStateOf(user?.businessAddress ?: "") }
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
@@ -173,23 +170,6 @@ fun AdvancedProfileEditScreen(
                     modifier = Modifier.height(120.dp)
                 )
 
-                if (user?.role == UserRole.VENDOR) {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    SectionTitle("Business Information")
-                    CustomTextField(
-                        value = cuisineType,
-                        onValueChange = { cuisineType = it },
-                        placeholder = "Cuisine Type",
-                        leadingIcon = Icons.Default.Restaurant
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    CustomTextField(
-                        value = businessAddress,
-                        onValueChange = { businessAddress = it },
-                        placeholder = "Business Address",
-                        leadingIcon = Icons.Default.Business
-                    )
-                }
 
                 Spacer(modifier = Modifier.height(48.dp))
 
@@ -202,9 +182,7 @@ fun AdvancedProfileEditScreen(
                                 email = email,
                                 phoneNumber = phoneNumber,
                                 gender = gender,
-                                bio = bio,
-                                cuisineType = cuisineType,
-                                businessAddress = businessAddress
+                                bio = bio
                             )
                             userViewModel.updateProfile(updated)
                             onNavigateBack()
