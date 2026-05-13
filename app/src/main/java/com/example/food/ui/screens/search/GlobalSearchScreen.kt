@@ -290,9 +290,7 @@ fun SearchResultsContent(
     isLoading: Boolean
 ) {
     if (isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
+        SearchShimmerContent(mode)
         return
     }
 
@@ -408,3 +406,41 @@ fun VendorSearchResultCard(vendor: Vendor, onClick: () -> Unit) {
         }
     }
 }
+
+@Composable
+fun SearchShimmerContent(mode: SearchMode) {
+    if (mode == SearchMode.FOOD) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            contentPadding = PaddingValues(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(6) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.LightGray.copy(alpha = 0.3f))
+                )
+            }
+        }
+    } else {
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(4) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.LightGray.copy(alpha = 0.3f))
+                ) {}
+            }
+        }
+    }
+}
+

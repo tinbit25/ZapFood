@@ -47,42 +47,37 @@ class VendorDiscoveryViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true)
             
             // Parallel loading of discovery sections
-            val discoveryJobs = listOf(
-                launch { fetchSection("rating") { _uiState.value = _uiState.value.copy(topRated = it) } },
-                launch { fetchSection("totalOrders") { _uiState.value = _uiState.value.copy(popular = it) } },
-                launch { fetchSection("createdAt") { _uiState.value = _uiState.value.copy(newVendors = it) } },
-                launch { 
-                    vendorRepository.getVendors(sortBy = "deliveryTimeMin", limit = 10).collectLatest { resource ->
-                        if (resource is Resource.Success) {
-                            _uiState.value = _uiState.value.copy(fastDelivery = resource.data ?: emptyList())
-                        }
-                    }
-                },
-                launch {
-                    vendorRepository.getVendors(type = VendorType.TRADITIONAL_ETHIOPIAN, limit = 10).collectLatest { resource ->
-                        if (resource is Resource.Success) {
-                            _uiState.value = _uiState.value.copy(traditional = resource.data ?: emptyList())
-                        }
-                    }
-                },
-                launch {
-                    vendorRepository.getVendors(type = VendorType.CAFE, limit = 10).collectLatest { resource ->
-                        if (resource is Resource.Success) {
-                            _uiState.value = _uiState.value.copy(cafes = resource.data ?: emptyList())
-                        }
-                    }
-                },
-                launch {
-                    // Budget friendly simulated by low delivery fee for now
-                    vendorRepository.getVendors(sortBy = "deliveryFee", limit = 10).collectLatest { resource ->
-                        if (resource is Resource.Success) {
-                            _uiState.value = _uiState.value.copy(budget = resource.data?.reversed() ?: emptyList())
-                        }
-                    }
-                }
-            )
+            // We use a supervisorScope or similar to ensure all jobs complete before setting loading to false
+            // For now, simple counter or just individual updates
             
-            _uiState.value = _uiState.value.copy(isLoading = false)
+            fetchSection("rating") { _uiState.value = _uiState.value.copy(topRated = it) }
+            fetchSection("totalOrders") { _uiState.value = _uiState.value.copy(popular = it) }
+            fetchSection("createdAt") { _uiState.value = _uiState.value.copy(newVendors = it) }
+            
+            vendorRepository.getVendors(sortBy = "deliveryTimeMin", limit = 10).collectLatest { resource ->
+                if (resource is Resource.Success) {
+                    _uiState.value = _uiState.value.copy(fastDelivery = resource.data ?: emptyList())
+                }
+            }
+
+            vendorRepository.getVendors(type = VendorType.TRADITIONAL_ETHIOPIAN, limit = 10).collectLatest { resource ->
+                if (resource is Resource.Success) {
+                    _uiState.value = _uiState.value.copy(traditional = resource.data ?: emptyList())
+                }
+            }
+
+            vendorRepository.getVendors(type = VendorType.CAFE, limit = 10).collectLatest { resource ->
+                if (resource is Resource.Success) {
+                    _uiState.value = _uiState.value.copy(cafes = resource.data ?: emptyList())
+                }
+            }
+
+            // Budget friendly simulated by low delivery fee
+            vendorRepository.getVendors(sortBy = "deliveryFee", limit = 10).collectLatest { resource ->
+                if (resource is Resource.Success) {
+                    _uiState.value = _uiState.value.copy(budget = resource.data?.reversed() ?: emptyList(), isLoading = false)
+                }
+            }
         }
     }
 

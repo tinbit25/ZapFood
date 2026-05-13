@@ -297,31 +297,35 @@ fun VendorCard(vendor: Vendor, onClick: () -> Unit) {
                 )
 
                 // Logo Overlay
-                AsyncImage(
-                    model = vendor.logoUrl ?: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100",
-                    contentDescription = null,
+                Surface(
                     modifier = Modifier
                         .padding(12.dp)
                         .size(48.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White)
-                        .padding(2.dp)
                         .align(Alignment.BottomEnd),
-                    contentScale = ContentScale.Crop
-                )
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White,
+                    shadowElevation = 4.dp
+                ) {
+                    AsyncImage(
+                        model = vendor.logoUrl ?: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100",
+                        contentDescription = null,
+                        modifier = Modifier.padding(2.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
 
                 // Status Badge
                 val isOpen = true // To be replaced with real check
-                Box(
+                Surface(
                     modifier = Modifier
                         .padding(12.dp)
-                        .align(Alignment.TopEnd)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (isOpen) Color(0xFF4CAF50) else Color(0xFFF44336))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .align(Alignment.TopEnd),
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (isOpen) Color(0xFF4CAF50) else Color(0xFFF44336)
                 ) {
                     Text(
                         if (isOpen) "OPEN" else "CLOSED",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         color = Color.White,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
@@ -329,15 +333,17 @@ fun VendorCard(vendor: Vendor, onClick: () -> Unit) {
                 }
 
                 // Delivery Time Badge
-                Box(
+                Surface(
                     modifier = Modifier
                         .padding(12.dp)
-                        .align(Alignment.BottomStart)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.Black.copy(alpha = 0.6f))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .align(Alignment.BottomStart),
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color.Black.copy(alpha = 0.6f)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Icon(Icons.Default.Timer, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
                         Spacer(Modifier.width(4.dp))
                         Text(
@@ -364,14 +370,22 @@ fun VendorCard(vendor: Vendor, onClick: () -> Unit) {
                         modifier = Modifier.weight(1f)
                     )
                     
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFB300), modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            String.format("%.1f", vendor.rating),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFB300), modifier = Modifier.size(14.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                String.format("%.1f", vendor.rating),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                        }
                     }
                 }
 
@@ -387,7 +401,7 @@ fun VendorCard(vendor: Vendor, onClick: () -> Unit) {
                     
                     // Distance (Simulated)
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Place, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(12.dp))
+                        Icon(Icons.Default.Place, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(12.dp))
                         Text(
                             "1.2 km",
                             style = MaterialTheme.typography.bodySmall,
@@ -402,14 +416,15 @@ fun VendorCard(vendor: Vendor, onClick: () -> Unit) {
                     Icon(
                         Icons.Default.LocalShipping, 
                         contentDescription = null, 
-                        tint = MaterialTheme.colorScheme.primary, 
+                        tint = Color(0xFF009B4D), // Ethiopian Green
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
                         if (vendor.deliveryFee == 0.0) "Free Delivery" else "$${vendor.deliveryFee} Delivery",
                         style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        color = if (vendor.deliveryFee == 0.0) Color(0xFF009B4D) else MaterialTheme.colorScheme.onSurface
                     )
                 }
             }

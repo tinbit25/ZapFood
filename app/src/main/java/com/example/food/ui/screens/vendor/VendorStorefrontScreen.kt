@@ -67,9 +67,7 @@ fun VendorStorefrontScreen(
         }
     ) { padding ->
         if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            ShimmerStorefrontContent(padding)
         } else if (uiState.vendor != null) {
             LazyColumn(
                 modifier = Modifier
@@ -145,6 +143,19 @@ fun VendorHeaderSection(vendor: Vendor) {
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
+        )
+        
+        // Ethiopian Flag Accent Overlay (Top)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .align(Alignment.TopStart)
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0xFF009B4D), Color(0xFFFED100), Color(0xFFEF3340))
+                    )
+                )
         )
         
         // Gradient Overlay
@@ -408,3 +419,73 @@ fun EmptyMenuPlaceholder() {
         Text("No items found in this category", textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
+
+@Composable
+fun ShimmerStorefrontContent(padding: PaddingValues) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+    ) {
+        // Hero Shimmer
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .background(Color.LightGray.copy(alpha = 0.3f))
+        )
+
+        // Info Shimmer
+        Column(modifier = Modifier.padding(16.dp)) {
+            Box(modifier = Modifier.size(width = 200.dp, height = 32.dp).background(Color.LightGray.copy(alpha = 0.3f)))
+            Spacer(Modifier.height(8.dp))
+            Box(modifier = Modifier.size(width = 150.dp, height = 16.dp).background(Color.LightGray.copy(alpha = 0.3f)))
+            Spacer(Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                repeat(3) {
+                    Box(modifier = Modifier.size(width = 80.dp, height = 24.dp).clip(RoundedCornerShape(8.dp)).background(Color.LightGray.copy(alpha = 0.3f)))
+                }
+            }
+        }
+
+        // Search Shimmer
+        Box(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+                .height(56.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.LightGray.copy(alpha = 0.3f))
+        )
+
+        // Category Tabs Shimmer
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            repeat(4) {
+                Box(modifier = Modifier.size(width = 90.dp, height = 32.dp).clip(RoundedCornerShape(16.dp)).background(Color.LightGray.copy(alpha = 0.3f)))
+            }
+        }
+
+        // Items Shimmer
+        Spacer(Modifier.height(16.dp))
+        repeat(2) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                repeat(2) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(220.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color.LightGray.copy(alpha = 0.3f))
+                    )
+                }
+            }
+        }
+    }
+}
+
