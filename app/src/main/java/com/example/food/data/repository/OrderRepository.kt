@@ -223,6 +223,37 @@ class OrderRepository {
             Resource.Error(e.localizedMessage ?: "Failed to verify QR pickup")
         }
     }
+    suspend fun checkInToTable(orderId: String, tableNumber: String): Resource<Unit> {
+        return try {
+            firestore.runTransaction { transaction ->
+                val docRef = ordersCollection.document(orderId)
+                val snapshot = transaction.get(docRef)
+                val order = snapshot.toObject(Order::class.java) ?: throw Exception("Order not found")
+
+                val updatedDineInInfo = order.dineInInfo?.copy(
+                    tableNumber = tableNumber,
+                    isCheckedIn = true
+                )
+
+                val historyEntry = OrderStatusHistory(
+                    status = OrderStatus.ARRIVED,
+                    actor = "CUSTOMER",
+                    notes = "Guest arrived at Table $tableNumber",
+                    timestamp = System.currentTimeMillis()
+                )
+
+                transaction.update(docRef, "orderStatus", OrderStatus.ARRIVED)
+                transaction.update(docRef, "dineInInfo", updatedDineInInfo)
+                transaction.update(docRef, "updatedAt", System.currentTimeMillis())
+                transaction.update(docRef, "statusHistory", FieldValue.arrayUnion(historyEntry))
+                null
+            }.await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Failed to check-in to table")
+        }
+    }
+
     suspend fun closeDineInTable(orderId: String): Resource<Unit> {
         return try {
             firestore.runTransaction { transaction ->

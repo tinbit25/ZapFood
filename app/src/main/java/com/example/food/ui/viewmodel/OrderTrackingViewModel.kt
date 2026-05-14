@@ -27,4 +27,11 @@ class OrderTrackingViewModel(
             }
         }
     }
+
+    fun checkIn(orderId: String, tableNumber: String, onResult: (Resource<Unit>) -> Unit = {}) {
+        viewModelScope.launch {
+            val result = orderRepository.checkInToTable(orderId, tableNumber)
+            onResult(result)
+        }
+    }
 }

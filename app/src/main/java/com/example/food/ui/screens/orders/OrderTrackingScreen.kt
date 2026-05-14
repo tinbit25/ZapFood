@@ -127,7 +127,8 @@ fun OrderTrackingScreen(
                             OrderTrackingContent(
                                 timeline = timeline, 
                                 onRefresh = { viewModel.observeOrder(orderId) },
-                                onShowQRCode = { onShowQRCode(orderId) }
+                                onShowQRCode = { onShowQRCode(orderId) },
+                                onCheckIn = { tableNum -> viewModel.checkIn(orderId, tableNum) }
                             )
                         }
                     }
@@ -141,10 +142,15 @@ fun OrderTrackingScreen(
 fun OrderTrackingContent(
     timeline: OrderTimeline, 
     onRefresh: () -> Unit,
-    onShowQRCode: () -> Unit
+    onShowQRCode: () -> Unit,
+    onCheckIn: (String) -> Unit
 ) {
-    val statuses = OrderStatus.values().filter { 
-        it != OrderStatus.CANCELLED && (timeline.orderType == com.example.food.data.model.OrderType.DELIVERY || it != OrderStatus.ON_THE_WAY)
+    val statuses = if (timeline.orderType == com.example.food.data.model.OrderType.DINE_IN) {
+        listOf(OrderStatus.BOOKED, OrderStatus.ARRIVED, OrderStatus.DELIVERED)
+    } else {
+        OrderStatus.values().filter { 
+            it != OrderStatus.CANCELLED && (timeline.orderType == com.example.food.data.model.OrderType.DELIVERY || it != OrderStatus.ON_THE_WAY)
+        }
     }
     val currentStatusIndex = statuses.indexOf(timeline.currentStatus)
 
@@ -173,6 +179,56 @@ fun OrderTrackingContent(
         
         Spacer(modifier = Modifier.height(16.dp))
         
+        // Arrive & Eat Specific UI
+        if (timeline.orderType == com.example.food.data.model.OrderType.DINE_IN) {
+            when (timeline.currentStatus) {
+                OrderStatus.BOOKED -> {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFF1A1A1A)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Arrived at the Hotel?", color = Color.White, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(8.dp))
+                            Button(
+                                onClick = { 
+                                    // Simulation: In a real app, this would open a QR scanner
+                                    onCheckIn("Table 4")
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24))
+                            ) {
+                                Icon(Icons.Default.QrCodeScanner, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Scan Table QR to Start")
+                            }
+                        }
+                    }
+                }
+                OrderStatus.ARRIVED -> {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFF1A1A1A)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Enjoy your meal!", color = Color.White, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(8.dp))
+                            Button(
+                                onClick = onShowQRCode,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24))
+                            ) {
+                                Text("Settle Bill & Leave")
+                            }
+                        }
+                    }
+                }
+                else -> {}
+            }
+        }
+
         // Show QR Code for Takeaway if generated and not delivered
         if (timeline.orderType == com.example.food.data.model.OrderType.TAKEAWAY && 
             timeline.pickupQRCode.isNotBlank() && 
@@ -245,45 +301,9 @@ fun OrderTrackingContent(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(24.dp))
-        } else if (timeline.orderType == com.example.food.data.model.OrderType.DINE_IN && 
-                   timeline.currentStatus == OrderStatus.READY) {
-            
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                color = Color(0xFF1A1A1A)
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Your food is served!",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Ready to pay? Scan the vendor's QR bill or pay here.",
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = { onShowQRCode() }, 
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24)),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Pay Now")
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(24.dp))
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         LazyColumn(
             modifier = Modifier.weight(1f),
@@ -409,13 +429,14 @@ fun TimelineItem(
     }
 
     val icon = when (status) {
-        OrderStatus.PENDING -> Icons.Default.Receipt
+        OrderStatus.PENDING, OrderStatus.BOOKED -> Icons.Default.Receipt
         OrderStatus.ACCEPTED -> Icons.Default.CheckCircle
         OrderStatus.PREPARING -> Icons.Default.Restaurant
         OrderStatus.READY -> Icons.Default.Fastfood
+        OrderStatus.ARRIVED -> Icons.Default.TableBar
         OrderStatus.ON_THE_WAY -> Icons.Default.DirectionsBike
-        OrderStatus.DELIVERED -> Icons.Default.Check
-        else -> Icons.Default.Info
+        OrderStatus.DELIVERED -> Icons.Default.Celebration
+        else -> Icons.Default.Help
     }
 
     Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {

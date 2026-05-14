@@ -110,6 +110,7 @@ fun CheckoutScreen(
             CheckoutBottomBar(
                 totalAmount = total,
                 isLoading = isPlacingOrder || paymentState is PaymentState.Loading || paymentState is PaymentState.Verifying,
+                isDineIn = uiState.orderType == OrderType.DINE_IN,
                 onPlaceOrder = {
                     val currentUser = user ?: return@CheckoutBottomBar
                     checkoutViewModel.setPlacingOrder(true)
@@ -289,10 +290,11 @@ fun DineInSection(details: DineInDetails, onUpdate: (DineInDetails) -> Unit) {
                 shape = RoundedCornerShape(12.dp)
             )
             OutlinedTextField(
-                value = "12:30 PM",
-                onValueChange = { /* Placeholder */ },
+                value = details.expectedArrivalTime,
+                onValueChange = { onUpdate(details.copy(expectedArrivalTime = it)) },
                 modifier = Modifier.weight(1f),
                 label = { Text("Arrival Time") },
+                placeholder = { Text("12:30 PM") },
                 shape = RoundedCornerShape(12.dp)
             )
         }
@@ -323,7 +325,7 @@ fun PaymentChip(method: PaymentMethod, label: String, isSelected: Boolean, onCli
 }
 
 @Composable
-fun CheckoutBottomBar(totalAmount: Double, isLoading: Boolean, onPlaceOrder: () -> Unit) {
+fun CheckoutBottomBar(totalAmount: Double, isLoading: Boolean, isDineIn: Boolean = false, onPlaceOrder: () -> Unit) {
     Surface(modifier = Modifier.fillMaxWidth(), shadowElevation = 16.dp) {
         Row(modifier = Modifier.padding(16.dp).navigationBarsPadding(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Column {
@@ -337,7 +339,7 @@ fun CheckoutBottomBar(totalAmount: Double, isLoading: Boolean, onPlaceOrder: () 
                 shape = RoundedCornerShape(16.dp)
             ) {
                 if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
-                else Text("Place Order", fontWeight = FontWeight.Bold)
+                else Text(if (isDineIn) "Book Table" else "Place Order", fontWeight = FontWeight.Bold)
             }
         }
     }

@@ -9,7 +9,11 @@ enum class OrderStatus {
     READY,
     ON_THE_WAY,
     DELIVERED,
-    CANCELLED
+    CANCELLED,
+    
+    // Arrive & Eat States
+    BOOKED,
+    ARRIVED
 }
 
 enum class DeliveryStatus {
@@ -52,11 +56,13 @@ data class TakeawayDetails(
 )
 
 data class DineInDetails(
-    val arrivalTime: Long? = null,
-    val tableNumber: String? = null,
+    val arrivalTime: Long? = null, // Legacy, will use expectedArrivalTime for new flow
+    val expectedArrivalTime: String = "", // e.g. "12:30 PM"
+    val tableNumber: String = "Pending",
     val guestCount: Int = 1,
     val preorderReadyTime: Long? = null,
-    val reservationConfirmed: Boolean = false
+    val reservationConfirmed: Boolean = false,
+    val isCheckedIn: Boolean = false
 )
 
 data class Order(

@@ -87,10 +87,11 @@ class OrderUseCase(
      */
     private fun canTransition(current: OrderStatus, next: OrderStatus): Boolean {
         return when (current) {
-            OrderStatus.PENDING -> next == OrderStatus.ACCEPTED || next == OrderStatus.CANCELLED
+            OrderStatus.PENDING, OrderStatus.BOOKED -> next == OrderStatus.ACCEPTED || next == OrderStatus.CANCELLED || next == OrderStatus.ARRIVED
             OrderStatus.ACCEPTED -> next == OrderStatus.PREPARING || next == OrderStatus.CANCELLED
             OrderStatus.PREPARING -> next == OrderStatus.READY
-            OrderStatus.READY -> next == OrderStatus.ON_THE_WAY
+            OrderStatus.READY -> next == OrderStatus.ON_THE_WAY || next == OrderStatus.DELIVERED
+            OrderStatus.ARRIVED -> next == OrderStatus.READY || next == OrderStatus.DELIVERED
             OrderStatus.ON_THE_WAY -> next == OrderStatus.DELIVERED
             OrderStatus.DELIVERED -> false // Terminal state
             OrderStatus.CANCELLED -> false // Terminal state
@@ -149,6 +150,7 @@ class OrderUseCase(
                 OrderStatus.ACCEPTED -> NotificationType.ORDER_ACCEPTED
                 OrderStatus.PREPARING -> NotificationType.MEAL_PREPARING
                 OrderStatus.READY -> NotificationType.ORDER_READY
+                OrderStatus.ARRIVED -> NotificationType.ORDER_STATUS_UPDATE // Or specific one
                 OrderStatus.ON_THE_WAY -> NotificationType.DELIVERY_ON_THE_WAY
                 OrderStatus.DELIVERED -> NotificationType.ORDER_DELIVERED
                 OrderStatus.CANCELLED -> NotificationType.ORDER_CANCELLED

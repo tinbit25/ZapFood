@@ -357,7 +357,7 @@ fun VendorStatusActions(order: Order, onUpdateStatus: (OrderStatus) -> Unit, onV
     }
 
     when (order.orderStatus) {
-        OrderStatus.PENDING -> {
+        OrderStatus.PENDING, OrderStatus.BOOKED -> {
             Row {
                 Button(
                     onClick = { onUpdateStatus(OrderStatus.CANCELLED) },
@@ -432,6 +432,15 @@ fun VendorStatusActions(order: Order, onUpdateStatus: (OrderStatus) -> Unit, onV
                         Text("Send for Delivery", fontSize = 12.sp)
                     }
                 }
+            }
+        }
+        OrderStatus.ARRIVED -> {
+            Button(
+                onClick = { onUpdateStatus(OrderStatus.READY) },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF32CD32)),
+                modifier = Modifier.height(32.dp)
+            ) {
+                Text("Mark as Served", fontSize = 12.sp)
             }
         }
         OrderStatus.ON_THE_WAY -> {
