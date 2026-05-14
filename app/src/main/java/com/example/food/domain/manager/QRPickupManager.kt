@@ -29,7 +29,12 @@ class QRPickupManager(
         }
 
         val token = PickupTokenGenerator.generateToken()
-        val qrCodePayload = PickupTokenGenerator.generateQRPayload(order.orderId, token)
+        val qrCodePayload = PickupTokenGenerator.generateQRPayload(
+            orderId = order.orderId,
+            customerId = order.customerId,
+            vendorId = order.vendorId,
+            token = token
+        )
         val expiresAt = PickupTokenGenerator.calculateExpiration()
 
         return orderRepository.updateQRPickupFields(

@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -35,6 +36,7 @@ import java.util.*
 fun OrderTrackingScreen(
     orderId: String,
     onNavigateBack: () -> Unit,
+    onShowQRCode: (String) -> Unit,
     viewModel: OrderTrackingViewModel = viewModel(),
     userViewModel: com.example.food.ui.viewmodel.UserViewModel = viewModel()
 ) {
@@ -122,7 +124,11 @@ fun OrderTrackingScreen(
                                 }
                             }
                             
-                            OrderTrackingContent(timeline, onRefresh = { viewModel.observeOrder(orderId) })
+                            OrderTrackingContent(
+                                timeline = timeline, 
+                                onRefresh = { viewModel.observeOrder(orderId) },
+                                onShowQRCode = { onShowQRCode(orderId) }
+                            )
                         }
                     }
                 }
@@ -132,7 +138,11 @@ fun OrderTrackingScreen(
 }
 
 @Composable
-fun OrderTrackingContent(timeline: OrderTimeline, onRefresh: () -> Unit) {
+fun OrderTrackingContent(
+    timeline: OrderTimeline, 
+    onRefresh: () -> Unit,
+    onShowQRCode: () -> Unit
+) {
     val statuses = OrderStatus.values().filter { it != OrderStatus.CANCELLED }
     val currentStatusIndex = statuses.indexOf(timeline.currentStatus)
 
@@ -198,24 +208,76 @@ fun OrderTrackingContent(timeline: OrderTimeline, onRefresh: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    QRCodeDisplay(payload = timeline.pickupQRCode)
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            QRCodeDisplay(
+                                payload = timeline.pickupQRCode,
+                                size = 160.dp
+                            )
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+                            
+                            Button(
+                                onClick = onShowQRCode,
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24)),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Default.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("View Full Screen QR")
+                            }
+                        }
+                    }
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
                         text = "Token: ${timeline.pickupToken}",
-                        color = Color(0xFFF16B24), // Brighter color
-                        fontWeight = FontWeight.Black, // Thicker font
-                        fontSize = 24.sp, // Larger font
-                        letterSpacing = 4.sp
+                        color = Color(0xFFF16B24),
+                        fontWeight = FontWeight.Black,
+                        fontSize = 20.sp,
+                        letterSpacing = 2.sp
                     )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        } else if (timeline.orderType == com.example.food.data.model.OrderType.DINE_IN && 
+                   timeline.currentStatus == OrderStatus.READY) {
+            
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = Color(0xFF1A1A1A)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text(
-                        text = "Ref: CHAPA-${timeline.orderId.takeLast(6).uppercase()}",
-                        color = Color.Gray, // Better contrast than DarkGray
-                        fontSize = 12.sp
+                        text = "Your food is served!",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Ready to pay? Scan the vendor's QR bill or pay here.",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { onShowQRCode() }, 
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Pay Now")
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))

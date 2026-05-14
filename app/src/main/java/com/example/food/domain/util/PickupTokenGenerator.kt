@@ -20,14 +20,20 @@ object PickupTokenGenerator {
     /**
      * Generates the payload to be encoded into the QR code.
      */
-    fun generateQRPayload(orderId: String, token: String): String {
-        return "zapfood-qr-$token-$orderId"
+    fun generateQRPayload(orderId: String, customerId: String, vendorId: String, token: String): String {
+        return com.example.food.core.qr.SecureQRPayload(
+            orderId = orderId,
+            customerId = customerId,
+            vendorId = vendorId,
+            pickupToken = token,
+            expiresAt = calculateExpiration()
+        ).toJson()
     }
 
     /**
-     * Calculates the expiration time for the QR code (e.g., 24 hours from now).
+     * Calculates the expiration time for the QR code (5 minutes).
      */
     fun calculateExpiration(): Long {
-        return System.currentTimeMillis() + (24 * 60 * 60 * 1000) // 24 hours
+        return System.currentTimeMillis() + (5 * 60 * 1000) // 5 minutes
     }
 }

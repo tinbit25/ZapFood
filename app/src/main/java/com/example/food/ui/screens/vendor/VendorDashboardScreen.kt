@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.food.core.util.Resource
@@ -161,12 +162,28 @@ fun OrdersTab(
                                     }
                                 }
                             },
-                            onVerifyPickup = { token ->
-                                orderViewModel.verifyPickup(order.orderId, token) { result ->
-                                    if (result is Resource.Success) {
-                                        scope.launch { snackbarHostState.showSnackbar("Order verified and delivered!") }
-                                    } else if (result is Resource.Error) {
-                                        scope.launch { snackbarHostState.showSnackbar(result.message ?: "Verification failed") }
+                            onVerifyPickup = { scannedData ->
+                                val validation = com.example.food.core.qr.QRValidationHandler.validateScannedQR(scannedData, order)
+                                if (validation is com.example.food.core.qr.QRValidationHandler.ValidationResult.Success) {
+                                    orderViewModel.verifyPickup(order.orderId, validation.payload.pickupToken) { result ->
+                                        if (result is Resource.Success) {
+                                            scope.launch { snackbarHostState.showSnackbar("Order verified and delivered!") }
+                                        } else if (result is Resource.Error) {
+                                            scope.launch { snackbarHostState.showSnackbar(result.message ?: "Verification failed") }
+                                        }
+                                    }
+                                } else if (validation is com.example.food.core.qr.QRValidationHandler.ValidationResult.Error) {
+                                    // Fallback for manual 6-char token entry
+                                    if (scannedData.length == 6) {
+                                        orderViewModel.verifyPickup(order.orderId, scannedData) { result ->
+                                            if (result is Resource.Success) {
+                                                scope.launch { snackbarHostState.showSnackbar("Token verified!") }
+                                            } else {
+                                                scope.launch { snackbarHostState.showSnackbar(result.message ?: "Invalid Token") }
+                                            }
+                                        }
+                                    } else {
+                                        scope.launch { snackbarHostState.showSnackbar(validation.message) }
                                     }
                                 }
                             }
@@ -382,21 +399,38 @@ fun VendorStatusActions(order: Order, onUpdateStatus: (OrderStatus) -> Unit, onV
             }
         }
         OrderStatus.READY -> {
-            if (order.orderType == com.example.food.data.model.OrderType.TAKEAWAY) {
-                Button(
-                    onClick = { showVerifyDialog = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9C27B0)),
-                    modifier = Modifier.height(32.dp)
-                ) {
-                    Text("Verify Pickup", fontSize = 12.sp)
+            when (order.orderType) {
+                com.example.food.data.model.OrderType.TAKEAWAY -> {
+                    Button(
+                        onClick = { showVerifyDialog = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9C27B0)),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Text("Verify Pickup", fontSize = 12.sp)
+                    }
                 }
-            } else {
-                Button(
-                    onClick = { onUpdateStatus(OrderStatus.ON_THE_WAY) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00BFFF)),
-                    modifier = Modifier.height(32.dp)
-                ) {
-                    Text("Send for Delivery", fontSize = 12.sp)
+                com.example.food.data.model.OrderType.DINE_IN -> {
+                    var showBillDialog by remember { mutableStateOf(false) }
+                    Button(
+                        onClick = { showBillDialog = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9C27B0)),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Text("Generate QR Bill", fontSize = 12.sp)
+                    }
+                    
+                    if (showBillDialog) {
+                        DineInBillDialog(order = order, onDismiss = { showBillDialog = false })
+                    }
+                }
+                else -> {
+                    Button(
+                        onClick = { onUpdateStatus(OrderStatus.ON_THE_WAY) },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00BFFF)),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Text("Send for Delivery", fontSize = 12.sp)
+                    }
                 }
             }
         }
@@ -475,4 +509,50 @@ fun VendorStatusActions(order: Order, onUpdateStatus: (OrderStatus) -> Unit, onV
             containerColor = Color(0xFF1A1A1A)
         )
     }
+}
+
+@Composable
+fun DineInBillDialog(order: Order, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("QR Bill - Table ${order.dineInInfo?.tableNumber ?: "N/A"}", color = Color.White) },
+        text = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Total: ETB ${"%,.0f".format(order.totalAmount * 1000)}",
+                    color = Color(0xFFF16B24),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Black
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Surface(
+                    modifier = Modifier.size(200.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        com.example.food.ui.components.QRCodeDisplay(
+                            payload = "ZAPFOOD-BILL-${order.orderId}",
+                            size = 180.dp
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Ask the customer to scan this code to complete payment.",
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center,
+                    fontSize = 14.sp
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = onDismiss, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24))) {
+                Text("Done")
+            }
+        },
+        containerColor = Color(0xFF1A1A1A)
+    )
 }

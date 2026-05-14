@@ -627,7 +627,31 @@ fun AppNavigation(
                 val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
                 OrderTrackingScreen(
                     orderId = orderId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onShowQRCode = { id -> navController.navigate(Screen.PickupQRCode.createRoute(id)) }
+                )
+            }
+            composable(
+                route = Screen.PickupQRCode.route,
+                arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+                com.example.food.ui.screens.orders.PickupQRCodeScreen(
+                    orderId = orderId,
                     onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable(
+                route = Screen.QRPayment.route,
+                arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+                com.example.food.ui.screens.payment.QRPaymentScreen(
+                    orderId = orderId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onPaymentSuccess = {
+                        navController.popBackStack()
+                    }
                 )
             }
             composable(route = Screen.Settings.route) {

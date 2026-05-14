@@ -89,6 +89,7 @@ data class Order(
     val pickupVerified: Boolean = false,
     val pickupTimestamp: Long = 0L,
     val qrExpiresAt: Long = 0L,
+    val tableClosed: Boolean = false,
 
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()

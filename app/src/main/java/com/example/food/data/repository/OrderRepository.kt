@@ -223,4 +223,27 @@ class OrderRepository {
             Resource.Error(e.localizedMessage ?: "Failed to verify QR pickup")
         }
     }
+    suspend fun closeDineInTable(orderId: String): Resource<Unit> {
+        return try {
+            firestore.runTransaction { transaction ->
+                val docRef = ordersCollection.document(orderId)
+                
+                val historyEntry = OrderStatusHistory(
+                    status = OrderStatus.DELIVERED,
+                    actor = "VENDOR",
+                    notes = "Table closed after payment",
+                    timestamp = System.currentTimeMillis()
+                )
+
+                transaction.update(docRef, "orderStatus", OrderStatus.DELIVERED)
+                transaction.update(docRef, "tableClosed", true)
+                transaction.update(docRef, "updatedAt", System.currentTimeMillis())
+                transaction.update(docRef, "statusHistory", FieldValue.arrayUnion(historyEntry))
+                null
+            }.await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Failed to close table")
+        }
+    }
 }

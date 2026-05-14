@@ -103,22 +103,34 @@ class UnifiedOrderManager(
         // 3. Synchronize order status based on new payment status
         val syncResult = synchronizer.onPaymentStatusChanged(orderId, newPaymentStatus, order)
         
-        // 4. Generate QR Code if it's a Takeaway order and payment succeeded
-        if (newPaymentStatus == PaymentStatus.SUCCESS && order.orderType == OrderType.TAKEAWAY) {
-            qrPickupManager.assignQRToOrder(order)
-            // Fire and forget push notification
-            kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                notificationService.notify(
-                    userId = order.customerId,
-                    title = "Payment Received!",
-                    message = "Your Pickup QR is now ready.",
-                    type = NotificationType.ORDER_STATUS_UPDATE,
-                    relatedOrderId = order.orderId
-                )
+        // 4. Handle QR features based on Order Type
+        if (newPaymentStatus == PaymentStatus.SUCCESS) {
+            when (order.orderType) {
+                OrderType.TAKEAWAY -> {
+                    qrPickupManager.assignQRToOrder(order)
+                    notifyCustomer(order, "Your Pickup QR is now ready.")
+                }
+                OrderType.DINE_IN -> {
+                    orderRepository.closeDineInTable(orderId)
+                    notifyCustomer(order, "Payment confirmed. Table closed. Thank you!")
+                }
+                else -> {}
             }
         }
         
         return syncResult
+    }
+
+    private fun notifyCustomer(order: Order, message: String) {
+        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            notificationService.notify(
+                userId = order.customerId,
+                title = "Payment Received!",
+                message = message,
+                type = NotificationType.ORDER_STATUS_UPDATE,
+                relatedOrderId = order.orderId
+            )
+        }
     }
 
     // ── Retrieval ─────────────────────────────────────────────────────────────
