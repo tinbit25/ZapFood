@@ -36,11 +36,10 @@ class FeedbackViewModel(
             var vendorName: String? = null
 
             if (orderId != null) {
-                val orderResult = orderRepository.getOrderById(orderId)
-                if (orderResult is Resource.Success<*>) {
-                    val order = orderResult.data as? com.example.food.data.model.Order
-                    vendorId = order?.vendorId
-                    vendorName = order?.businessName
+                val order = orderRepository.getOrderById(orderId)
+                if (order != null) {
+                    vendorId = order.vendorId
+                    vendorName = order.businessName
                 }
             }
 
