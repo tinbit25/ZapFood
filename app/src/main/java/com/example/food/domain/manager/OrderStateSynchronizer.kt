@@ -32,11 +32,17 @@ class OrderStateSynchronizer(
         return when (newPaymentStatus) {
             PaymentStatus.SUCCESS -> {
                 if (currentOrder.orderStatus == OrderStatus.PENDING) {
+                    val targetStatus = if (currentOrder.orderType == com.example.food.data.model.OrderType.DINE_IN) {
+                        OrderStatus.BOOKED 
+                    } else {
+                        OrderStatus.ACCEPTED
+                    }
+                    
                     orderRepository.updateOrderStatus(
                         orderId = orderId,
-                        status = OrderStatus.ACCEPTED,
+                        status = targetStatus,
                         actor = "SYSTEM",
-                        notes = "Auto-advanced to ACCEPTED after payment confirmation."
+                        notes = "Auto-advanced to $targetStatus after payment confirmation."
                     )
                 } else {
                     Resource.Success(Unit) // Already progressed, nothing to do.

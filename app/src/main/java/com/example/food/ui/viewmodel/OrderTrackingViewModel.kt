@@ -34,4 +34,11 @@ class OrderTrackingViewModel(
             onResult(result)
         }
     }
+
+    fun settleBill(orderId: String, onResult: (Resource<Unit>) -> Unit = {}) {
+        viewModelScope.launch {
+            val result = orderRepository.closeDineInTable(orderId)
+            onResult(result)
+        }
+    }
 }

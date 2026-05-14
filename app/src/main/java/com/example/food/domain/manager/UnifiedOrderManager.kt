@@ -111,8 +111,10 @@ class UnifiedOrderManager(
                     notifyCustomer(order, "Your Pickup QR is now ready.")
                 }
                 OrderType.DINE_IN -> {
-                    orderRepository.closeDineInTable(orderId)
-                    notifyCustomer(order, "Payment confirmed. Table closed. Thank you!")
+                    // In Arrive & Eat, payment confirm confirms the BOOKING first
+                    // The table is closed later when they click "Settle Bill" at the table.
+                    // For now, we just ensure status reflects the booking.
+                    notifyCustomer(order, "Booking confirmed! See you at ${order.dineInInfo?.expectedArrivalTime}")
                 }
                 else -> {}
             }

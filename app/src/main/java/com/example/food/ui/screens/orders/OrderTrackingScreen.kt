@@ -128,7 +128,8 @@ fun OrderTrackingScreen(
                                 timeline = timeline, 
                                 onRefresh = { viewModel.observeOrder(orderId) },
                                 onShowQRCode = { onShowQRCode(orderId) },
-                                onCheckIn = { tableNum -> viewModel.checkIn(orderId, tableNum) }
+                                onCheckIn = { tableNum -> viewModel.checkIn(orderId, tableNum) },
+                                onSettleBill = { viewModel.settleBill(orderId) }
                             )
                         }
                     }
@@ -143,7 +144,8 @@ fun OrderTrackingContent(
     timeline: OrderTimeline, 
     onRefresh: () -> Unit,
     onShowQRCode: () -> Unit,
-    onCheckIn: (String) -> Unit
+    onCheckIn: (String) -> Unit,
+    onSettleBill: () -> Unit
 ) {
     val statuses = if (timeline.orderType == com.example.food.data.model.OrderType.DINE_IN) {
         listOf(OrderStatus.BOOKED, OrderStatus.ARRIVED, OrderStatus.DELIVERED)
@@ -216,7 +218,7 @@ fun OrderTrackingContent(
                             Text("Enjoy your meal!", color = Color.White, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.height(8.dp))
                             Button(
-                                onClick = onShowQRCode,
+                                onClick = onSettleBill,
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24))
                             ) {
