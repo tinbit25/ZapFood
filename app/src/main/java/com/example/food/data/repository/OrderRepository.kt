@@ -47,11 +47,11 @@ class OrderRepository {
                 }
                 val order = snapshot?.toObject(Order::class.java)
                 if (order != null) {
-                    android.util.Log.d("ORDER_SYNC", "Realtime update received for timeline [${order.orderId}]: ${order.status}")
+                    android.util.Log.d("ORDER_SYNC", "Realtime update received for timeline [${order.orderId}]: ${order.orderStatus}")
                     val timeline = OrderTimeline(
                         orderId = order.orderId,
                         history = order.statusHistory,
-                        currentStatus = order.status
+                        currentStatus = order.orderStatus
                     )
                     trySend(Resource.Success(timeline))
                 } else {
@@ -73,7 +73,7 @@ class OrderRepository {
                 val orders = snapshot?.documents?.mapNotNull { doc ->
                     try {
                         doc.toObject(Order::class.java).also { order ->
-                            android.util.Log.d("ORDER_SYNC", "Realtime update received for customer: ${order?.status}")
+                            android.util.Log.d("ORDER_SYNC", "Realtime update received for customer: ${order?.orderStatus}")
                         }
                     } catch (e: Exception) {
                         null
@@ -98,7 +98,7 @@ class OrderRepository {
                 val orders = snapshot?.documents?.mapNotNull { doc ->
                     try {
                         doc.toObject(Order::class.java).also { order ->
-                            android.util.Log.d("ORDER_SYNC", "Realtime update received for vendor: ${order?.status}")
+                            android.util.Log.d("ORDER_SYNC", "Realtime update received for vendor: ${order?.orderStatus}")
                         }
                     } catch (e: Exception) {
                         null
@@ -123,9 +123,9 @@ class OrderRepository {
             
             firestore.runTransaction { transaction ->
                 val snapshot = transaction.get(docRef)
-                val currentStatus = snapshot.getString("status")
+                val currentStatus = snapshot.getString("orderStatus")
                 
-                // Optional: Business logic check within transaction
+                // Business logic: Block updates on terminal orders
                 if (currentStatus == OrderStatus.CANCELLED.name || currentStatus == OrderStatus.DELIVERED.name) {
                     throw Exception("Cannot update status of a terminal order")
                 }
@@ -138,7 +138,7 @@ class OrderRepository {
                     timestamp = System.currentTimeMillis()
                 )
                 
-                transaction.update(docRef, "status", status)
+                transaction.update(docRef, "orderStatus", status)
                 transaction.update(docRef, "updatedAt", System.currentTimeMillis())
                 transaction.update(docRef, "statusHistory", FieldValue.arrayUnion(historyEntry))
                 

@@ -97,7 +97,7 @@ fun AdminOrderCard(order: Order) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OrderTypeBadge(order.orderType)
                     Spacer(modifier = Modifier.width(8.dp))
-                    OrderStatusBadge(order.status)
+                    OrderStatusBadge(order.orderStatus)
                 }
             }
             

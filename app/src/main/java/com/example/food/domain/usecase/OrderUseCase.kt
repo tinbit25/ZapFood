@@ -64,7 +64,7 @@ class OrderUseCase(
             items = orderItems,
             totalAmount = subtotal + deliveryFee,
             deliveryFee = deliveryFee,
-            status = OrderStatus.PENDING,
+            orderStatus = OrderStatus.PENDING,
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
@@ -121,7 +121,7 @@ class OrderUseCase(
         }
 
         if (nextStatus == OrderStatus.CANCELLED) {
-            if (user.role == UserRole.CUSTOMER && order.status != OrderStatus.PENDING) {
+            if (user.role == UserRole.CUSTOMER && order.orderStatus != OrderStatus.PENDING) {
                 return Resource.Error("Cannot cancel order once it is accepted by vendor")
             }
             
@@ -132,8 +132,8 @@ class OrderUseCase(
         }
 
         // 3. State Machine enforcement
-        if (!canTransition(order.status, nextStatus)) {
-            return Resource.Error("Invalid transition from ${order.status} to $nextStatus")
+        if (!canTransition(order.orderStatus, nextStatus)) {
+            return Resource.Error("Invalid transition from ${order.orderStatus} to $nextStatus")
         }
 
         val result = orderRepository.updateOrderStatus(

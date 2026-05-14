@@ -158,7 +158,7 @@ fun VendorOrderCard(order: Order, user: User, onUpdateStatus: (OrderStatus) -> U
                     color = Color(0xFFF16B24)
                 )
                 
-                VendorStatusActions(status = order.status, onUpdateStatus = onUpdateStatus)
+                VendorStatusActions(status = order.orderStatus, onUpdateStatus = onUpdateStatus)
             }
         }
     }

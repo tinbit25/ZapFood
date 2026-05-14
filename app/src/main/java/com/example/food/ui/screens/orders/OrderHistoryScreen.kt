@@ -50,14 +50,14 @@ fun OrderHistoryScreen(
         val state = ordersState
         if (state is Resource.Success) {
             state.data?.firstOrNull()?.let { latestOrder ->
-                if (latestOrder.status == com.example.food.data.model.OrderStatus.ACCEPTED || 
-                    latestOrder.status == com.example.food.data.model.OrderStatus.PREPARING) {
+                if (latestOrder.orderStatus == com.example.food.data.model.OrderStatus.ACCEPTED || 
+                    latestOrder.orderStatus == com.example.food.data.model.OrderStatus.PREPARING) {
                     user?.userId?.let { uid ->
                         com.example.food.core.util.LocalNotificationHelper.showOrderNotification(
                             context,
                             uid,
-                            "Order Update: ${latestOrder.status.name}",
-                            "Order #${latestOrder.orderId.take(8)} is now ${latestOrder.status.name}"
+                            "Order Update: ${latestOrder.orderStatus.name}",
+                            "Order #${latestOrder.orderId.take(8)} is now ${latestOrder.orderStatus.name}"
                         )
                     }
                 }
@@ -188,11 +188,11 @@ fun OrderHistoryCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     PaymentBadge(status = order.paymentStatus)
                     Spacer(modifier = Modifier.width(8.dp))
-                    StatusBadge(status = order.status)
+                    StatusBadge(status = order.orderStatus)
                 }
             }
 
-            if (order.paymentStatus == PaymentStatus.FAILED && order.status == OrderStatus.PENDING) {
+            if (order.paymentStatus == PaymentStatus.FAILED && order.orderStatus == OrderStatus.PENDING) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = onRetryPayment,
@@ -204,7 +204,7 @@ fun OrderHistoryCard(
                 }
             }
 
-            if (order.status == OrderStatus.PENDING) {
+            if (order.orderStatus == OrderStatus.PENDING) {
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedButton(
                     onClick = onCancel,
@@ -217,9 +217,9 @@ fun OrderHistoryCard(
                 }
             }
             
-            if (order.status == OrderStatus.PENDING || order.status == OrderStatus.ACCEPTED || 
-                order.status == OrderStatus.PREPARING || order.status == OrderStatus.READY || 
-                order.status == OrderStatus.ON_THE_WAY) {
+            if (order.orderStatus == OrderStatus.PENDING || order.orderStatus == OrderStatus.ACCEPTED || 
+                order.orderStatus == OrderStatus.PREPARING || order.orderStatus == OrderStatus.READY || 
+                order.orderStatus == OrderStatus.ON_THE_WAY) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(
                     onClick = { onNavigateToTracking(order.orderId) },
@@ -234,7 +234,7 @@ fun OrderHistoryCard(
                 }
             }
 
-            if (order.status == OrderStatus.DELIVERED) {
+            if (order.orderStatus == OrderStatus.DELIVERED) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = onLeaveFeedback,

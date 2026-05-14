@@ -94,7 +94,7 @@ class AdminRepository {
                 val allOrders = ordersSnapshot?.documents?.mapNotNull { it.toObject(Order::class.java) } ?: emptyList()
                 val allUsers = usersSnapshot?.documents?.mapNotNull { it.toObject(User::class.java) } ?: emptyList()
                 
-                val totalRevenue = allOrders.filter { it.status == OrderStatus.DELIVERED }.sumOf { it.totalAmount }
+                val totalRevenue = allOrders.filter { it.orderStatus == OrderStatus.DELIVERED }.sumOf { it.totalAmount }
                     val pendingVendors = allUsers.count { it.role == UserRole.VENDOR } // Status filter moved to Vendor collection
                 val recentOrders = allOrders.sortedByDescending { it.createdAt }.take(10)
                 
@@ -134,7 +134,7 @@ class AdminRepository {
             val allOrders = ordersCollection.get().await().documents.mapNotNull { it.toObject(Order::class.java) }
             val allUsers = usersCollection.get().await().documents.mapNotNull { it.toObject(User::class.java) }
             
-            val totalRevenue = allOrders.filter { it.status == OrderStatus.DELIVERED }.sumOf { it.totalAmount }
+            val totalRevenue = allOrders.filter { it.orderStatus == OrderStatus.DELIVERED }.sumOf { it.totalAmount }
                 val pendingVendors = allUsers.count { it.role == UserRole.VENDOR } // Status filter moved to Vendor collection
             
             val recentOrders = allOrders.sortedByDescending { it.createdAt }.take(10)
@@ -161,7 +161,7 @@ class AdminRepository {
     suspend fun getOrdersByFilters(status: OrderStatus?, vendorId: String?): Resource<List<Order>> {
         return try {
             var query: Query = ordersCollection
-            status?.let { query = query.whereEqualTo("status", it) }
+            status?.let { query = query.whereEqualTo("orderStatus", it) }
             vendorId?.let { query = query.whereEqualTo("vendorId", it) }
             
             val snapshot = query.get().await()

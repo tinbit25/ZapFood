@@ -111,7 +111,8 @@ fun CheckoutScreen(
                     cartState.meals.forEach { pair -> repeat(pair.second) { allMealIds.add(pair.first.id) } }
                     val planId = cartState.mealPlans.firstOrNull()?.first?.id
 
-                    val finalOrder = Order(
+                    // Build the base order; CheckoutViewModel enriches type-specific info internally
+                    val baseOrder = Order(
                         customerId = currentUser.userId,
                         customerName = currentUser.displayName ?: "Guest",
                         vendorId = cartState.meals.firstOrNull()?.first?.vendorId ?: "",
@@ -120,13 +121,15 @@ fun CheckoutScreen(
                         totalAmount = total,
                         deliveryFee = deliveryFee,
                         orderType = uiState.orderType,
-                        deliveryDetails = if (uiState.orderType == OrderType.DELIVERY) uiState.deliveryDetails else null,
-                        takeawayDetails = if (uiState.orderType == OrderType.TAKEAWAY) uiState.takeawayDetails else null,
-                        dineInDetails = if (uiState.orderType == OrderType.DINE_IN) uiState.dineInDetails else null,
+                        // Unified info fields
+                        deliveryInfo = if (uiState.orderType == OrderType.DELIVERY) uiState.deliveryInfo else null,
+                        pickupInfo   = if (uiState.orderType == OrderType.TAKEAWAY) uiState.pickupInfo   else null,
+                        dineInInfo   = if (uiState.orderType == OrderType.DINE_IN)  uiState.dineInInfo   else null,
                         paymentMethod = uiState.paymentMethod
                     )
 
-                    orderViewModel.placeOrder(currentUser, allMealIds, planId) { resource ->
+                    // Route through UnifiedOrderManager via CheckoutViewModel
+                    checkoutViewModel.placeOrder(baseOrder) { resource ->
                         checkoutViewModel.setPlacingOrder(false)
                         if (resource is Resource.Success) {
                             val order = resource.data!!
@@ -154,9 +157,9 @@ fun CheckoutScreen(
             item {
                 AnimatedContent(targetState = uiState.orderType, transitionSpec = { fadeIn() togetherWith fadeOut() }) { type ->
                     when (type) {
-                        OrderType.DELIVERY -> DeliverySection(uiState.deliveryDetails) { checkoutViewModel.updateDeliveryDetails(it) }
-                        OrderType.TAKEAWAY -> TakeawaySection(uiState.takeawayDetails) { checkoutViewModel.updateTakeawayDetails(it) }
-                        OrderType.DINE_IN -> DineInSection(uiState.dineInDetails) { checkoutViewModel.updateDineInDetails(it) }
+                        OrderType.DELIVERY -> DeliverySection(uiState.deliveryInfo) { checkoutViewModel.updateDeliveryInfo(it) }
+                        OrderType.TAKEAWAY -> TakeawaySection(uiState.pickupInfo)   { checkoutViewModel.updatePickupInfo(it) }
+                        OrderType.DINE_IN  -> DineInSection(uiState.dineInInfo)    { checkoutViewModel.updateDineInInfo(it) }
                     }
                 }
             }

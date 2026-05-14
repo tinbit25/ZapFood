@@ -69,15 +69,15 @@ data class Order(
     val items: List<OrderItem> = emptyList(),
     val totalAmount: Double = 0.0,
     val deliveryFee: Double = 0.0,
-    val status: OrderStatus = OrderStatus.PENDING,
+    val orderStatus: OrderStatus = OrderStatus.PENDING,
     val paymentStatus: PaymentStatus = PaymentStatus.INITIATED,
     val paymentMethod: PaymentMethod = PaymentMethod.CARD,
     val orderType: OrderType = OrderType.DELIVERY,
     
-    // Type-specific details
-    val deliveryDetails: DeliveryDetails? = null,
-    val takeawayDetails: TakeawayDetails? = null,
-    val dineInDetails: DineInDetails? = null,
+    // Unified Info Fields
+    val deliveryInfo: DeliveryDetails? = null,
+    val pickupInfo: TakeawayDetails? = null,
+    val dineInInfo: DineInDetails? = null,
     
     val deliveryTrackingId: String = "",
     val deliveryStatus: DeliveryStatus = DeliveryStatus.IDLE,
