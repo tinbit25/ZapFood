@@ -204,16 +204,16 @@ fun OrderTrackingContent(timeline: OrderTimeline, onRefresh: () -> Unit) {
                     
                     Text(
                         text = "Token: ${timeline.pickupToken}",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        letterSpacing = 2.sp
+                        color = Color(0xFFF16B24), // Brighter color
+                        fontWeight = FontWeight.Black, // Thicker font
+                        fontSize = 24.sp, // Larger font
+                        letterSpacing = 4.sp
                     )
                     
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = "Ref: CHAPA-${timeline.orderId.takeLast(6).uppercase()}",
-                        color = Color.DarkGray,
+                        color = Color.Gray, // Better contrast than DarkGray
                         fontSize = 12.sp
                     )
                 }

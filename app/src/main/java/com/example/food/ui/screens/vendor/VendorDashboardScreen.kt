@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -177,6 +178,15 @@ fun VendorOrderCard(order: Order, user: User, onUpdateStatus: (OrderStatus) -> U
 fun VendorStatusActions(order: Order, onUpdateStatus: (OrderStatus) -> Unit, onVerifyPickup: (String) -> Unit) {
     var showVerifyDialog by remember { mutableStateOf(false) }
 
+    val scanLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        com.journeyapps.barcodescanner.ScanContract()
+    ) { result ->
+        if (result.contents != null) {
+            showVerifyDialog = false
+            onVerifyPickup(result.contents)
+        }
+    }
+
     when (order.orderStatus) {
         OrderStatus.PENDING -> {
             Row {
@@ -273,6 +283,25 @@ fun VendorStatusActions(order: Order, onUpdateStatus: (OrderStatus) -> Unit, onV
                         ),
                         placeholder = { Text("e.g. A1B2C3", color = Color.DarkGray) }
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            scanLauncher.launch(
+                                com.journeyapps.barcodescanner.ScanOptions().apply {
+                                    setDesiredBarcodeFormats(com.journeyapps.barcodescanner.ScanOptions.QR_CODE)
+                                    setPrompt("Scan Customer QR Code")
+                                    setBeepEnabled(true)
+                                    setBarcodeImageEnabled(false)
+                                }
+                            )
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF32CD32)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(androidx.compose.material.icons.Icons.Filled.QrCodeScanner, contentDescription = "Scan")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Scan QR Code")
+                    }
                 }
             },
             confirmButton = {
