@@ -143,7 +143,9 @@ fun OrderTrackingContent(
     onRefresh: () -> Unit,
     onShowQRCode: () -> Unit
 ) {
-    val statuses = OrderStatus.values().filter { it != OrderStatus.CANCELLED }
+    val statuses = OrderStatus.values().filter { 
+        it != OrderStatus.CANCELLED && (timeline.orderType == com.example.food.data.model.OrderType.DELIVERY || it != OrderStatus.ON_THE_WAY)
+    }
     val currentStatusIndex = statuses.indexOf(timeline.currentStatus)
 
     Column(
@@ -302,6 +304,20 @@ fun OrderTrackingContent(
 
 @Composable
 fun TrackingHeaderCard(timeline: OrderTimeline) {
+    val headerTitle = when (timeline.orderType) {
+        com.example.food.data.model.OrderType.DELIVERY -> "Estimated Delivery"
+        com.example.food.data.model.OrderType.TAKEAWAY -> "Estimated Pickup"
+        com.example.food.data.model.OrderType.DINE_IN -> "Estimated Service"
+        else -> "Estimated Time"
+    }
+    
+    val headerIcon = when (timeline.orderType) {
+        com.example.food.data.model.OrderType.DELIVERY -> Icons.Default.DirectionsBike
+        com.example.food.data.model.OrderType.TAKEAWAY -> Icons.Default.ShoppingBag
+        com.example.food.data.model.OrderType.DINE_IN -> Icons.Default.Restaurant
+        else -> Icons.Default.Timer
+    }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = Color(0xFF1A1A1A),
@@ -313,9 +329,9 @@ fun TrackingHeaderCard(timeline: OrderTimeline) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text(text = "Estimated Delivery", fontSize = 12.sp, color = Color.Gray)
+                Text(text = headerTitle, fontSize = 12.sp, color = Color.Gray)
                 Text(
-                    text = "25 - 35 mins", // Mock for now, could use timeline.estimatedDeliveryTime
+                    text = if (timeline.currentStatus == OrderStatus.DELIVERED) "Arrived!" else "25 - 35 mins",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White
@@ -330,7 +346,7 @@ fun TrackingHeaderCard(timeline: OrderTimeline) {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.DirectionsBike,
+                    imageVector = headerIcon,
                     contentDescription = null,
                     tint = Color(0xFFF16B24),
                     modifier = Modifier.size(28.dp)
