@@ -6,9 +6,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,19 +29,31 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.launch
 
+import com.example.food.ui.viewmodel.FeedbackViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.food.data.model.Feedback
+
 @Composable
 fun VendorDashboardScreen(
     userViewModel: UserViewModel,
     orderViewModel: OrderViewModel,
+    feedbackViewModel: FeedbackViewModel = viewModel(),
     onLogout: () -> Unit
 ) {
     val user by userViewModel.user.collectAsState()
     val ordersState by orderViewModel.vendorOrders.collectAsState()
+    val feedbackState by feedbackViewModel.vendorFeedbackState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    
+    var selectedTab by remember { mutableStateOf(0) }
+    val tabs = listOf("Orders", "Customer Reviews")
 
     LaunchedEffect(user) {
-        user?.let { orderViewModel.fetchVendorOrders(it.userId) }
+        user?.let { 
+            orderViewModel.fetchVendorOrders(it.userId)
+            feedbackViewModel.fetchVendorFeedback(it.userId)
+        }
     }
 
     Scaffold(
@@ -59,74 +71,214 @@ fun VendorDashboardScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
-            when (val state = ordersState) {
-                is Resource.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Color(0xFFF16B24))
-                    }
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = Color(0xFF1A1A1A),
+                contentColor = Color(0xFFF16B24),
+                indicator = { tabPositions ->
+                    TabRowDefaults.Indicator(
+                        Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                        color = Color(0xFFF16B24)
+                    )
                 }
-                is Resource.Error -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(text = state.message ?: "Error loading orders", color = Color.Red)
-                    }
+            ) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        text = { Text(title, fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal) }
+                    )
                 }
-                is Resource.Success -> {
-                    val orders = state.data ?: emptyList()
-                    if (orders.isEmpty()) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(text = "No incoming orders", color = Color.Gray)
-                                Spacer(modifier = Modifier.height(16.dp))
-                                val mealViewModel: com.example.food.ui.viewmodel.MealViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-                                Button(
-                                    onClick = {
-                                        scope.launch {
-                                            mealViewModel.seedMealsForVendor(user!!) { result ->
-                                                if (result is Resource.Success) {
-                                                    scope.launch {
-                                                        snackbarHostState.showSnackbar("Meals seeded with your business name!")
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24))
-                                ) {
-                                    Text("Seed My Meals")
-                                }
-                            }
-                        }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            items(orders) { order ->
-                                VendorOrderCard(
-                                    order = order,
-                                    user = user!!,
-                                    onUpdateStatus = { nextStatus ->
-                                        orderViewModel.updateStatus(user!!, order.orderId, nextStatus) { result ->
-                                            if (result is Resource.Error) {
-                                                // Handle error (e.g. snackbar)
-                                            }
-                                        }
-                                    },
-                                    onVerifyPickup = { token ->
-                                        orderViewModel.verifyPickup(order.orderId, token) { result ->
-                                            if (result is Resource.Success) {
-                                                scope.launch { snackbarHostState.showSnackbar("Order verified and delivered!") }
-                                            } else if (result is Resource.Error) {
-                                                scope.launch { snackbarHostState.showSnackbar(result.message ?: "Verification failed") }
+            }
+
+            when (selectedTab) {
+                0 -> OrdersTab(ordersState, user, orderViewModel, scope, snackbarHostState)
+                1 -> ReviewsTab(feedbackState)
+            }
+        }
+    }
+}
+
+@Composable
+fun OrdersTab(
+    ordersState: Resource<List<Order>>,
+    user: User?,
+    orderViewModel: OrderViewModel,
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbarHostState: SnackbarHostState
+) {
+    when (val state = ordersState) {
+        is Resource.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Color(0xFFF16B24))
+            }
+        }
+        is Resource.Error -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = state.message ?: "Error loading orders", color = Color.Red)
+            }
+        }
+        is Resource.Success -> {
+            val orders = state.data ?: emptyList()
+            if (orders.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = "No incoming orders", color = Color.Gray)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        val mealViewModel: com.example.food.ui.viewmodel.MealViewModel = viewModel()
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    mealViewModel.seedMealsForVendor(user!!) { result ->
+                                        if (result is Resource.Success) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar("Meals seeded with your business name!")
                                             }
                                         }
                                     }
-                                )
-                            }
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24))
+                        ) {
+                            Text("Seed My Meals")
                         }
                     }
                 }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(orders) { order ->
+                        VendorOrderCard(
+                            order = order,
+                            user = user!!,
+                            onUpdateStatus = { nextStatus ->
+                                orderViewModel.updateStatus(user!!, order.orderId, nextStatus) { result ->
+                                    if (result is Resource.Error) {
+                                        // Handle error
+                                    }
+                                }
+                            },
+                            onVerifyPickup = { token ->
+                                orderViewModel.verifyPickup(order.orderId, token) { result ->
+                                    if (result is Resource.Success) {
+                                        scope.launch { snackbarHostState.showSnackbar("Order verified and delivered!") }
+                                    } else if (result is Resource.Error) {
+                                        scope.launch { snackbarHostState.showSnackbar(result.message ?: "Verification failed") }
+                                    }
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ReviewsTab(feedbackState: Resource<List<Feedback>>) {
+    when (val state = feedbackState) {
+        is Resource.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Color(0xFFF16B24))
+            }
+        }
+        is Resource.Error -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = state.message ?: "Error loading reviews", color = Color.Red)
+            }
+        }
+        is Resource.Success -> {
+            val feedbackList = state.data ?: emptyList()
+            val avgRating = if (feedbackList.isNotEmpty()) feedbackList.map { it.rating }.average() else 0.0
+
+            Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                    color = Color(0xFF1A1A1A),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Average Rating", color = Color.Gray, fontSize = 14.sp)
+                        Text(
+                            text = if (feedbackList.isNotEmpty()) "%.1f".format(avgRating) else "N/A",
+                            fontSize = 48.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFFF16B24)
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            repeat(5) { index ->
+                                Icon(
+                                    imageVector = androidx.compose.material.icons.Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = if (index < avgRating.toInt()) Color(0xFFF16B24) else Color.DarkGray,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                        Text(
+                            text = "Based on ${feedbackList.size} reviews",
+                            color = Color.Gray,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
+
+                if (feedbackList.isEmpty()) {
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        Text("No reviews yet", color = Color.Gray)
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(feedbackList) { feedback ->
+                            VendorFeedbackItem(feedback)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun VendorFeedbackItem(feedback: Feedback) {
+    val dateFormat = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color(0xFF1A1A1A),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(text = feedback.userName, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = dateFormat.format(Date(feedback.createdAt)), fontSize = 10.sp, color = Color.Gray)
+            }
+            Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                repeat(5) { index ->
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Default.Star,
+                        contentDescription = null,
+                        tint = if (index < feedback.rating) Color(0xFFF16B24) else Color.DarkGray,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+            }
+            if (feedback.comment.isNotEmpty()) {
+                Text(text = feedback.comment, color = Color.LightGray, fontSize = 14.sp)
+            }
+            if (!feedback.orderId.isNullOrEmpty()) {
+                Text(
+                    text = "Order #${feedback.orderId.take(6).uppercase()}",
+                    fontSize = 10.sp,
+                    color = Color.DarkGray,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
         }
     }

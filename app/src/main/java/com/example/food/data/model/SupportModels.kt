@@ -36,6 +36,8 @@ data class Feedback(
     val userId: String = "",
     val userName: String = "",
     val orderId: String? = null,
+    val vendorId: String? = null,
+    val vendorName: String? = null,
     val rating: Int = 5,
     val comment: String = "",
     val createdAt: Long = System.currentTimeMillis()

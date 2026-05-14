@@ -124,4 +124,20 @@ class SupportRepository : ISupportRepository {
             }
         awaitClose { listener.remove() }
     }
+
+    override fun getVendorFeedback(vendorId: String): Flow<Resource<List<Feedback>>> = callbackFlow {
+        trySend(Resource.Loading())
+        val listener = feedbackCollection
+            .whereEqualTo("vendorId", vendorId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(Resource.Error(error.localizedMessage ?: "Failed to fetch vendor feedback"))
+                    return@addSnapshotListener
+                }
+                val feedbackList = snapshot?.documents?.mapNotNull { it.toObject(Feedback::class.java) }
+                    ?.sortedByDescending { it.createdAt } ?: emptyList()
+                trySend(Resource.Success(feedbackList))
+            }
+        awaitClose { listener.remove() }
+    }
 }

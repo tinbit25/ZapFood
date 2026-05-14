@@ -85,7 +85,9 @@ class SupportUseCase(
         user: User,
         rating: Int,
         comment: String,
-        orderId: String? = null
+        orderId: String? = null,
+        vendorId: String? = null,
+        vendorName: String? = null
     ): Resource<Unit> {
         if (rating !in 1..5) return Resource.Error("Rating must be between 1 and 5")
         if (comment.isBlank() && rating < 4) return Resource.Error("Please provide a comment for low ratings")
@@ -94,6 +96,8 @@ class SupportUseCase(
             userId = user.userId,
             userName = user.displayName ?: "Unknown User",
             orderId = orderId,
+            vendorId = vendorId,
+            vendorName = vendorName,
             rating = rating,
             comment = comment
         )
@@ -104,5 +108,9 @@ class SupportUseCase(
     fun getFeedbackList(user: User): Flow<Resource<List<Feedback>>> {
         // Technically anyone could view feedback, or maybe just admins. Let's return all.
         return supportRepository.getAllFeedback()
+    }
+
+    fun getVendorFeedback(vendorId: String): Flow<Resource<List<Feedback>>> {
+        return supportRepository.getVendorFeedback(vendorId)
     }
 }

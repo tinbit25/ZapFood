@@ -18,4 +18,5 @@ interface ISupportRepository {
     
     suspend fun saveFeedback(feedback: Feedback): Resource<Unit>
     fun getAllFeedback(): Flow<Resource<List<Feedback>>>
+    fun getVendorFeedback(vendorId: String): Flow<Resource<List<Feedback>>>
 }
