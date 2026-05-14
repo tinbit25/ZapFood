@@ -59,11 +59,18 @@ fun CheckoutScreen(
     }
 
     // Payment Verification Logic
-    LaunchedEffect(paymentState) {
-        if (paymentState is PaymentState.CheckoutReady && com.example.food.MainActivity.pendingPaymentReturn) {
-            com.example.food.MainActivity.clearPaymentReturn()
-            paymentViewModel.verifyPayment()
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                if (paymentState is PaymentState.CheckoutReady && com.example.food.MainActivity.pendingPaymentReturn) {
+                    com.example.food.MainActivity.clearPaymentReturn()
+                    paymentViewModel.verifyPayment()
+                }
+            }
         }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     LaunchedEffect(paymentState) {

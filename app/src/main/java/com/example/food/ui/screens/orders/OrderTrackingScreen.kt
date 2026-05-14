@@ -122,7 +122,7 @@ fun OrderTrackingScreen(
                                 }
                             }
                             
-                            OrderTrackingContent(timeline)
+                            OrderTrackingContent(timeline, onRefresh = { viewModel.observeOrder(orderId) })
                         }
                     }
                 }
@@ -132,7 +132,7 @@ fun OrderTrackingScreen(
 }
 
 @Composable
-fun OrderTrackingContent(timeline: OrderTimeline) {
+fun OrderTrackingContent(timeline: OrderTimeline, onRefresh: () -> Unit) {
     val statuses = OrderStatus.values().filter { it != OrderStatus.CANCELLED }
     val currentStatusIndex = statuses.indexOf(timeline.currentStatus)
 
@@ -166,26 +166,59 @@ fun OrderTrackingContent(timeline: OrderTimeline) {
             timeline.pickupQRCode.isNotBlank() && 
             timeline.currentStatus != OrderStatus.DELIVERED) {
             
-            Column(
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                shape = RoundedCornerShape(16.dp),
+                color = Color(0xFF1A1A1A)
             ) {
-                Text(
-                    text = "Present this code at pickup",
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                QRCodeDisplay(payload = timeline.pickupQRCode)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Token: ${timeline.pickupToken}",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-                Spacer(modifier = Modifier.height(24.dp))
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.VerifiedUser, contentDescription = "Paid", tint = Color(0xFF4CAF50), modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("PAID", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
+                        }
+                        IconButton(onClick = onRefresh) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = Color.Gray)
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Present this secure code at pickup",
+                        color = Color.LightGray,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    QRCodeDisplay(payload = timeline.pickupQRCode)
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = "Token: ${timeline.pickupToken}",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        letterSpacing = 2.sp
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Ref: CHAPA-${timeline.orderId.takeLast(6).uppercase()}",
+                        color = Color.DarkGray,
+                        fontSize = 12.sp
+                    )
+                }
             }
+            Spacer(modifier = Modifier.height(24.dp))
         }
 
         LazyColumn(

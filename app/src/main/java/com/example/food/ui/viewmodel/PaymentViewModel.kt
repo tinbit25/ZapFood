@@ -140,14 +140,29 @@ class PaymentViewModel(
 
                     when (response) {
                         is GatewayResponse.Success -> {
+                            // Critical Sync: Update order status and generate QR Code before notifying UI
+                            val orderId = currentOrderId ?: ""
+                            if (orderId.isNotEmpty()) {
+                                try {
+                                    val repo = com.example.food.data.repository.OrderRepository()
+                                    val syncManager = com.example.food.domain.manager.UnifiedOrderManager(
+                                        repo, 
+                                        com.example.food.domain.manager.OrderStateSynchronizer(repo)
+                                    )
+                                    syncManager.syncPaymentStatus(orderId, PaymentStatus.SUCCESS)
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Failed to sync order state after payment", e)
+                                }
+                            }
+
                             _paymentState.value = PaymentState.Success(
                                 Payment(
-                                    orderId = currentOrderId ?: "",
+                                    orderId = orderId,
                                     transactionRef = ref,
                                     status = PaymentStatus.SUCCESS
                                 )
                             )
-                            Log.i(TAG, "Payment verified: SUCCESS")
+                            Log.i(TAG, "Payment verified and synchronized: SUCCESS")
                             return@launch
                         }
                         is GatewayResponse.Processing -> {

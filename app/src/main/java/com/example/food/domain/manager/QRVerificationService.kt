@@ -24,6 +24,11 @@ class QRVerificationService(
         if (order.pickupVerified) {
             return Resource.Error("This order has already been verified and picked up.")
         }
+        
+        if (order.paymentStatus != com.example.food.data.model.PaymentStatus.SUCCESS && order.paymentMethod != com.example.food.data.model.PaymentMethod.CASH) {
+            return Resource.Error("Caution: Payment not yet confirmed by Chapa.")
+        }
+
         if (System.currentTimeMillis() > order.qrExpiresAt) {
             return Resource.Error("This pickup QR code has expired.")
         }

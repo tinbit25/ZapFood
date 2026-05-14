@@ -134,6 +134,7 @@ class PaymentService:
 
         # ── Step 5: Call Chapa Initialize ─────────────────────
         callback_url = f"{self.settings.backend_base_url}/api/payments/webhook"
+        return_url = f"{self.settings.backend_base_url}/api/payments/return"
 
         chapa_result: ChapaInitResult = await self.chapa.initialize_transaction(
             amount=total_amount,
@@ -142,6 +143,7 @@ class PaymentService:
             last_name=last_name,
             phone_number=phone_number,
             callback_url=callback_url,
+            return_url=return_url,
             customization_title="ZapFood",
             customization_description=f"Order {order_id[:8]}",
             meta={"order_id": order_id, "payment_id": payment_id},

@@ -45,7 +45,7 @@ async def get_ai_recommendations(
     preferences = user_repo.get_user_preferences(user_id)
     user_profile = {
         "displayName": f"User {user_id}",
-        "spiceTolerance": preferences.spiceTolerance,
+        "spiceTolerance": preferences.spicePreference,
         "favoriteCategories": preferences.favoriteCategories,
         "fastingMode": preferences.fastingMode
     }

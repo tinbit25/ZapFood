@@ -7,6 +7,11 @@ import com.example.food.data.model.OrderType
 import com.example.food.data.model.PaymentStatus
 import com.example.food.data.repository.OrderRepository
 import com.example.food.domain.util.OrderTypeResolver
+import com.example.food.data.remote.NotificationService
+import com.example.food.data.model.NotificationType
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 
 /**
  * UnifiedOrderManager
@@ -24,6 +29,7 @@ class UnifiedOrderManager(
     private val synchronizer: OrderStateSynchronizer
 ) {
     private val qrPickupManager = QRPickupManager(orderRepository)
+    private val notificationService = NotificationService()
 
     // ── Order Creation ────────────────────────────────────────────────────────
 
@@ -100,6 +106,16 @@ class UnifiedOrderManager(
         // 4. Generate QR Code if it's a Takeaway order and payment succeeded
         if (newPaymentStatus == PaymentStatus.SUCCESS && order.orderType == OrderType.TAKEAWAY) {
             qrPickupManager.assignQRToOrder(order)
+            // Fire and forget push notification
+            kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                notificationService.notify(
+                    userId = order.customerId,
+                    title = "Payment Received!",
+                    message = "Your Pickup QR is now ready.",
+                    type = NotificationType.ORDER_STATUS_UPDATE,
+                    relatedOrderId = order.orderId
+                )
+            }
         }
         
         return syncResult
