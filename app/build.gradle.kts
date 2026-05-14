@@ -84,6 +84,9 @@ dependencies {
     // Custom Tabs (Chapa Checkout)
     implementation("androidx.browser:browser:1.8.0")
 
+    // QR Code Generation
+    implementation("com.google.zxing:core:3.5.3")
+
     testImplementation(libs.junit)
     testImplementation("androidx.test:core-ktx:1.5.0")
     testImplementation("org.robolectric:robolectric:4.11.1")

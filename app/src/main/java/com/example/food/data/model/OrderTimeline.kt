@@ -8,5 +8,8 @@ data class OrderTimeline(
     val orderId: String,
     val history: List<OrderStatusHistory> = emptyList(),
     val currentStatus: OrderStatus = OrderStatus.PENDING,
-    val estimatedDeliveryTime: Long? = null
+    val estimatedDeliveryTime: Long? = null,
+    val orderType: OrderType = OrderType.DELIVERY,
+    val pickupQRCode: String = "",
+    val pickupToken: String = ""
 )

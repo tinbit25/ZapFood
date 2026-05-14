@@ -27,6 +27,7 @@ import com.example.food.data.model.OrderStatus
 import com.example.food.data.model.OrderTimeline
 import com.example.food.ui.components.TopNavBar
 import com.example.food.ui.viewmodel.OrderTrackingViewModel
+import com.example.food.ui.components.QRCodeDisplay
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -159,6 +160,33 @@ fun OrderTrackingContent(timeline: OrderTimeline) {
         )
         
         Spacer(modifier = Modifier.height(16.dp))
+        
+        // Show QR Code for Takeaway if generated and not delivered
+        if (timeline.orderType == com.example.food.data.model.OrderType.TAKEAWAY && 
+            timeline.pickupQRCode.isNotBlank() && 
+            timeline.currentStatus != OrderStatus.DELIVERED) {
+            
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Present this code at pickup",
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                QRCodeDisplay(payload = timeline.pickupQRCode)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Token: ${timeline.pickupToken}",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
 
         LazyColumn(
             modifier = Modifier.weight(1f),

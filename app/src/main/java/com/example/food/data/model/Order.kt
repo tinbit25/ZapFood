@@ -82,6 +82,14 @@ data class Order(
     val deliveryTrackingId: String = "",
     val deliveryStatus: DeliveryStatus = DeliveryStatus.IDLE,
     val statusHistory: List<OrderStatusHistory> = emptyList(),
+    
+    // QR Takeaway Pickup Flow Fields
+    val pickupQRCode: String = "",
+    val pickupToken: String = "",
+    val pickupVerified: Boolean = false,
+    val pickupTimestamp: Long = 0L,
+    val qrExpiresAt: Long = 0L,
+
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

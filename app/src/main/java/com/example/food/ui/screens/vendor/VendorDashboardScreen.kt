@@ -111,6 +111,15 @@ fun VendorDashboardScreen(
                                                 // Handle error (e.g. snackbar)
                                             }
                                         }
+                                    },
+                                    onVerifyPickup = { token ->
+                                        orderViewModel.verifyPickup(order.orderId, token) { result ->
+                                            if (result is Resource.Success) {
+                                                scope.launch { snackbarHostState.showSnackbar("Order verified and delivered!") }
+                                            } else if (result is Resource.Error) {
+                                                scope.launch { snackbarHostState.showSnackbar(result.message ?: "Verification failed") }
+                                            }
+                                        }
                                     }
                                 )
                             }
@@ -123,7 +132,7 @@ fun VendorDashboardScreen(
 }
 
 @Composable
-fun VendorOrderCard(order: Order, user: User, onUpdateStatus: (OrderStatus) -> Unit) {
+fun VendorOrderCard(order: Order, user: User, onUpdateStatus: (OrderStatus) -> Unit, onVerifyPickup: (String) -> Unit) {
     val dateFormat = remember { SimpleDateFormat("HH:mm, dd MMM", Locale.getDefault()) }
     
     Surface(
@@ -158,15 +167,17 @@ fun VendorOrderCard(order: Order, user: User, onUpdateStatus: (OrderStatus) -> U
                     color = Color(0xFFF16B24)
                 )
                 
-                VendorStatusActions(status = order.orderStatus, onUpdateStatus = onUpdateStatus)
+                VendorStatusActions(order = order, onUpdateStatus = onUpdateStatus, onVerifyPickup = onVerifyPickup)
             }
         }
     }
 }
 
 @Composable
-fun VendorStatusActions(status: OrderStatus, onUpdateStatus: (OrderStatus) -> Unit) {
-    when (status) {
+fun VendorStatusActions(order: Order, onUpdateStatus: (OrderStatus) -> Unit, onVerifyPickup: (String) -> Unit) {
+    var showVerifyDialog by remember { mutableStateOf(false) }
+
+    when (order.orderStatus) {
         OrderStatus.PENDING -> {
             Row {
                 Button(
@@ -209,12 +220,22 @@ fun VendorStatusActions(status: OrderStatus, onUpdateStatus: (OrderStatus) -> Un
             }
         }
         OrderStatus.READY -> {
-            Button(
-                onClick = { onUpdateStatus(OrderStatus.ON_THE_WAY) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00BFFF)),
-                modifier = Modifier.height(32.dp)
-            ) {
-                Text("Send for Delivery", fontSize = 12.sp)
+            if (order.orderType == com.example.food.data.model.OrderType.TAKEAWAY) {
+                Button(
+                    onClick = { showVerifyDialog = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9C27B0)),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Text("Verify Pickup", fontSize = 12.sp)
+                }
+            } else {
+                Button(
+                    onClick = { onUpdateStatus(OrderStatus.ON_THE_WAY) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00BFFF)),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Text("Send for Delivery", fontSize = 12.sp)
+                }
             }
         }
         OrderStatus.ON_THE_WAY -> {
@@ -227,7 +248,50 @@ fun VendorStatusActions(status: OrderStatus, onUpdateStatus: (OrderStatus) -> Un
             }
         }
         else -> {
-            Text(text = status.name, color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(text = order.orderStatus.name, color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
+    }
+
+    if (showVerifyDialog) {
+        var tokenInput by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showVerifyDialog = false },
+            title = { Text("Verify QR Pickup", color = Color.White) },
+            text = {
+                Column {
+                    Text("Enter the 6-character token from the customer's device.", color = Color.Gray)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = tokenInput,
+                        onValueChange = { tokenInput = it.take(6).uppercase() },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color(0xFFF16B24),
+                            unfocusedBorderColor = Color.Gray
+                        ),
+                        placeholder = { Text("e.g. A1B2C3", color = Color.DarkGray) }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showVerifyDialog = false
+                        onVerifyPickup(tokenInput)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24))
+                ) {
+                    Text("Verify")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showVerifyDialog = false }) {
+                    Text("Cancel", color = Color.Gray)
+                }
+            },
+            containerColor = Color(0xFF1A1A1A)
+        )
     }
 }

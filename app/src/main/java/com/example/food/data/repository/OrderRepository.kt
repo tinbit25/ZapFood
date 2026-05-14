@@ -51,7 +51,10 @@ class OrderRepository {
                     val timeline = OrderTimeline(
                         orderId = order.orderId,
                         history = order.statusHistory,
-                        currentStatus = order.orderStatus
+                        currentStatus = order.orderStatus,
+                        orderType = order.orderType,
+                        pickupQRCode = order.pickupQRCode,
+                        pickupToken = order.pickupToken
                     )
                     trySend(Resource.Success(timeline))
                 } else {
@@ -172,6 +175,52 @@ class OrderRepository {
             Resource.Success(Unit)
         } catch (e: Exception) {
             Resource.Error(e.localizedMessage ?: "Failed to update payment status")
+        }
+    }
+
+    suspend fun updateQRPickupFields(
+        orderId: String,
+        token: String,
+        qrCode: String,
+        expiresAt: Long
+    ): Resource<Unit> {
+        return try {
+            ordersCollection.document(orderId).update(
+                mapOf(
+                    "pickupToken" to token,
+                    "pickupQRCode" to qrCode,
+                    "qrExpiresAt" to expiresAt,
+                    "updatedAt" to System.currentTimeMillis()
+                )
+            ).await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Failed to update QR pickup fields")
+        }
+    }
+
+    suspend fun verifyQRPickup(orderId: String): Resource<Unit> {
+        return try {
+            firestore.runTransaction { transaction ->
+                val docRef = ordersCollection.document(orderId)
+                
+                val historyEntry = OrderStatusHistory(
+                    status = OrderStatus.DELIVERED,
+                    actor = "VENDOR",
+                    notes = "Verified via QR Pickup",
+                    timestamp = System.currentTimeMillis()
+                )
+
+                transaction.update(docRef, "orderStatus", OrderStatus.DELIVERED)
+                transaction.update(docRef, "pickupVerified", true)
+                transaction.update(docRef, "pickupTimestamp", System.currentTimeMillis())
+                transaction.update(docRef, "updatedAt", System.currentTimeMillis())
+                transaction.update(docRef, "statusHistory", FieldValue.arrayUnion(historyEntry))
+                null
+            }.await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Failed to verify QR pickup")
         }
     }
 }

@@ -18,7 +18,8 @@ class OrderUseCase(
     private val paymentUseCase: PaymentUseCase = PaymentUseCase(),
     private val notificationService: NotificationService = NotificationService(),
     private val userPreferenceUseCase: UserPreferenceUseCase = UserPreferenceUseCase(),
-    private val analyticsPreparationUseCase: AnalyticsPreparationUseCase = AnalyticsPreparationUseCase()
+    private val analyticsPreparationUseCase: AnalyticsPreparationUseCase = AnalyticsPreparationUseCase(),
+    private val qrVerificationService: com.example.food.domain.manager.QRVerificationService = com.example.food.domain.manager.QRVerificationService(orderRepository)
 ) {
     /**
      * Customer places an order for a list of meals.
@@ -171,5 +172,10 @@ class OrderUseCase(
 
     fun getIncomingOrders(vendorId: String): Flow<Resource<List<Order>>> {
         return orderRepository.getOrdersForVendor(vendorId)
+    }
+
+    suspend fun verifyPickup(orderId: String, token: String): Resource<Unit> {
+        val order = orderRepository.getOrderById(orderId) ?: return Resource.Error("Order not found")
+        return qrVerificationService.verifyToken(order, token)
     }
 }

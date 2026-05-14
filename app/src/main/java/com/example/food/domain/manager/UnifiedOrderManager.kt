@@ -3,6 +3,7 @@ package com.example.food.domain.manager
 import com.example.food.core.util.Resource
 import com.example.food.data.model.Order
 import com.example.food.data.model.OrderStatus
+import com.example.food.data.model.OrderType
 import com.example.food.data.model.PaymentStatus
 import com.example.food.data.repository.OrderRepository
 import com.example.food.domain.util.OrderTypeResolver
@@ -22,6 +23,7 @@ class UnifiedOrderManager(
     private val orderRepository: OrderRepository,
     private val synchronizer: OrderStateSynchronizer
 ) {
+    private val qrPickupManager = QRPickupManager(orderRepository)
 
     // ── Order Creation ────────────────────────────────────────────────────────
 
@@ -93,7 +95,14 @@ class UnifiedOrderManager(
             ?: return Resource.Error("Order not found: $orderId")
 
         // 3. Synchronize order status based on new payment status
-        return synchronizer.onPaymentStatusChanged(orderId, newPaymentStatus, order)
+        val syncResult = synchronizer.onPaymentStatusChanged(orderId, newPaymentStatus, order)
+        
+        // 4. Generate QR Code if it's a Takeaway order and payment succeeded
+        if (newPaymentStatus == PaymentStatus.SUCCESS && order.orderType == OrderType.TAKEAWAY) {
+            qrPickupManager.assignQRToOrder(order)
+        }
+        
+        return syncResult
     }
 
     // ── Retrieval ─────────────────────────────────────────────────────────────
