@@ -54,22 +54,27 @@ class SmartTableViewModel(application: Application) : AndroidViewModel(applicati
     fun parseQRCode(json: String, userId: String) {
         viewModelScope.launch {
             try {
-                // In a real app, use a proper JSON parser like Gson or Kotlin Serialization
-                // { "vendorId": "ETH_XYZ_01", "tableId": "T-05", "tableNumber": "5", "branchId": "DB_BRANCH_A" }
-                val vendorId = json.substringAfter("\"vendorId\":\"").substringBefore("\"")
-                val tableId = json.substringAfter("\"tableId\":\"").substringBefore("\"")
-                val tableNumber = json.substringAfter("\"tableNumber\":\"").substringBefore("\"")
-                val branchId = json.substringAfter("\"branchId\":\"").substringBefore("\"")
+                // Safer parsing using Regex to handle variations in spacing/formatting
+                val vendorId = Regex("\"vendorId\"\\s*:\\s*\"([^\"]+)\"").find(json)?.groupValues?.get(1)
+                val tableId = Regex("\"tableId\"\\s*:\\s*\"([^\"]+)\"").find(json)?.groupValues?.get(1)
+                val tableNumber = Regex("\"tableNumber\"\\s*:\\s*\"([^\"]+)\"").find(json)?.groupValues?.get(1)
+                val branchId = Regex("\"branchId\"\\s*:\\s*\"([^\"]+)\"").find(json)?.groupValues?.get(1)
 
-                sessionManager.startSession(userId, vendorId, tableId, tableNumber, branchId)
-                
-                // If there's an active booking, check-in
-                val activeBooking = _uiState.value.activeBooking
-                if (activeBooking != null && activeBooking.vendorId == vendorId) {
-                    orderRepository.checkInToTable(activeBooking.orderId, tableNumber)
+                if (vendorId != null && tableId != null && tableNumber != null) {
+                    sessionManager.startSession(userId, vendorId, tableId, tableNumber, branchId ?: "")
+                    
+                    // If there's an active booking, check-in
+                    val activeBooking = _uiState.value.activeBooking
+                    if (activeBooking != null && activeBooking.vendorId == vendorId) {
+                        orderRepository.checkInToTable(activeBooking.orderId, tableNumber)
+                    }
+                    
+                    _uiState.value = _uiState.value.copy(error = null)
+                } else {
+                    _uiState.value = _uiState.value.copy(error = "Invalid Table QR Code")
                 }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = "Invalid QR Code format")
+                _uiState.value = _uiState.value.copy(error = "Scanning failed. Please try again.")
             }
         }
     }

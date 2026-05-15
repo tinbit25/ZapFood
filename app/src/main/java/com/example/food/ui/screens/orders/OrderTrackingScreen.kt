@@ -37,6 +37,7 @@ fun OrderTrackingScreen(
     orderId: String,
     onNavigateBack: () -> Unit,
     onShowQRCode: (String) -> Unit,
+    onNavigateToTableScan: () -> Unit,
     viewModel: OrderTrackingViewModel = viewModel(),
     userViewModel: com.example.food.ui.viewmodel.UserViewModel = viewModel()
 ) {
@@ -128,6 +129,7 @@ fun OrderTrackingScreen(
                                 timeline = timeline, 
                                 onRefresh = { viewModel.observeOrder(orderId) },
                                 onShowQRCode = { onShowQRCode(orderId) },
+                                onNavigateToTableScan = onNavigateToTableScan,
                                 onCheckIn = { tableNum -> viewModel.checkIn(orderId, tableNum) },
                                 onSettleBill = { viewModel.settleBill(orderId) }
                             )
@@ -144,6 +146,7 @@ fun OrderTrackingContent(
     timeline: OrderTimeline, 
     onRefresh: () -> Unit,
     onShowQRCode: () -> Unit,
+    onNavigateToTableScan: () -> Unit,
     onCheckIn: (String) -> Unit,
     onSettleBill: () -> Unit
 ) {
@@ -194,10 +197,7 @@ fun OrderTrackingContent(
                             Text("Arrived at the Hotel?", color = Color.White, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.height(8.dp))
                             Button(
-                                onClick = { 
-                                    // Simulation: In a real app, this would open a QR scanner
-                                    onCheckIn("Table 4")
-                                },
+                                onClick = onNavigateToTableScan,
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24))
                             ) {

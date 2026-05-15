@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,9 +30,25 @@ fun SmartTableScannerScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val user by userViewModel.user.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
     
-    // JSON Payload simulation
-    val mockPayload = """{ "vendorId": "ETH_XYZ_01", "tableId": "T-05", "tableNumber": "5", "branchId": "DB_BRANCH_A" }"""
+    // Brightness Boost for better camera focus/visibility
+    DisposableEffect(Unit) {
+        val activity = context as? android.app.Activity
+        val originalBrightness = activity?.window?.attributes?.screenBrightness ?: -1f
+        activity?.window?.attributes = activity?.window?.attributes?.apply { screenBrightness = 1.0f }
+        onDispose { activity?.window?.attributes = activity?.window?.attributes?.apply { screenBrightness = originalBrightness } }
+    }
+
+    val scanLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        com.journeyapps.barcodescanner.ScanContract()
+    ) { result ->
+        if (result.contents != null) {
+            user?.userId?.let { uid ->
+                viewModel.parseQRCode(result.contents, uid)
+            }
+        }
+    }
 
     LaunchedEffect(uiState.session) {
         if (uiState.session != null) {
@@ -39,7 +57,7 @@ fun SmartTableScannerScreen(
     }
 
     Scaffold(
-        topBar = { TopNavBar(title = "Scan Table QR", onBackClick = onNavigateBack) },
+        topBar = { TopNavBar(title = "Table Scanner", onBackClick = onNavigateBack) },
         containerColor = Color(0xFF0F0F0F)
     ) { padding ->
         Column(
@@ -47,56 +65,94 @@ fun SmartTableScannerScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                imageVector = Icons.Default.QrCodeScanner,
-                contentDescription = null,
-                modifier = Modifier.size(120.dp),
-                tint = Color(0xFFF16B24)
-            )
+            // Instruction Card
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color(0xFF1A1A1A),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFFF16B24))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Scan the QR code located on your table to automatically link your order and start your dining session.",
+                        color = Color.LightGray,
+                        fontSize = 13.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Box(
+                modifier = Modifier
+                    .size(200.dp)
+                    .background(Color(0xFF1A1A1A), RoundedCornerShape(32.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.QrCodeScanner,
+                    contentDescription = null,
+                    modifier = Modifier.size(100.dp),
+                    tint = Color(0xFFF16B24)
+                )
+                // Scanner corner accents
+                Box(modifier = Modifier.fillMaxSize()) {
+                    // This is a simplified version of corner accents
+                }
+            }
             
             Spacer(modifier = Modifier.height(32.dp))
             
             Text(
-                text = "Align the Table QR Code",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
+                text = "Arrived at the Hotel?",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Black,
                 color = Color.White
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "Scanning will automatically bind you to the table and show your running bill.",
-                fontSize = 14.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center
             )
             
             Spacer(modifier = Modifier.height(48.dp))
             
             Button(
                 onClick = { 
-                    user?.userId?.let { uid ->
-                        viewModel.parseQRCode(mockPayload, uid)
-                    }
+                    scanLauncher.launch(
+                        com.journeyapps.barcodescanner.ScanOptions().apply {
+                            setDesiredBarcodeFormats(com.journeyapps.barcodescanner.ScanOptions.QR_CODE)
+                            setPrompt("Scan Table QR Code")
+                            setBeepEnabled(true)
+                            setBarcodeImageEnabled(false)
+                        }
+                    )
                 },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                modifier = Modifier.fillMaxWidth().height(64.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24)),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp),
+                elevation = ButtonDefaults.buttonElevation(8.dp)
             ) {
-                Text("Simulate Scan (Table 5)", fontWeight = FontWeight.Bold)
+                Icon(Icons.Default.QrCodeScanner, contentDescription = null)
+                Spacer(modifier = Modifier.width(12.dp))
+                Text("Scan Table QR", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            if (uiState.error != null) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color.Red.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Error, contentDescription = null, tint = Color.Red, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = uiState.error!!, color = Color.Red, fontSize = 12.sp)
+                    }
+                }
             }
             
-            if (uiState.error != null) {
-                Text(
-                    text = uiState.error!!,
-                    color = Color.Red,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-            }
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }

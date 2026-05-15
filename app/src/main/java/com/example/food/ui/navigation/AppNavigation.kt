@@ -633,7 +633,8 @@ fun AppNavigation(
                 OrderTrackingScreen(
                     orderId = orderId,
                     onNavigateBack = { navController.popBackStack() },
-                    onShowQRCode = { id -> navController.navigate(Screen.PickupQRCode.createRoute(id)) }
+                    onShowQRCode = { id -> navController.navigate(Screen.PickupQRCode.createRoute(id)) },
+                    onNavigateToTableScan = { navController.navigate(Screen.SmartTableScan.route) }
                 )
             }
             composable(
