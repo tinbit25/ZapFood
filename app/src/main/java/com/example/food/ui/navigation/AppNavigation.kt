@@ -43,6 +43,10 @@ import com.example.food.ui.screens.checkout.CheckoutScreen
 import com.example.food.ui.screens.cart.OrderSuccessScreen
 import com.example.food.ui.screens.details.MealPlanDetailsScreen
 import com.example.food.ui.screens.vendor.VendorDashboardScreen
+import com.example.food.ui.screens.vendor.VendorOrdersScreen
+import com.example.food.ui.screens.vendor.VendorMenuManagementScreen
+import com.example.food.ui.screens.vendor.VendorAnalyticsScreen
+import com.example.food.ui.screens.vendor.VendorStoreScreen
 import com.example.food.ui.screens.support.SupportTicketScreen
 import com.example.food.ui.screens.admin.AdminSupportDashboardScreen
 import com.example.food.ui.screens.feedback.FeedbackScreen
@@ -85,12 +89,22 @@ fun AppNavigation(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    
+    val user by userViewModel.user.collectAsState()
+    val userRole = user?.role ?: com.example.food.data.model.UserRole.CUSTOMER
 
-    val bottomBarRoutes = listOf(
+    val customerBottomBarRoutes = listOf(
         Screen.Home.route,
         Screen.Menu.route,
         Screen.Cart.route,
         Screen.Profile.route
+    )
+    val vendorBottomBarRoutes = listOf(
+        Screen.VendorDashboard.route,
+        Screen.VendorOrders.route,
+        Screen.VendorMenu.route,
+        Screen.VendorAnalytics.route,
+        Screen.VendorStore.route
     )
 
     // Handle Notification Navigation
@@ -107,21 +121,56 @@ fun AppNavigation(
         }
     }
 
+    // REACTIVE VENDOR REDIRECT — fixes the Firestore race condition.
+    // The splash navigates before user data loads. Once the user flow emits,
+    // we check the role and redirect vendors to their Merchant OS immediately.
+    LaunchedEffect(user) {
+        val loadedUser = user ?: return@LaunchedEffect
+        val isOnCustomerScreen = currentRoute in customerBottomBarRoutes
+        val isOnSplash = currentRoute == Screen.Splash.route
+        if (loadedUser.role == com.example.food.data.model.UserRole.VENDOR && (isOnCustomerScreen || isOnSplash)) {
+            navController.navigate(Screen.VendorDashboard.route) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
     Scaffold(
+        containerColor = if (userRole == com.example.food.data.model.UserRole.VENDOR) androidx.compose.ui.graphics.Color(0xFF0F0F0F) else androidx.compose.ui.graphics.Color.Unspecified,
         bottomBar = {
-            if (currentRoute in bottomBarRoutes) {
-                BottomNavBar(
-                    currentRoute = currentRoute,
-                    onNavigate = { route ->
-                        navController.navigate(route) {
-                            popUpTo(Screen.Home.route) {
-                                saveState = true
+            if (userRole == com.example.food.data.model.UserRole.VENDOR) {
+                // Vendor Merchant OS Navigation
+                if (currentRoute in vendorBottomBarRoutes) {
+                    com.example.food.ui.components.VendorBottomNavBar(
+                        currentRoute = currentRoute,
+                        onNavigate = { route ->
+                            navController.navigate(route) {
+                                popUpTo(Screen.VendorDashboard.route) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
                         }
-                    }
-                )
+                    )
+                }
+            } else {
+                // Customer Navigation
+                if (currentRoute in customerBottomBarRoutes) {
+                    BottomNavBar(
+                        currentRoute = currentRoute,
+                        onNavigate = { route ->
+                            navController.navigate(route) {
+                                popUpTo(Screen.Home.route) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
+                }
             }
         }
     ) { innerPadding ->
@@ -134,6 +183,9 @@ fun AppNavigation(
             composable(route = Screen.Splash.route) {
                 SplashScreen(
                     onNavigateToHome = {
+                        // Always navigate to Home; the reactive vendor redirect LaunchedEffect
+                        // in AppNavigation will intercept and send vendors to VendorDashboard
+                        // once the Firestore user data loads (fixes the async race condition).
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
                         }
@@ -401,7 +453,7 @@ fun AppNavigation(
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     onNavigateToAdmin = { navController.navigate(Screen.AdminDashboard.route) },
                     onNavigateToVendorDashboard = { navController.navigate(Screen.VendorDashboard.route) },
-                    onNavigateToVendorMenu = { navController.navigate(Screen.VendorMenuManagement.route) },
+                    onNavigateToVendorMenu = { navController.navigate(Screen.VendorMenu.route) },
                     onNavigateToSupportTickets = { navController.navigate(Screen.SupportTickets.route) },
                     onNavigateToAdminSupport = { navController.navigate(Screen.AdminSupportDashboard.route) },
                     onNavigateToLinkPhone = {
@@ -500,7 +552,6 @@ fun AppNavigation(
             }
 
             composable(route = Screen.VendorDashboard.route) {
-                val user by userViewModel.user.collectAsState()
                 val vendorUIState by vendorStateManager.uiState.collectAsState()
 
                 LaunchedEffect(user?.userId) {
@@ -513,20 +564,15 @@ fun AppNavigation(
                         VendorDashboardScreen(
                             userViewModel = userViewModel,
                             orderViewModel = orderViewModel,
-                            onLogout = {
-                                navController.navigate(Screen.Welcome.route) {
-                                    popUpTo(0) { inclusive = true }
-                                }
-                            }
+                            onNavigateToScan = { navController.navigate(Screen.VendorStore.route) },
+                            onNavigateToAddMeal = { navController.navigate(Screen.VendorMenu.route) }
                         )
                     },
                     onPending = {
                         com.example.food.ui.screens.vendor.VendorVerificationStateScreen(
                             state = vendorUIState,
                             onNavigateBack = { navController.popBackStack() },
-                            onContactSupport = {
-                                navController.navigate(Screen.SupportTickets.route)
-                            }
+                            onContactSupport = { navController.navigate(Screen.SupportTickets.route) }
                         )
                     },
                     onOnboarding = {
@@ -537,29 +583,43 @@ fun AppNavigation(
                         )
                     },
                     onRestricted = { restrictedState ->
-                        if (restrictedState is com.example.food.ui.viewmodel.VendorUIState.Loading) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                                CircularProgressIndicator()
-                            }
-                        } else {
-                            com.example.food.ui.screens.vendor.VendorVerificationStateScreen(
-                                state = restrictedState,
-                                onNavigateBack = { navController.popBackStack() },
-                                onContactSupport = {
-                                    navController.navigate(Screen.SupportTickets.route)
-                                }
-                            )
-                        }
+                        com.example.food.ui.screens.vendor.VendorVerificationStateScreen(
+                            state = restrictedState,
+                            onNavigateBack = { navController.popBackStack() },
+                            onContactSupport = { navController.navigate(Screen.SupportTickets.route) }
+                        )
                     }
                 )
             }
 
-            composable(route = Screen.VendorMenuManagement.route) {
-                // For now, navigating to a placeholder or a screen we will create
-                com.example.food.ui.screens.vendor.VendorMenuManagementScreen(
+            composable(route = Screen.VendorOrders.route) {
+                VendorOrdersScreen(
+                    userViewModel = userViewModel,
+                    orderViewModel = orderViewModel
+                )
+            }
+
+            composable(route = Screen.VendorMenu.route) {
+                VendorMenuManagementScreen(
                     userViewModel = userViewModel,
                     mealViewModel = mealViewModel,
                     onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(route = Screen.VendorAnalytics.route) {
+                VendorAnalyticsScreen()
+            }
+
+            composable(route = Screen.VendorStore.route) {
+                VendorStoreScreen(
+                    userViewModel = userViewModel,
+                    onLogout = {
+                        authViewModel.logout()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
 

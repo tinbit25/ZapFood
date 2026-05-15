@@ -19,6 +19,13 @@ sealed class Screen(val route: String) {
         fun createRoute(phone: String, isLinking: Boolean) = "otp_verification_screen/$phone/$isLinking"
     }
 
+    // Vendor Merchant OS Flow
+    object VendorDashboard : Screen("vendor_dashboard")
+    object VendorOrders : Screen("vendor_orders")
+    object VendorMenu : Screen("vendor_menu")
+    object VendorAnalytics : Screen("vendor_analytics")
+    object VendorStore : Screen("vendor_store")
+
     // Main App Flow
     object Home : Screen("home_screen")
     object Menu : Screen("menu_screen")
@@ -52,8 +59,6 @@ sealed class Screen(val route: String) {
     }
 
     // Role-based Dashboards
-    object VendorDashboard : Screen("vendor_dashboard_screen")
-    object VendorMenuManagement : Screen("vendor_menu_management_screen")
     object AdminDashboard : Screen("admin_dashboard_screen")
 
     object AdminUserManagement : Screen("admin_user_management_screen")

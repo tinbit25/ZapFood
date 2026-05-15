@@ -23,6 +23,7 @@ data class User(
     val fcmToken: String? = null,
     val bio: String? = null,
     val gender: String? = null,
+    val businessName: String? = null,
 
     // Role-specific extensions
     val preferences: List<String> = emptyList(), // For Customer
