@@ -80,7 +80,8 @@ fun AppNavigation(
     authViewModel: AuthViewModel = viewModel(),
     addressViewModel: com.example.food.ui.viewmodel.AddressViewModel = viewModel(),
     settingsViewModel: SettingsViewModel = viewModel(),
-    vendorStateManager: com.example.food.ui.viewmodel.VendorStateManager = viewModel()
+    vendorStateManager: com.example.food.ui.viewmodel.VendorStateManager = viewModel(),
+    smartTableViewModel: com.example.food.ui.viewmodel.SmartTableViewModel = viewModel()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -296,7 +297,11 @@ fun AppNavigation(
                     },
                     onNavigateToVendorDiscovery = {
                         navController.navigate(Screen.VendorDiscovery.route)
-                    }
+                    },
+                    onNavigateToTableScan = {
+                        navController.navigate(Screen.SmartTableScan.route)
+                    },
+                    smartTableViewModel = smartTableViewModel
                 )
             }
             
@@ -729,6 +734,29 @@ fun AppNavigation(
                             popUpTo(Screen.VendorRegistration.route) { inclusive = true }
                         }
                     }
+                )
+            }
+
+            composable(route = Screen.SmartTableScan.route) {
+                com.example.food.ui.screens.orders.SmartTableScannerScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onSessionStarted = {
+                        navController.navigate(Screen.SmartTableSession.route) {
+                            popUpTo(Screen.SmartTableScan.route) { inclusive = true }
+                        }
+                    },
+                    viewModel = smartTableViewModel,
+                    userViewModel = userViewModel
+                )
+            }
+
+            composable(route = Screen.SmartTableSession.route) {
+                com.example.food.ui.screens.orders.SmartTableSessionScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToMenu = { vendorId ->
+                        navController.navigate(Screen.VendorStorefront.createRoute(vendorId))
+                    },
+                    viewModel = smartTableViewModel
                 )
             }
         }

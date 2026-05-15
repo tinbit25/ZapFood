@@ -64,6 +64,28 @@ class AiRecommendationApi(
             }
         }
 
+    // ── Preferences ─────────────────────────────────────────────
+
+    suspend fun saveUserPreferences(preferences: com.example.food.data.model.UserFoodPreference): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                val body = gson.toJson(preferences)
+                val request = Request.Builder()
+                    .url("$baseUrl/api/ai/recommendations/preferences")
+                    .post(body.toRequestBody(JSON_MEDIA_TYPE))
+                    .build()
+                
+                val response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception("Failed to save preferences: ${response.code}"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Network error saving preferences"))
+            }
+        }
+
     // ── Helpers ──────────────────────────────────────────────────
 
     private suspend fun <T, R> postRequest(endpoint: String, requestData: T, responseClass: Class<R>): Result<R> =

@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.alpha
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -20,7 +21,8 @@ import com.example.food.data.model.OrderType
 fun OrderTypeSelector(
     selectedType: OrderType,
     onTypeSelected: (OrderType) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
     Column(modifier = modifier.padding(16.dp)) {
         Text(
@@ -40,8 +42,9 @@ fun OrderTypeSelector(
                 subtitle = "To your door",
                 icon = Icons.Default.LocalShipping,
                 isSelected = selectedType == OrderType.DELIVERY,
-                onClick = { onTypeSelected(OrderType.DELIVERY) },
-                modifier = Modifier.weight(1f)
+                onClick = { if (enabled) onTypeSelected(OrderType.DELIVERY) },
+                modifier = Modifier.weight(1f),
+                enabled = enabled
             )
             
             OrderTypeCard(
@@ -50,8 +53,9 @@ fun OrderTypeSelector(
                 subtitle = "Pick up food",
                 icon = Icons.Default.ShoppingBag,
                 isSelected = selectedType == OrderType.TAKEAWAY,
-                onClick = { onTypeSelected(OrderType.TAKEAWAY) },
-                modifier = Modifier.weight(1f)
+                onClick = { if (enabled) onTypeSelected(OrderType.TAKEAWAY) },
+                modifier = Modifier.weight(1f),
+                enabled = enabled
             )
             
             OrderTypeCard(
@@ -60,8 +64,9 @@ fun OrderTypeSelector(
                 subtitle = "Eat at venue",
                 icon = Icons.Default.Restaurant,
                 isSelected = selectedType == OrderType.DINE_IN,
-                onClick = { onTypeSelected(OrderType.DINE_IN) },
-                modifier = Modifier.weight(1f)
+                onClick = { if (enabled) onTypeSelected(OrderType.DINE_IN) },
+                modifier = Modifier.weight(1f),
+                enabled = enabled
             )
         }
     }
@@ -75,7 +80,8 @@ private fun OrderTypeCard(
     icon: ImageVector,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
     val containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
     val contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
@@ -84,7 +90,8 @@ private fun OrderTypeCard(
     OutlinedCard(
         modifier = modifier
             .height(110.dp)
-            .clickable { onClick() },
+            .alpha(if (enabled || isSelected) 1f else 0.5f)
+            .clickable(enabled = enabled) { onClick() },
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(1.dp, borderColor),
         colors = CardDefaults.outlinedCardColors(containerColor = containerColor)

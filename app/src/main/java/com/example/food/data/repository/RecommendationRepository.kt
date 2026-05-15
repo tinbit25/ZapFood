@@ -60,6 +60,10 @@ class RecommendationRepository(
         api.trackEvent(request)
     }
 
+    suspend fun saveUserPreferences(preferences: com.example.food.data.model.UserFoodPreference): Result<Unit> {
+        return api.saveUserPreferences(preferences)
+    }
+
     private fun isCacheValid(): Boolean {
         return (System.currentTimeMillis() - cacheTimestamp) < CACHE_DURATION_MS
     }

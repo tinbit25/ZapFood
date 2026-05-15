@@ -151,9 +151,10 @@ fun SmartPreferenceScreen(
             PrimaryButton(
                 text = if (isSaving) "Saving..." else "Update Smart Picks ✨",
                 onClick = {
+                    val uid = user?.userId ?: return@PrimaryButton
                     isSaving = true
                     val prefs = UserFoodPreference(
-                        userId = user?.userId ?: "",
+                        userId = uid,
                         fastingMode = fastingMode,
                         spicePreference = selectedSpice,
                         budgetPreference = selectedBudget,
@@ -162,9 +163,13 @@ fun SmartPreferenceScreen(
                         preferredMealTime = preferredMealTime,
                         lastUpdated = System.currentTimeMillis()
                     )
-                    // Call ViewModel to save (Need to implement this in RecommendationViewModel)
-                    // For now, we simulate a delay
-                    onPreferencesSaved()
+                    
+                    recommendationViewModel.saveUserPreferences(prefs) { success ->
+                        isSaving = false
+                        if (success) {
+                            onPreferencesSaved()
+                        }
+                    }
                 },
                 enabled = !isSaving,
                 backgroundColor = Color(0xFFF16B24)

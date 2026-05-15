@@ -81,4 +81,6 @@ sealed class Screen(val route: String) {
     object QRPayment : Screen("qr_payment_screen/{orderId}") {
         fun createRoute(orderId: String) = "qr_payment_screen/$orderId"
     }
+    object SmartTableScan : Screen("smart_table_scan")
+    object SmartTableSession : Screen("smart_table_session")
 }

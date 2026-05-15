@@ -3,6 +3,7 @@ package com.example.food.data.repository
 import com.example.food.core.util.Resource
 import com.example.food.data.model.Order
 import com.example.food.data.model.OrderStatus
+import com.example.food.data.model.OrderType
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
@@ -275,6 +276,22 @@ class OrderRepository {
             Resource.Success(Unit)
         } catch (e: Exception) {
             Resource.Error(e.localizedMessage ?: "Failed to close table")
+        }
+    }
+
+    suspend fun getActiveDineInBooking(userId: String): Order? {
+        return try {
+            val query = ordersCollection
+                .whereEqualTo("customerId", userId)
+                .whereEqualTo("orderType", OrderType.DINE_IN.name)
+                .whereEqualTo("orderStatus", OrderStatus.BOOKED.name)
+                .limit(1)
+                .get()
+                .await()
+            
+            query.documents.firstOrNull()?.toObject(Order::class.java)
+        } catch (e: Exception) {
+            null
         }
     }
 }

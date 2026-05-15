@@ -87,4 +87,15 @@ class RecommendationViewModel(
             repository.trackAnalyticsEvent(userId, eventType, mealId, context)
         }
     }
+
+    fun saveUserPreferences(prefs: com.example.food.data.model.UserFoodPreference, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val result = repository.saveUserPreferences(prefs)
+            if (result.isSuccess) {
+                // Refresh recommendations after saving preferences
+                loadHomeRecommendations(prefs.userId)
+            }
+            onResult(result.isSuccess)
+        }
+    }
 }

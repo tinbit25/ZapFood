@@ -24,6 +24,7 @@ import com.example.food.core.util.Resource
 import com.example.food.data.model.*
 import com.example.food.ui.components.OrderTypeSelector
 import com.example.food.ui.viewmodel.*
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -35,12 +36,14 @@ fun CheckoutScreen(
     rewardViewModel: RewardViewModel,
     paymentViewModel: PaymentViewModel,
     checkoutViewModel: CheckoutViewModel,
+    smartTableViewModel: SmartTableViewModel = viewModel(),
     onNavigateBack: () -> Unit,
     onOrderSuccess: (String) -> Unit
 ) {
     val user by userViewModel.user.collectAsState()
     val cartState by cartViewModel.cartState.collectAsState()
     val uiState by checkoutViewModel.uiState.collectAsState()
+    val smartTableState by smartTableViewModel.uiState.collectAsState()
     val isPlacingOrder by checkoutViewModel.isPlacingOrder.collectAsState()
     val paymentState by paymentViewModel.paymentState.collectAsState()
     val pointsBalance by rewardViewModel.pointsBalance.collectAsState()
@@ -56,6 +59,12 @@ fun CheckoutScreen(
 
     LaunchedEffect(user) {
         user?.let { rewardViewModel.fetchBalance(it.userId) }
+    }
+
+    LaunchedEffect(smartTableState.session) {
+        smartTableState.session?.let { session ->
+            checkoutViewModel.initializeWithSession(session)
+        }
     }
 
     // Payment Verification Logic
@@ -160,7 +169,22 @@ fun CheckoutScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            item { OrderTypeSelector(uiState.orderType, checkoutViewModel::setOrderType) }
+            item { 
+                val isSessionActive = smartTableState.session != null
+                OrderTypeSelector(
+                    selectedType = uiState.orderType, 
+                    onTypeSelected = checkoutViewModel::setOrderType,
+                    enabled = !isSessionActive
+                )
+                if (isSessionActive) {
+                    Text(
+                        text = "You are currently at Table ${smartTableState.session?.tableNumber}. Order will be served there.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                    )
+                }
+            }
 
             item {
                 AnimatedContent(targetState = uiState.orderType, transitionSpec = { fadeIn() togetherWith fadeOut() }) { type ->

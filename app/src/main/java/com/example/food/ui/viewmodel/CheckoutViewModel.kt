@@ -44,6 +44,16 @@ class CheckoutViewModel @Inject constructor() : ViewModel() {
 
     var pointsToRedeem by mutableIntStateOf(0)
 
+    fun initializeWithSession(session: SmartTableSession) {
+        _uiState.value = _uiState.value.copy(
+            orderType = OrderType.DINE_IN,
+            dineInInfo = DineInDetails(
+                tableNumber = session.tableNumber,
+                isCheckedIn = true
+            )
+        )
+    }
+
     fun setOrderType(type: OrderType) {
         _uiState.value = _uiState.value.copy(orderType = type, error = null)
     }

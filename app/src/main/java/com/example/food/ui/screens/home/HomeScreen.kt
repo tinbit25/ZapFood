@@ -38,6 +38,9 @@ import com.example.food.data.model.Meal
 import com.example.food.ui.components.MPCodeDialog
 import com.example.food.core.util.Resource
 import com.example.food.domain.usecase.EthiopianBehaviorIntelligence
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.food.ui.viewmodel.SmartTableViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -50,12 +53,15 @@ fun HomeScreen(
     onNavigateToSmartPreference: () -> Unit,
     onNavigateToSearch: () -> Unit,
     onNavigateToNotifications: () -> Unit,
-    onNavigateToVendorDiscovery: () -> Unit
+    onNavigateToVendorDiscovery: () -> Unit,
+    onNavigateToTableScan: () -> Unit,
+    smartTableViewModel: com.example.food.ui.viewmodel.SmartTableViewModel = viewModel()
 ) {
     val user by userViewModel.user.collectAsState()
     val discoverPlansState by mealPlanViewModel.discoverPlansState.collectAsState()
     val mealsState by mealViewModel.mealsState.collectAsState()
     val recommendationState by recommendationViewModel.uiState.collectAsState()
+    val smartTableState by smartTableViewModel.uiState.collectAsState()
     
     val mealPlans = (discoverPlansState as? Resource.Success)?.data ?: emptyList()
     val meals = (mealsState as? Resource.Success)?.data ?: emptyList()
@@ -77,7 +83,10 @@ fun HomeScreen(
         }
         mealPlanViewModel.fetchDiscoverPlans()
         mealViewModel.fetchMeals()
-        user?.let { recommendationViewModel.loadHomeRecommendations(it.userId) }
+        user?.let { 
+            recommendationViewModel.loadHomeRecommendations(it.userId)
+            smartTableViewModel.checkForActiveBooking(it.userId)
+        }
     }
 
     LazyColumn(
@@ -93,6 +102,16 @@ fun HomeScreen(
                 userPhotoUrl = user?.photoUrl,
                 onNotificationClick = onNavigateToNotifications
             )
+        }
+
+        // Smart Table Entry Point (I'm at the Hotel)
+        if (smartTableState.activeBooking != null) {
+            item {
+                HotelCheckInCard(
+                    booking = smartTableState.activeBooking!!,
+                    onCheckInClick = onNavigateToTableScan
+                )
+            }
         }
 
         // Search Bar
@@ -643,6 +662,51 @@ fun SectionHeader(title: String, onActionClick: () -> Unit) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier.clickable { onActionClick() }
         )
+    }
+}
+
+@Composable
+fun HotelCheckInCard(
+    booking: com.example.food.data.model.Order,
+    onCheckInClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .clickable { onCheckInClick() },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF16B24))
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = CircleShape,
+                color = Color.White.copy(alpha = 0.2f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(imageVector = Icons.Default.QrCodeScanner, contentDescription = null, tint = Color.White)
+                }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "I'm at ${booking.businessName}", 
+                    fontSize = 16.sp, 
+                    fontWeight = FontWeight.Bold, 
+                    color = Color.White
+                )
+                Text(
+                    text = "Scan Table QR to start your meal session", 
+                    fontSize = 12.sp, 
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+            }
+            Icon(imageVector = Icons.Default.ChevronRight, contentDescription = null, tint = Color.White)
+        }
     }
 }
 
