@@ -158,10 +158,13 @@ fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
 
 @Composable
 fun SettingsItem(title: String, icon: ImageVector) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { }
+            .clickable {
+                android.widget.Toast.makeText(context, "$title feature coming soon", android.widget.Toast.LENGTH_SHORT).show()
+            }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween

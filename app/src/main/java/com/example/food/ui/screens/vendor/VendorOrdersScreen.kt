@@ -187,8 +187,14 @@ fun VendorProfessionalOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> U
                                 Text("Mark Ready", fontSize = 12.sp)
                             }
                         }
-                        OrderStatus.READY -> {
-                           // Done side
+                        OrderStatus.READY, OrderStatus.ARRIVED -> {
+                            Button(
+                                onClick = { onUpdateStatus(OrderStatus.DELIVERED) },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF16B24)),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text("Mark Delivered", fontSize = 12.sp)
+                            }
                         }
                         else -> {}
                     }

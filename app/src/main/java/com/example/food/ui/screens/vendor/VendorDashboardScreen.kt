@@ -97,7 +97,7 @@ fun VendorDashboardScreen(
                 Spacer(Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     QuickActionCard("Add Meal", Icons.Default.Add, Color(0xFFF16B24), Modifier.weight(1f), onNavigateToAddMeal)
-                    QuickActionCard("Update Stock", Icons.Default.Inventory, Color(0xFF2196F3), Modifier.weight(1f), {})
+                    QuickActionCard("Update Stock", Icons.Default.Inventory, Color(0xFF2196F3), Modifier.weight(1f), onNavigateToAddMeal)
                 }
             }
 

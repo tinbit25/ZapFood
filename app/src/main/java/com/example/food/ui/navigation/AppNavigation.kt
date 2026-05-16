@@ -47,6 +47,7 @@ import com.example.food.ui.screens.vendor.VendorOrdersScreen
 import com.example.food.ui.screens.vendor.VendorMenuManagementScreen
 import com.example.food.ui.screens.vendor.VendorAnalyticsScreen
 import com.example.food.ui.screens.vendor.VendorStoreScreen
+import com.example.food.ui.screens.vendor.VendorPickupScannerScreen
 import com.example.food.ui.screens.support.SupportTicketScreen
 import com.example.food.ui.screens.admin.AdminSupportDashboardScreen
 import com.example.food.ui.screens.feedback.FeedbackScreen
@@ -564,7 +565,7 @@ fun AppNavigation(
                         VendorDashboardScreen(
                             userViewModel = userViewModel,
                             orderViewModel = orderViewModel,
-                            onNavigateToScan = { navController.navigate(Screen.VendorStore.route) },
+                            onNavigateToScan = { navController.navigate(Screen.VendorPickupScan.route) },
                             onNavigateToAddMeal = { navController.navigate(Screen.VendorMenu.route) }
                         )
                     },
@@ -620,6 +621,14 @@ fun AppNavigation(
                             popUpTo(0) { inclusive = true }
                         }
                     }
+                )
+            }
+
+            composable(route = Screen.VendorPickupScan.route) {
+                VendorPickupScannerScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    userViewModel = userViewModel,
+                    orderViewModel = orderViewModel
                 )
             }
 

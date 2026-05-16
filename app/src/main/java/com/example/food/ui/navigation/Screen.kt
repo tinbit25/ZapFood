@@ -25,6 +25,7 @@ sealed class Screen(val route: String) {
     object VendorMenu : Screen("vendor_menu")
     object VendorAnalytics : Screen("vendor_analytics")
     object VendorStore : Screen("vendor_store")
+    object VendorPickupScan : Screen("vendor_pickup_scan")
 
     // Main App Flow
     object Home : Screen("home_screen")
