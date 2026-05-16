@@ -25,20 +25,29 @@ import com.example.food.ui.viewmodel.AdminViewModel
 
 @Composable
 fun AdminOrderMonitoringScreen(
-    onNavigateBack: () -> Unit,
     viewModel: AdminViewModel = viewModel()
 ) {
     val dashboardData by viewModel.dashboardState.collectAsState()
 
     Scaffold(
-        containerColor = Color(0xFF0A0A0A)
+        containerColor = Color(0xFF0A0A0A),
+        topBar = {
+            Surface(color = Color(0xFF0A0A0A)) {
+                Text(
+                    text = "Order Monitoring",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            TopNavBar(title = "Order Monitoring", onBackClick = onNavigateBack)
 
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(

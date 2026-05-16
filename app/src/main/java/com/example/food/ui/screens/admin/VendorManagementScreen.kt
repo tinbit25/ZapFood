@@ -25,7 +25,6 @@ import com.example.food.ui.viewmodel.AdminViewModel
 
 @Composable
 fun VendorManagementScreen(
-    onNavigateBack: () -> Unit,
     viewModel: AdminViewModel = viewModel()
 ) {
     val applicationsState by viewModel.vendorsApplicationsState.collectAsState()
@@ -35,14 +34,24 @@ fun VendorManagementScreen(
     }
 
     Scaffold(
-        containerColor = Color(0xFF0A0A0A)
+        containerColor = Color(0xFF0A0A0A),
+        topBar = {
+            Surface(color = Color(0xFF0A0A0A)) {
+                Text(
+                    text = "Vendor Management",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            TopNavBar(title = "Vendor Approvals", onBackClick = onNavigateBack)
 
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(

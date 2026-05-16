@@ -61,10 +61,11 @@ sealed class Screen(val route: String) {
 
     // Role-based Dashboards
     object AdminDashboard : Screen("admin_dashboard_screen")
-
     object AdminUserManagement : Screen("admin_user_management_screen")
     object AdminVendorManagement : Screen("admin_vendor_management_screen")
     object AdminOrderMonitoring : Screen("admin_order_monitoring_screen")
+    object AdminAnalytics : Screen("admin_analytics_screen")
+    object AdminControlCenter : Screen("admin_control_center_screen")
 
     // Support and Feedback
     object SupportTickets : Screen("support_tickets_screen")

@@ -69,6 +69,9 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.food.ui.components.BottomNavBar
 import com.example.food.ui.screens.vendor.VendorDiscoveryScreen
+import com.example.food.ui.components.AdminBottomNavBar
+import com.example.food.ui.screens.admin.AdminAnalyticsScreen
+import com.example.food.ui.screens.admin.AdminControlCenterScreen
 import androidx.compose.runtime.LaunchedEffect
 import com.example.food.MainActivity
 
@@ -107,6 +110,13 @@ fun AppNavigation(
         Screen.VendorAnalytics.route,
         Screen.VendorStore.route
     )
+    val adminBottomBarRoutes = listOf(
+        Screen.AdminDashboard.route,
+        Screen.AdminVendorManagement.route,
+        Screen.AdminOrderMonitoring.route,
+        Screen.AdminAnalytics.route,
+        Screen.AdminControlCenter.route
+    )
 
     // Handle Notification Navigation
     LaunchedEffect(MainActivity.pendingNotificationRoute) {
@@ -122,15 +132,21 @@ fun AppNavigation(
         }
     }
 
-    // REACTIVE VENDOR REDIRECT — fixes the Firestore race condition.
+    // REACTIVE REDIRECT — fixes the Firestore race condition.
     // The splash navigates before user data loads. Once the user flow emits,
-    // we check the role and redirect vendors to their Merchant OS immediately.
+    // we check the role and redirect vendors/admins to their respective OS immediately.
     LaunchedEffect(user) {
         val loadedUser = user ?: return@LaunchedEffect
         val isOnCustomerScreen = currentRoute in customerBottomBarRoutes
         val isOnSplash = currentRoute == Screen.Splash.route
+        
         if (loadedUser.role == com.example.food.data.model.UserRole.VENDOR && (isOnCustomerScreen || isOnSplash)) {
             navController.navigate(Screen.VendorDashboard.route) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+        } else if (loadedUser.role == com.example.food.data.model.UserRole.ADMIN && (isOnCustomerScreen || isOnSplash)) {
+            navController.navigate(Screen.AdminDashboard.route) {
                 popUpTo(0) { inclusive = true }
                 launchSingleTop = true
             }
@@ -138,9 +154,25 @@ fun AppNavigation(
     }
 
     Scaffold(
-        containerColor = if (userRole == com.example.food.data.model.UserRole.VENDOR) androidx.compose.ui.graphics.Color(0xFF0F0F0F) else androidx.compose.ui.graphics.Color.Unspecified,
+        containerColor = if (userRole == com.example.food.data.model.UserRole.VENDOR || userRole == com.example.food.data.model.UserRole.ADMIN) androidx.compose.ui.graphics.Color(0xFF0F0F0F) else androidx.compose.ui.graphics.Color.Unspecified,
         bottomBar = {
-            if (userRole == com.example.food.data.model.UserRole.VENDOR) {
+            if (userRole == com.example.food.data.model.UserRole.ADMIN) {
+                // Admin Control Center Navigation
+                if (currentRoute in adminBottomBarRoutes) {
+                    AdminBottomNavBar(
+                        currentRoute = currentRoute,
+                        onNavigate = { route ->
+                            navController.navigate(route) {
+                                popUpTo(Screen.AdminDashboard.route) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
+                }
+            } else if (userRole == com.example.food.data.model.UserRole.VENDOR) {
                 // Vendor Merchant OS Navigation
                 if (currentRoute in vendorBottomBarRoutes) {
                     com.example.food.ui.components.VendorBottomNavBar(
@@ -638,7 +670,6 @@ fun AppNavigation(
                     onNavigateToUsers = { navController.navigate(Screen.AdminUserManagement.route) },
                     onNavigateToVendors = { navController.navigate(Screen.AdminVendorManagement.route) },
                     onNavigateToOrders = { navController.navigate(Screen.AdminOrderMonitoring.route) },
-                    onNavigateBack = { navController.popBackStack() },
                     viewModel = adminViewModel,
                     mealViewModel = mealViewModel,
                     mealPlanViewModel = mealPlanViewModel
@@ -656,7 +687,6 @@ fun AppNavigation(
             composable(route = Screen.AdminVendorManagement.route) {
                 val adminViewModel: com.example.food.ui.viewmodel.AdminViewModel = viewModel()
                 com.example.food.ui.screens.admin.VendorManagementScreen(
-                    onNavigateBack = { navController.popBackStack() },
                     viewModel = adminViewModel
                 )
             }
@@ -664,8 +694,23 @@ fun AppNavigation(
             composable(route = Screen.AdminOrderMonitoring.route) {
                 val adminViewModel: com.example.food.ui.viewmodel.AdminViewModel = viewModel()
                 com.example.food.ui.screens.admin.AdminOrderMonitoringScreen(
-                    onNavigateBack = { navController.popBackStack() },
                     viewModel = adminViewModel
+                )
+            }
+
+            composable(route = Screen.AdminAnalytics.route) {
+                AdminAnalyticsScreen()
+            }
+
+            composable(route = Screen.AdminControlCenter.route) {
+                AdminControlCenterScreen(
+                    userViewModel = userViewModel,
+                    onLogout = {
+                        authViewModel.logout()
+                        navController.navigate(Screen.Welcome.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
 
