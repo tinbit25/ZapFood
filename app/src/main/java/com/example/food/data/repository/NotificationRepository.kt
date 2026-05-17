@@ -109,7 +109,8 @@ class NotificationRepository : INotificationRepository {
                 .update(
                     mapOf(
                         "isRead" to true,
-                        "status" to NotificationStatus.READ.name
+                        "status" to NotificationStatus.READ.name,
+                        "readAt" to System.currentTimeMillis()
                     )
                 ).await()
             Resource.Success(Unit)
@@ -132,7 +133,8 @@ class NotificationRepository : INotificationRepository {
                     doc.reference,
                     mapOf(
                         "isRead" to true,
-                        "status" to NotificationStatus.READ.name
+                        "status" to NotificationStatus.READ.name,
+                        "readAt" to System.currentTimeMillis()
                     )
                 )
             }
@@ -153,6 +155,7 @@ class NotificationRepository : INotificationRepository {
             )
             if (status == NotificationStatus.READ) {
                 updates["isRead"] = true
+                updates["readAt"] = System.currentTimeMillis()
             }
             notificationsCollection.document(notificationId).update(updates).await()
             Resource.Success(Unit)

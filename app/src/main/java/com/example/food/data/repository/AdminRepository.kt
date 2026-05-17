@@ -52,22 +52,40 @@ class AdminRepository {
                 VendorAction.APPROVE -> mapOf(
                     "verificationStatus" to "APPROVED",
                     "verified" to true,
-                    "active" to true
+                    "active" to true,
+                    "isActive" to true
                 )
                 VendorAction.REJECT -> mapOf(
                     "verificationStatus" to "REJECTED",
                     "verified" to false,
-                    "active" to false
+                    "active" to false,
+                    "isActive" to false
                 )
                 VendorAction.SUSPEND -> mapOf(
                     "verificationStatus" to "SUSPENDED",
-                    "verified" to true, // Profile still exists/verified but not active
-                    "active" to false
+                    "verified" to true,
+                    "active" to false,
+                    "isActive" to false
+                )
+                VendorAction.REQUEST_INFO -> mapOf(
+                    "verificationStatus" to "PENDING_REVIEW",
+                    "verified" to false,
+                    "active" to false,
+                    "isActive" to false
+                )
+                VendorAction.FLAG -> mapOf(
+                    "verificationStatus" to "VERIFYING",
+                    "active" to false,
+                    "isActive" to false
                 )
             }
             
             firestore.collection("vendors").document(userId)
                 .update(updateMap).await()
+
+            // Synchronize with the users collection
+            val userIsActive = (action == VendorAction.APPROVE)
+            usersCollection.document(userId).update("isActive", userIsActive).await()
 
             Resource.Success(Unit)
         } catch (e: Exception) {

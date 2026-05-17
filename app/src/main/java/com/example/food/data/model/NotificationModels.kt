@@ -48,7 +48,8 @@ data class Notification(
     val status: NotificationStatus = NotificationStatus.UNREAD,
     val createdAt: Long = System.currentTimeMillis(),
     val isRead: Boolean = false,
-    val relatedOrderId: String? = null
+    val relatedOrderId: String? = null,
+    val readAt: Long? = null
 ) {
     /**
      * Convenience check: is this an order-lifecycle notification?

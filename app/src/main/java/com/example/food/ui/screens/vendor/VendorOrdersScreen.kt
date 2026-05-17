@@ -71,7 +71,7 @@ fun VendorOrdersScreen(
         val filteredOrders = remember(ordersState, selectedTab) {
             val orders = (ordersState as? Resource.Success)?.data ?: emptyList()
             when (selectedTab) {
-                0 -> orders.filter { it.orderStatus == OrderStatus.PENDING || it.orderStatus == OrderStatus.BOOKED }
+                0 -> orders.filter { it.orderStatus == OrderStatus.PENDING || it.orderStatus == OrderStatus.BOOKED || it.orderStatus == OrderStatus.SENT_TO_VENDOR }
                 1 -> orders.filter { it.orderStatus == OrderStatus.ACCEPTED || it.orderStatus == OrderStatus.PREPARING }
                 2 -> orders.filter { it.orderStatus == OrderStatus.READY }
                 3 -> orders.filter { it.orderStatus == OrderStatus.ON_THE_WAY || it.orderStatus == OrderStatus.ARRIVED }

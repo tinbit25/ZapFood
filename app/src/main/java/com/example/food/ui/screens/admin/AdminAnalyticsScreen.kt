@@ -1,11 +1,15 @@
 package com.example.food.ui.screens.admin
 
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.food.core.util.Resource
+import com.example.food.ui.viewmodel.AdminViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,7 +23,11 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 
 @Composable
-fun AdminAnalyticsScreen() {
+fun AdminAnalyticsScreen(
+    viewModel: AdminViewModel = viewModel()
+) {
+    val dashboardState by viewModel.dashboardState.collectAsState()
+    val dashboardData = (dashboardState as? Resource.Success)?.data
     Scaffold(
         containerColor = Color(0xFF0A0A0A),
         topBar = { TopNavBar(title = "Platform Analytics") }
@@ -32,15 +40,20 @@ fun AdminAnalyticsScreen() {
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             item {
-                Text("Revenue Trajectory", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Revenue Trajectory (Last 7 Days)", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
-                MockLineChart()
+                if (dashboardData != null && dashboardData.revenueByDay.isNotEmpty()) {
+                    RealLineChart(dashboardData.revenueByDay)
+                } else {
+                    MockLineChart()
+                }
             }
 
             item {
+                val avgOrder = if (dashboardData != null && dashboardData.totalOrders > 0) dashboardData.totalRevenue / dashboardData.totalOrders else 0.0
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    MiniStatCard("Avg Order Value", "ETB 450", "+12%", Modifier.weight(1f))
-                    MiniStatCard("Customer LTV", "ETB 12K", "+5%", Modifier.weight(1f))
+                    MiniStatCard("Avg Order Value", "ETB ${"%.0f".format(avgOrder)}", "+12%", Modifier.weight(1f))
+                    MiniStatCard("Active Users", "${dashboardData?.activeUsers ?: 0}", "+5%", Modifier.weight(1f))
                 }
             }
 
@@ -51,11 +64,78 @@ fun AdminAnalyticsScreen() {
             }
 
             item {
-                Text("Top Performing Vendors", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Top Performing Categories", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
-                VendorPerformanceCard("Ethiopian Skyline Hotel", 98, "ETB 1.2M")
-                VendorPerformanceCard("Kategna Traditional", 85, "ETB 900K")
-                VendorPerformanceCard("Kuriftu Resorts", 78, "ETB 750K")
+                if (dashboardData != null && dashboardData.categoryDistribution.isNotEmpty()) {
+                    val maxCount = dashboardData.categoryDistribution.values.maxOrNull()?.coerceAtLeast(1) ?: 1
+                    dashboardData.categoryDistribution.entries.sortedByDescending { it.value }.take(3).forEach { entry ->
+                        val catName = entry.key
+                        VendorPerformanceCard(catName, (entry.value * 100) / maxCount, "${entry.value} Orders")
+                    }
+                } else {
+                    VendorPerformanceCard("Traditional", 98, "450 Orders")
+                    VendorPerformanceCard("Fasting", 85, "320 Orders")
+                    VendorPerformanceCard("Drinks", 78, "210 Orders")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RealLineChart(data: Map<String, Double>) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp),
+        color = Color(0xFF1A1A1A),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+            val width = size.width
+            val height = size.height
+            val maxRevenue = data.values.maxOrNull()?.toFloat()?.coerceAtLeast(1f) ?: 1f
+            val minRevenue = 0f
+            
+            val entries = data.entries.toList()
+            val points = entries.mapIndexed { index, entry ->
+                val x = if (entries.size > 1) (index.toFloat() / (entries.size - 1)) * width else width / 2f
+                val y = height - ((entry.value.toFloat() - minRevenue) / (maxRevenue - minRevenue) * height)
+                Offset(x, y)
+            }
+
+            if (points.isNotEmpty()) {
+                val path = Path().apply {
+                    moveTo(points.first().x, points.first().y)
+                    for (i in 1 until points.size) {
+                        val p1 = points[i - 1]
+                        val p2 = points[i]
+                        cubicTo(
+                            (p1.x + p2.x) / 2, p1.y,
+                            (p1.x + p2.x) / 2, p2.y,
+                            p2.x, p2.y
+                        )
+                    }
+                }
+
+                drawPath(
+                    path = path,
+                    color = Color(0xFF4CAF50),
+                    style = Stroke(width = 4.dp.toPx())
+                )
+                
+                val fillPath = Path().apply {
+                    addPath(path)
+                    lineTo(points.last().x, height)
+                    lineTo(points.first().x, height)
+                    close()
+                }
+                drawPath(
+                    path = fillPath,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color(0xFF4CAF50).copy(alpha = 0.3f), Color.Transparent)
+                    )
+                )
             }
         }
     }

@@ -92,9 +92,11 @@ class OrderRepository {
 
     fun getOrdersForVendor(vendorId: String): Flow<Resource<List<Order>>> = callbackFlow {
         trySend(Resource.Loading())
-        val listener = ordersCollection
-            .whereEqualTo("vendorId", vendorId)
-            .addSnapshotListener { snapshot, error ->
+        
+        var query: Query = ordersCollection.whereEqualTo("vendorId", vendorId)
+        query = com.example.food.domain.manager.VendorOrderGatekeeper().filterVendorOrdersQuery(query)
+
+        val listener = query.addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     trySend(Resource.Error(error.localizedMessage ?: "Query failed"))
                     return@addSnapshotListener

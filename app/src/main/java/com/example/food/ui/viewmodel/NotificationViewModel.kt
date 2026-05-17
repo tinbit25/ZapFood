@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
+import com.example.food.domain.manager.NotificationStateManager
+
 /**
  * NotificationViewModel — Manages the state for the notification center.
  * Handles realtime synchronization, pagination, and unread count tracking.
@@ -19,6 +21,8 @@ import kotlinx.coroutines.launch
 class NotificationViewModel(
     private val notificationUseCase: NotificationUseCase = NotificationUseCase()
 ) : ViewModel() {
+
+    private val stateManager = NotificationStateManager()
 
     private val _notificationsState = mutableStateOf<Resource<List<Notification>>>(Resource.Loading())
     val notificationsState: State<Resource<List<Notification>>> = _notificationsState
@@ -48,7 +52,11 @@ class NotificationViewModel(
         unreadCountJob = notificationUseCase.observeUnreadCount(userId)
             .onEach { resource ->
                 if (resource is Resource.Success) {
-                    _unreadCountState.value = resource.data ?: 0
+                    // Update state manager with latest DB unread count if we are not optimistic
+                    val dbCount = resource.data ?: 0
+                    if (stateManager.unreadCount.value != dbCount) {
+                        _unreadCountState.value = dbCount
+                    }
                 }
             }.launchIn(viewModelScope)
 
@@ -66,11 +74,11 @@ class NotificationViewModel(
                 when (resource) {
                     is Resource.Success -> {
                         val newData = resource.data ?: emptyList()
-                        // In a real pagination with snapshot listeners, we'd merge or append.
-                        // For simplicity in this foundational phase, we update the list.
                         allNotifications.clear()
                         allNotifications.addAll(newData)
-                        _notificationsState.value = Resource.Success(allNotifications.toList())
+                        stateManager.updateNotifications(newData)
+                        _notificationsState.value = Resource.Success(stateManager.notifications.value)
+                        _unreadCountState.value = stateManager.unreadCount.value
                         isLoadingMore = false
                     }
                     is Resource.Error -> {
@@ -90,18 +98,18 @@ class NotificationViewModel(
      * Mark a notification as read.
      */
     fun markAsRead(notificationId: String) {
-        viewModelScope.launch {
-            notificationUseCase.markAsRead(notificationId)
-        }
+        stateManager.markAsReadOptimistic(notificationId)
+        _notificationsState.value = Resource.Success(stateManager.notifications.value)
+        _unreadCountState.value = stateManager.unreadCount.value
     }
 
     /**
      * Mark all as read.
      */
     fun markAllAsRead(userId: String) {
-        viewModelScope.launch {
-            notificationUseCase.markAllAsRead(userId)
-        }
+        stateManager.markAllAsReadOptimistic(userId)
+        _notificationsState.value = Resource.Success(stateManager.notifications.value)
+        _unreadCountState.value = stateManager.unreadCount.value
     }
 
     /**

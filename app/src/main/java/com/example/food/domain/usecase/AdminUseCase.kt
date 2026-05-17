@@ -65,5 +65,5 @@ class AdminUseCase(
 }
 
 enum class VendorAction {
-    APPROVE, REJECT, SUSPEND
+    APPROVE, REJECT, SUSPEND, REQUEST_INFO, FLAG
 }

@@ -62,7 +62,9 @@ data class Vendor(
     val profileCompleted: Boolean = false,
     val isActive: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
-    val verificationInfo: VendorVerificationInfo? = null
+    val verificationInfo: VendorVerificationInfo? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null
 )
 
 data class VendorVerificationInfo(
@@ -70,5 +72,7 @@ data class VendorVerificationInfo(
     val taxId: String? = null,
     val sanitationCertificateUrl: String? = null,
     val bankAccountInfo: String? = null,
-    val mobileMoneyNumber: String? = null
+    val mobileMoneyNumber: String? = null,
+    val nationalIdUrl: String? = null,
+    val payoutAccountName: String? = null
 )

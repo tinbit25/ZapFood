@@ -1,5 +1,6 @@
 package com.example.food.ui.screens.admin
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,60 +29,73 @@ fun VendorManagementScreen(
     viewModel: AdminViewModel = viewModel()
 ) {
     val applicationsState by viewModel.vendorsApplicationsState.collectAsState()
+    var selectedApplication by remember { mutableStateOf<VendorApplication?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.fetchUsers(role = UserRole.VENDOR)
     }
 
-    Scaffold(
-        containerColor = Color(0xFF0A0A0A),
-        topBar = {
-            Surface(color = Color(0xFF0A0A0A)) {
-                Text(
-                    text = "Vendor Management",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.padding(16.dp)
-                )
+    if (selectedApplication != null) {
+        VendorVerificationDetailScreen(
+            application = selectedApplication!!,
+            adminViewModel = viewModel,
+            onNavigateBack = {
+                selectedApplication = null
+                viewModel.fetchUsers(role = UserRole.VENDOR)
             }
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+        )
+    } else {
+        Scaffold(
+            containerColor = Color(0xFF0A0A0A),
+            topBar = {
+                Surface(color = Color(0xFF0A0A0A)) {
+                    Text(
+                        text = "Vendor Management",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
 
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    text = "Pending Applications",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text(
+                        text = "Pending Applications",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                when (applicationsState) {
-                    is Resource.Loading -> {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = Color(0xFFF16B24))
+                    when (applicationsState) {
+                        is Resource.Loading -> {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = Color(0xFFF16B24))
+                            }
                         }
-                    }
-                    is Resource.Error -> {
-                        Text(text = (applicationsState as Resource.Error).message ?: "Error loading vendors", color = Color.Red)
-                    }
-                    is Resource.Success -> {
-                        val applications = (applicationsState as Resource.Success).data ?: emptyList()
-                        if (applications.isEmpty()) {
-                            EmptyState("No vendor applications found")
-                        } else {
-                            LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                items(applications) { application ->
-                                    VendorApprovalCard(
-                                        application = application,
-                                        onAction = { action -> viewModel.updateVendorStatus(application.user.userId, action) }
-                                    )
+                        is Resource.Error -> {
+                            Text(text = (applicationsState as Resource.Error).message ?: "Error loading vendors", color = Color.Red)
+                        }
+                        is Resource.Success -> {
+                            val applications = (applicationsState as Resource.Success).data ?: emptyList()
+                            if (applications.isEmpty()) {
+                                EmptyState("No vendor applications found")
+                            } else {
+                                LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    items(applications) { application ->
+                                        VendorApprovalCard(
+                                            application = application,
+                                            onCardClick = { selectedApplication = application },
+                                            onAction = { action -> viewModel.updateVendorStatus(application.user.userId, action) }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -93,13 +107,19 @@ fun VendorManagementScreen(
 }
 
 @Composable
-fun VendorApprovalCard(application: VendorApplication, onAction: (VendorAction) -> Unit) {
+fun VendorApprovalCard(
+    application: VendorApplication,
+    onCardClick: () -> Unit,
+    onAction: (VendorAction) -> Unit
+) {
     val user = application.user
     val vendor = application.vendor
     val status = vendor?.verificationStatus ?: VerificationStatus.PENDING_REVIEW
     
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCardClick() },
         shape = RoundedCornerShape(16.dp),
         color = Color(0xFF1A1A1A)
     ) {

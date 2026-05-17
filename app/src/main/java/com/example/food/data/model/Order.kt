@@ -3,6 +3,14 @@ package com.example.food.data.model
 import java.util.UUID
 
 enum class OrderStatus {
+    // Payment-Gated digital flows states
+    INITIATED,
+    PAYMENT_PENDING,
+    PAYMENT_PROCESSING,
+    PAID,
+    SENT_TO_VENDOR,
+
+    // Standard flow states
     PENDING,
     ACCEPTED,
     PREPARING,

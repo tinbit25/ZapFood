@@ -276,6 +276,8 @@ fun PaymentBadge(status: PaymentStatus) {
 @Composable
 fun StatusBadge(status: OrderStatus) {
     val color = when (status) {
+        OrderStatus.INITIATED, OrderStatus.PAYMENT_PENDING, OrderStatus.PAYMENT_PROCESSING -> Color.Gray
+        OrderStatus.PAID, OrderStatus.SENT_TO_VENDOR -> Color(0xFFE91E63)
         OrderStatus.PENDING, OrderStatus.BOOKED -> Color(0xFFFFA500)
         OrderStatus.ACCEPTED, OrderStatus.PREPARING -> Color(0xFF00BFFF)
         OrderStatus.READY, OrderStatus.ON_THE_WAY, OrderStatus.ARRIVED -> Color(0xFF32CD32)

@@ -52,10 +52,17 @@ fun CheckoutScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
-    val rewardDiscount = (checkoutViewModel.pointsToRedeem / 10) * 100.0
-    val deliveryFee = if (uiState.orderType == OrderType.DELIVERY) 50.0 else 0.0
-    val subtotal = cartState.subtotal
-    val total = subtotal + deliveryFee - rewardDiscount
+    val pricingSummary = remember(cartState.subtotal, uiState.orderType, checkoutViewModel.pointsToRedeem) {
+        com.example.food.domain.manager.CheckoutPricingManager().getPricingSummary(
+            subtotal = cartState.subtotal,
+            orderType = uiState.orderType,
+            pointsToRedeem = checkoutViewModel.pointsToRedeem
+        )
+    }
+    val rewardDiscount = pricingSummary.discount
+    val deliveryFee = pricingSummary.deliveryFee
+    val subtotal = pricingSummary.subtotal
+    val total = pricingSummary.total
 
     LaunchedEffect(user) {
         user?.let { rewardViewModel.fetchBalance(it.userId) }

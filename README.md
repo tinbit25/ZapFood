@@ -2,12 +2,61 @@
 
 A comprehensive, AI-ready food delivery platform built with Kotlin and Jetpack Compose for Android, backed by Firebase and a Python FastAPI backend. The platform supports three distinct user roles: Customers, Vendors, and Administrators, with specialized features for Ethiopian food intelligence.
 
+## 📸 Visual Preview
+
+<table align="center">
+  <tr>
+    <td align="center" valign="top" width="33%">
+      <img src="images/photo_2026-05-17_06-48-19.jpg" alt="Welcome Screen" />
+      <br/><sub><b>Welcome Screen</b></sub>
+    </td>
+    <td align="center" valign="top" width="33%">
+      <img src="images/photo_2026-05-17_06-50-36.jpg" alt="Log In" />
+      <br/><sub><b>Customer Authentication</b></sub>
+    </td>
+    <td align="center" valign="top" width="33%">
+      <img src="images/photo_2026-05-17_06-51-06.jpg" alt="Discovery Hub" />
+      <br/><sub><b>AI Discovery Hub</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top" width="33%">
+      <img src="images/photo_2026-05-17_06-53-13.jpg" alt="Dine-In Reservation" />
+      <br/><sub><b>Dine-In Reservation & Checkout</b></sub>
+    </td>
+    <td align="center" valign="top" width="33%">
+      <img src="images/photo_2026-05-17_06-36-09.jpg" alt="Order History" />
+      <br/><sub><b>Order History</b></sub>
+    </td>
+    <td align="center" valign="top" width="33%">
+      <img src="images/photo_2026-05-17_06-51-28.jpg" alt="Customer Profile" />
+      <br/><sub><b>Customer Profile & Account</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top" width="33%">
+      <img src="images/photo_2026-05-17_06-54-41.jpg" alt="Support Tickets" />
+      <br/><sub><b>Support Tickets Hub</b></sub>
+    </td>
+    <td align="center" valign="top" width="33%">
+    </td>
+    <td align="center" valign="top" width="33%">
+    </td>
+  </tr>
+</table>
+
 ## Achieved Core Capabilities
 
 ### 🍽️ Customer Discovery & "Arrive & Eat" Dine-In Hub
 - **Cultural Recommendation Engine:** Adaptive discovery recommendations (Fasting, Meat, Vegan) with fasting-day meal alerts driven by real-time fasting state observation (`EthiopianBehaviorIntelligence`).
 - **"Arrive & Eat" Smart Table QR System:** Session-managed, waiter-less dining. Customers scan table-specific QR codes to check-in, browse menu packages, route dine-in orders directly to tables, and perform one-tap settlement.
 - **Fast checkout with Chapa Payment:** Secure digital checkout redirects supporting mobile money channels, deep-linked callbacks (`zapfood://payment/return`), and transaction verification.
+
+<p align="center">
+  <img src="images/photo_2026-05-17_06-51-06.jpg" width="30%" alt="Discovery Hub" />
+  <img src="images/photo_2026-05-17_06-53-13.jpg" width="30%" alt="Dine-In Reservation" />
+  <img src="images/photo_2026-05-17_06-36-09.jpg" width="30%" alt="Order History" />
+</p>
 
 ### 🏪 Merchant Command OS (Vendor Portal)
 - **Role-Based Single-App Navigation:** Dynamic startup intercepts that seamlessly guide logged-in users directly to their merchant command center or customer discovery center depending on their verified role.
@@ -18,6 +67,10 @@ A comprehensive, AI-ready food delivery platform built with Kotlin and Jetpack C
 - **System Health Monitor:** Real-time analytics dashboard presenting gross sales aggregates, system responsiveness, total active customer nodes, and system logs.
 - **Vendor Onboarding Verification Hub:** Structured review boards listing vendor onboarding requests.
 - **Live Ticket Support Desk:** Central resolution center where platform administrators can live-chat and process dispute resolutions directly.
+
+<p align="center">
+  <img src="images/photo_2026-05-17_06-54-41.jpg" width="35%" alt="Support Tickets Desk" />
+</p>
 
 ## Tech Stack
 

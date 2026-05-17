@@ -37,6 +37,7 @@ fun AdminDashboardScreen(
     val health by viewModel.systemHealth.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var showBroadcastDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.fetchUsers(role = UserRole.VENDOR)
@@ -95,7 +96,7 @@ fun AdminDashboardScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     QuickActionChip("Approvals", Icons.Default.CheckCircle, Color(0xFFE91E63), onNavigateToVendors, Modifier.weight(1f))
-                    QuickActionChip("Broadcast", Icons.Default.Campaign, Color(0xFF2196F3), {}, Modifier.weight(1f))
+                    QuickActionChip("Broadcast", Icons.Default.Campaign, Color(0xFF2196F3), { showBroadcastDialog = true }, Modifier.weight(1f))
                     QuickActionChip("Users", Icons.Default.People, Color(0xFFFF9800), onNavigateToUsers, Modifier.weight(1f))
                 }
             }
@@ -165,6 +166,45 @@ fun AdminDashboardScreen(
                 }
                 Spacer(modifier = Modifier.height(32.dp))
             }
+        }
+
+        if (showBroadcastDialog) {
+            var broadcastMessage by remember { mutableStateOf("") }
+            AlertDialog(
+                onDismissRequest = { showBroadcastDialog = false },
+                containerColor = Color(0xFF1A1A1A),
+                title = { Text("Broadcast Notification", color = Color.White) },
+                text = {
+                    OutlinedTextField(
+                        value = broadcastMessage,
+                        onValueChange = { broadcastMessage = it },
+                        label = { Text("Message", color = Color.Gray) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color(0xFFF16B24),
+                            cursorColor = Color(0xFFF16B24)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { 
+                            showBroadcastDialog = false
+                            scope.launch { snackbarHostState.showSnackbar("Broadcast sent: $broadcastMessage") }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+                    ) {
+                        Text("Send")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showBroadcastDialog = false }) {
+                        Text("Cancel", color = Color.Gray)
+                    }
+                }
+            )
         }
     }
 }

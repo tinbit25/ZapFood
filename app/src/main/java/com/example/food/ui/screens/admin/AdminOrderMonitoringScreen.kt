@@ -141,6 +141,8 @@ fun AdminOrderCard(order: Order) {
 @Composable
 fun OrderStatusBadge(status: OrderStatus) {
     val color = when (status) {
+        OrderStatus.INITIATED, OrderStatus.PAYMENT_PENDING, OrderStatus.PAYMENT_PROCESSING -> Color.Gray
+        OrderStatus.PAID, OrderStatus.SENT_TO_VENDOR -> Color(0xFFE91E63)
         OrderStatus.PENDING, OrderStatus.BOOKED -> Color(0xFFFF9800)
         OrderStatus.ACCEPTED -> Color(0xFF2196F3)
         OrderStatus.PREPARING -> Color(0xFF9C27B0)

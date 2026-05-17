@@ -16,7 +16,11 @@ data class CartState(
     val mealPlans: List<Pair<MealPlan, Int>> = emptyList()
 ) {
     val subtotal: Double
-        get() = (meals.sumOf { it.first.price * it.second }) + (mealPlans.sumOf { it.first.price * it.second })
+        get() {
+            val mealPrices = meals.map { it.first.price to it.second }
+            val planPrices = mealPlans.map { it.first.price to it.second }
+            return com.example.food.domain.manager.PricingEngine.calculateSubtotal(mealPrices + planPrices)
+        }
 }
 
 class CartViewModel : ViewModel() {

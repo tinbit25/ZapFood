@@ -87,6 +87,12 @@ class OrderUseCase(
      */
     private fun canTransition(current: OrderStatus, next: OrderStatus): Boolean {
         return when (current) {
+            OrderStatus.INITIATED -> next == OrderStatus.PAYMENT_PENDING || next == OrderStatus.CANCELLED || next == OrderStatus.PENDING || next == OrderStatus.SENT_TO_VENDOR
+            OrderStatus.PAYMENT_PENDING -> next == OrderStatus.PAYMENT_PROCESSING || next == OrderStatus.CANCELLED || next == OrderStatus.PAID
+            OrderStatus.PAYMENT_PROCESSING -> next == OrderStatus.PAID || next == OrderStatus.CANCELLED
+            OrderStatus.PAID -> next == OrderStatus.SENT_TO_VENDOR || next == OrderStatus.CANCELLED
+            OrderStatus.SENT_TO_VENDOR -> next == OrderStatus.ACCEPTED || next == OrderStatus.CANCELLED
+
             OrderStatus.PENDING, OrderStatus.BOOKED -> next == OrderStatus.ACCEPTED || next == OrderStatus.CANCELLED || next == OrderStatus.ARRIVED
             OrderStatus.ACCEPTED -> next == OrderStatus.PREPARING || next == OrderStatus.CANCELLED
             OrderStatus.PREPARING -> next == OrderStatus.READY

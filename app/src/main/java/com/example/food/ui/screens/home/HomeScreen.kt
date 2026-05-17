@@ -55,7 +55,8 @@ fun HomeScreen(
     onNavigateToNotifications: () -> Unit,
     onNavigateToVendorDiscovery: () -> Unit,
     onNavigateToTableScan: () -> Unit,
-    smartTableViewModel: com.example.food.ui.viewmodel.SmartTableViewModel = viewModel()
+    smartTableViewModel: com.example.food.ui.viewmodel.SmartTableViewModel = viewModel(),
+    notificationViewModel: com.example.food.ui.viewmodel.NotificationViewModel = viewModel()
 ) {
     val user by userViewModel.user.collectAsState()
     val discoverPlansState by mealPlanViewModel.discoverPlansState.collectAsState()
@@ -83,9 +84,13 @@ fun HomeScreen(
         }
         mealPlanViewModel.fetchDiscoverPlans()
         mealViewModel.fetchMeals()
+    }
+
+    LaunchedEffect(user) {
         user?.let { 
             recommendationViewModel.loadHomeRecommendations(it.userId)
             smartTableViewModel.checkForActiveBooking(it.userId)
+            notificationViewModel.startObserving(it.userId)
         }
     }
 
@@ -100,7 +105,8 @@ fun HomeScreen(
             HomeHeader(
                 userName = user?.displayName ?: "Explorer",
                 userPhotoUrl = user?.photoUrl,
-                onNotificationClick = onNavigateToNotifications
+                onNotificationClick = onNavigateToNotifications,
+                notificationCount = notificationViewModel.unreadCountState.value
             )
         }
 
@@ -520,7 +526,8 @@ fun HomeSearchBar(onSearchClick: () -> Unit) {
 fun HomeHeader(
     userName: String,
     userPhotoUrl: String?,
-    onNotificationClick: () -> Unit
+    onNotificationClick: () -> Unit,
+    notificationCount: Int
 ) {
     val colorScheme = MaterialTheme.colorScheme
     Row(
@@ -560,16 +567,23 @@ fun HomeHeader(
                     modifier = Modifier.size(28.dp)
                 )
             }
-            Surface(
-                color = colorScheme.primary,
-                shape = CircleShape,
-                modifier = Modifier
-                    .size(16.dp)
-                    .align(Alignment.TopEnd)
-                    .offset(x = (-8).dp, y = 8.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(text = "1", fontSize = 10.sp, color = colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+            if (notificationCount > 0) {
+                Surface(
+                    color = colorScheme.primary,
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .align(Alignment.TopEnd)
+                        .offset(x = (-4).dp, y = 4.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = notificationCount.toString(),
+                            fontSize = 9.sp,
+                            color = colorScheme.onPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
