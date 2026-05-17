@@ -2,24 +2,22 @@
 
 A comprehensive, AI-ready food delivery platform built with Kotlin and Jetpack Compose for Android, backed by Firebase and a Python FastAPI backend. The platform supports three distinct user roles: Customers, Vendors, and Administrators, with specialized features for Ethiopian food intelligence.
 
-## Features
+## Achieved Core Capabilities
 
-### 🍽️ Customer App
-- **Browse & Order**: Discover meals with rich metadata (Cuisine Type, Spice Level, Protein Level, Fasting/Vegan friendly).
-- **Order Tracking**: Real-time order status tracking with timeline updates.
-- **Push Notifications**: Instant alerts when orders are accepted, preparing, ready, or delivered.
-- **Seamless Payments**: Integrated with Chapa for secure online transactions.
-- **Support System**: Built-in support ticketing system to resolve order issues directly with admins.
+### 🍽️ Customer Discovery & "Arrive & Eat" Dine-In Hub
+- **Cultural Recommendation Engine:** Adaptive discovery recommendations (Fasting, Meat, Vegan) with fasting-day meal alerts driven by real-time fasting state observation (`EthiopianBehaviorIntelligence`).
+- **"Arrive & Eat" Smart Table QR System:** Session-managed, waiter-less dining. Customers scan table-specific QR codes to check-in, browse menu packages, route dine-in orders directly to tables, and perform one-tap settlement.
+- **Fast checkout with Chapa Payment:** Secure digital checkout redirects supporting mobile money channels, deep-linked callbacks (`zapfood://payment/return`), and transaction verification.
 
-### 🏪 Vendor Dashboard
-- **Menu Management**: Add and edit meals with detailed dietary and nutritional AI metadata tags.
-- **Order Management**: Real-time order reception with an intuitive state-machine for order fulfillment (Accept -> Prepare -> Ready -> Send).
-- **Analytics**: Track daily revenue, top-selling items, and overall performance.
+### 🏪 Merchant Command OS (Vendor Portal)
+- **Role-Based Single-App Navigation:** Dynamic startup intercepts that seamlessly guide logged-in users directly to their merchant command center or customer discovery center depending on their verified role.
+- **Exhaustive Order Handling State Machine:** Interactive order status timeline (Accept -> Prepare -> Mark Ready -> Deliver) syncing to Firestore document streams.
+- **Detailed Menu & Tagging Management:** Interface for vendors to catalog products with detailed culinary metadata (cuisine type, fasting friendly, spice, and protein levels).
 
-### 🛡️ Admin Portal
-- **User & Vendor Management**: Approve, reject, or suspend vendor applications. Manage user access.
-- **Platform Analytics**: Global view of revenue, total orders, and platform health.
-- **Support Resolution**: Handle customer support tickets and provide real-time updates.
+### 🛡️ Admin Control Center
+- **System Health Monitor:** Real-time analytics dashboard presenting gross sales aggregates, system responsiveness, total active customer nodes, and system logs.
+- **Vendor Onboarding Verification Hub:** Structured review boards listing vendor onboarding requests.
+- **Live Ticket Support Desk:** Central resolution center where platform administrators can live-chat and process dispute resolutions directly.
 
 ## Tech Stack
 
