@@ -1,6 +1,6 @@
 # Food Delivery Intelligence Platform
 
-A comprehensive, AI-ready food delivery platform built with Kotlin and Jetpack Compose for Android, backed by Firebase and a Python FastAPI backend. The platform supports three distinct user roles: Customers, Vendors, and Administrators, with specialized features for Ethiopian food intelligence.
+A comprehensive, AI-ready food delivery platform built with Kotlin and Jetpack Compose for Android, bac ked by Firebase and a Python FastAPI backend. The platform supports three distinct user roles: Customers, Vendors, and Administrators, with specialized features for Ethiopian food intelligence.
 
 ## 📸 Visual Preview
 
