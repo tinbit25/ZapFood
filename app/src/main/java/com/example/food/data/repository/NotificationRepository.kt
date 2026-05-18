@@ -50,8 +50,8 @@ class NotificationRepository : INotificationRepository {
                         trySend(Resource.Error(error.localizedMessage ?: "Failed to fetch notifications"))
                         return@addSnapshotListener
                     }
-                    val notifications = snapshot?.documents?.mapNotNull {
-                        it.toObject(Notification::class.java)
+                    val notifications = snapshot?.documents?.mapNotNull { doc ->
+                        doc.toObject(Notification::class.java)?.copy(id = doc.id)
                     }?.sortedByDescending { it.createdAt } ?: emptyList()
                     trySend(Resource.Success(notifications))
                 }
@@ -69,8 +69,8 @@ class NotificationRepository : INotificationRepository {
                         trySend(Resource.Error(error.localizedMessage ?: "Failed to fetch unread notifications"))
                         return@addSnapshotListener
                     }
-                    val notifications = snapshot?.documents?.mapNotNull {
-                        it.toObject(Notification::class.java)
+                    val notifications = snapshot?.documents?.mapNotNull { doc ->
+                        doc.toObject(Notification::class.java)?.copy(id = doc.id)
                     }?.sortedByDescending { it.createdAt } ?: emptyList()
                     trySend(Resource.Success(notifications))
                 }

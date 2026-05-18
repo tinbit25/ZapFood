@@ -52,11 +52,7 @@ class NotificationViewModel(
         unreadCountJob = notificationUseCase.observeUnreadCount(userId)
             .onEach { resource ->
                 if (resource is Resource.Success) {
-                    // Update state manager with latest DB unread count if we are not optimistic
-                    val dbCount = resource.data ?: 0
-                    if (stateManager.unreadCount.value != dbCount) {
-                        _unreadCountState.value = dbCount
-                    }
+                    _unreadCountState.value = resource.data ?: 0
                 }
             }.launchIn(viewModelScope)
 
@@ -78,7 +74,6 @@ class NotificationViewModel(
                         allNotifications.addAll(newData)
                         stateManager.updateNotifications(newData)
                         _notificationsState.value = Resource.Success(stateManager.notifications.value)
-                        _unreadCountState.value = stateManager.unreadCount.value
                         isLoadingMore = false
                     }
                     is Resource.Error -> {
@@ -100,7 +95,6 @@ class NotificationViewModel(
     fun markAsRead(notificationId: String) {
         stateManager.markAsReadOptimistic(notificationId)
         _notificationsState.value = Resource.Success(stateManager.notifications.value)
-        _unreadCountState.value = stateManager.unreadCount.value
     }
 
     /**
@@ -109,7 +103,6 @@ class NotificationViewModel(
     fun markAllAsRead(userId: String) {
         stateManager.markAllAsReadOptimistic(userId)
         _notificationsState.value = Resource.Success(stateManager.notifications.value)
-        _unreadCountState.value = stateManager.unreadCount.value
     }
 
     /**
