@@ -28,6 +28,8 @@ import com.example.food.data.model.PaymentMethod
 import com.example.food.ui.viewmodel.PaymentViewModel
 import com.example.food.ui.viewmodel.PaymentState
 
+private val notifiedOrderStates = mutableSetOf<String>()
+
 @Composable
 fun OrderHistoryScreen(
     userViewModel: UserViewModel,
@@ -50,15 +52,19 @@ fun OrderHistoryScreen(
         val state = ordersState
         if (state is Resource.Success) {
             state.data?.firstOrNull()?.let { latestOrder ->
-                if (latestOrder.orderStatus == com.example.food.data.model.OrderStatus.ACCEPTED || 
-                    latestOrder.orderStatus == com.example.food.data.model.OrderStatus.PREPARING) {
-                    user?.userId?.let { uid ->
-                        com.example.food.core.util.LocalNotificationHelper.showOrderNotification(
-                            context,
-                            uid,
-                            "Order Update: ${latestOrder.orderStatus.name}",
-                            "Order #${latestOrder.orderId.take(8)} is now ${latestOrder.orderStatus.name}"
-                        )
+                val notificationKey = "${latestOrder.orderId}_${latestOrder.orderStatus.name}"
+                if (!notifiedOrderStates.contains(notificationKey)) {
+                    if (latestOrder.orderStatus == com.example.food.data.model.OrderStatus.ACCEPTED || 
+                        latestOrder.orderStatus == com.example.food.data.model.OrderStatus.PREPARING) {
+                        user?.userId?.let { uid ->
+                            com.example.food.core.util.LocalNotificationHelper.showOrderNotification(
+                                context,
+                                uid,
+                                "Order Update: ${latestOrder.orderStatus.name}",
+                                "Order #${latestOrder.orderId.take(8)} is now ${latestOrder.orderStatus.name}"
+                            )
+                            notifiedOrderStates.add(notificationKey)
+                        }
                     }
                 }
             }

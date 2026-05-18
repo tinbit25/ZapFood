@@ -1,8 +1,8 @@
 package com.example.food.ui.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
@@ -17,7 +17,7 @@ import com.example.food.ui.navigation.Screen
 
 sealed class BottomNavItem(val title: String, val icon: ImageVector, val route: String) {
     object Home : BottomNavItem("Home", Icons.Default.Home, Screen.Home.route)
-    object Menu : BottomNavItem("Menu", Icons.Default.Menu, Screen.Menu.route)
+    object Menu : BottomNavItem("Smart Picks", Icons.Default.Explore, Screen.Menu.route)
     object Cart : BottomNavItem("Cart", Icons.Default.ShoppingCart, Screen.Cart.route)
     object Profile : BottomNavItem("Profile", Icons.Default.Person, Screen.Profile.route)
 }

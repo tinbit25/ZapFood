@@ -394,7 +394,17 @@ fun AppNavigation(
                 MenuScreen(
                     onNavigateToAI = { navController.navigate(Screen.SmartPreference.route) },
                     onNavigateToCustom = { navController.navigate(Screen.CustomPlanCreator.route) },
-                    onNavigateToBrowse = { navController.navigate(Screen.Home.route) }
+                    onNavigateToBrowse = { navController.navigate(Screen.Home.route) },
+                    onNavigateToMeal = { mealId -> 
+                        navController.navigate(Screen.ProductDetails.createRoute(mealId))
+                    },
+                    onNavigateToVendor = { vendorId -> 
+                        navController.navigate(Screen.VendorStorefront.createRoute(vendorId))
+                    },
+                    userViewModel = userViewModel,
+                    recommendationViewModel = recommendationViewModel,
+                    mealViewModel = mealViewModel,
+                    cartViewModel = cartViewModel
                 )
             }
             

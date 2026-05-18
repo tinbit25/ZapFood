@@ -23,6 +23,9 @@ import com.example.food.ui.components.TopNavBar
 import com.example.food.ui.viewmodel.UserViewModel
 import com.example.food.ui.viewmodel.RecommendationViewModel
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SmartPreferenceScreen(
@@ -97,7 +100,12 @@ fun SmartPreferenceScreen(
 
             // Spice Preference
             PreferenceSection(title = "Spice Level") {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                @OptIn(ExperimentalLayoutApi::class)
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     SpiceLevel.entries.forEach { spice ->
                         FilterChip(
                             selected = selectedSpice == spice,
@@ -130,7 +138,12 @@ fun SmartPreferenceScreen(
             // Budget Preference
             PreferenceSection(title = "Budget Preference") {
                 val budgets = listOf("BUDGET", "STANDARD", "PREMIUM")
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                @OptIn(ExperimentalLayoutApi::class)
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     budgets.forEach { budget ->
                         FilterChip(
                             selected = selectedBudget == budget,
