@@ -98,7 +98,7 @@ fun ProductDetailsScreen(
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = "ETB ${"%,.0f".format(product.price * 1000)}",
+                        text = "ETB ${"%,.0f".format(product.price)}",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFF16B24)

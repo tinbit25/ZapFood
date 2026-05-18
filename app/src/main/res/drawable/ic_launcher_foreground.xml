@@ -3,10 +3,22 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Perfect black circular background inside the safe zone -->
     <path
-        android:fillColor="#F16B24"
-        android:pathData="M54,10 L34,50 L54,50 L44,90 L84,40 L54,40 L64,10 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M24,60 Q24,90 54,90 Q84,90 84,60 Z" />
+        android:fillColor="#0A0A0A"
+        android:pathData="M54,54 m-35,0 a35,35 0 1,0 70,0 a35,35 0 1,0 -70,0" />
+    <group
+        android:pivotX="54"
+        android:pivotY="50"
+        android:scaleX="0.7"
+        android:scaleY="0.7"
+        android:translateX="0"
+        android:translateY="4">
+        <path
+            android:fillColor="#F16B24"
+            android:pathData="M54,10 L34,50 L54,50 L44,90 L84,40 L54,40 L64,10 Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M24,60 Q24,90 54,90 Q84,90 84,60 Z" />
+    </group>
 </vector>

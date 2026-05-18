@@ -455,7 +455,7 @@ fun PopularMealCard(meal: Meal, onClick: () -> Unit) {
             )
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(text = meal.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = colorScheme.onSurface, maxLines = 1)
-                Text(text = "ETB ${"%,.0f".format(meal.price * 1000)}", fontSize = 12.sp, color = colorScheme.primary)
+                Text(text = "ETB ${"%,.0f".format(meal.price)}", fontSize = 12.sp, color = colorScheme.primary)
             }
         }
     }

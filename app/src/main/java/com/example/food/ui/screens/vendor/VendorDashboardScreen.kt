@@ -29,13 +29,15 @@ import com.example.food.ui.components.TopNavBar
 fun VendorDashboardScreen(
     userViewModel: UserViewModel,
     orderViewModel: OrderViewModel,
+    vendorStateManager: com.example.food.ui.viewmodel.VendorStateManager,
     onNavigateToScan: () -> Unit,
     onNavigateToAddMeal: () -> Unit
 ) {
     val user by userViewModel.user.collectAsState()
     val ordersState by orderViewModel.vendorOrders.collectAsState()
+    val vendor by vendorStateManager.vendor.collectAsState()
     
-    var isStoreOpen by remember { mutableStateOf(true) }
+    val isStoreOpen = vendor?.isActive == true
 
     LaunchedEffect(user) {
         user?.let { orderViewModel.fetchVendorOrders(it.userId) }
@@ -58,11 +60,11 @@ fun VendorDashboardScreen(
         topBar = {
             Column(modifier = Modifier.background(Color(0xFF1A1A1A))) {
                 TopNavBar(
-                    title = "Command Center",
+                    title = vendor?.businessName ?: "Command Center",
                     actions = {
                         Switch(
                             checked = isStoreOpen,
-                            onCheckedChange = { isStoreOpen = it },
+                            onCheckedChange = { vendorStateManager.toggleActiveStatus(it) },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color(0xFF4CAF50),
                                 checkedTrackColor = Color(0xFF4CAF50).copy(alpha = 0.5f)
@@ -115,7 +117,7 @@ fun VendorDashboardScreen(
 
             // Performance Insights (Mini)
             item {
-                PerformanceInsightCard()
+                PerformanceInsightCard(paidOrdersState)
             }
 
             // Urgent Notifications / Pending
@@ -239,7 +241,21 @@ fun QuickActionCard(title: String, icon: ImageVector, color: Color, modifier: Mo
 }
 
 @Composable
-fun PerformanceInsightCard() {
+fun PerformanceInsightCard(ordersState: Resource<List<com.example.food.data.model.Order>>) {
+    val orders = (ordersState as? Resource.Success)?.data ?: emptyList()
+    val allItems = orders.flatMap { it.items }
+    
+    val mostPopularMeal = allItems
+        .groupBy { it.name }
+        .mapValues { entry -> entry.value.sumOf { it.quantity } }
+        .maxByOrNull { it.value }
+
+    val insightText = if (mostPopularMeal != null) {
+        "Your \"${mostPopularMeal.key}\" is trending! It has been ordered ${mostPopularMeal.value} times. Consider increasing prep stock."
+    } else {
+        "No sales data yet. Performance insights will appear automatically once you start receiving orders!"
+    }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = Color(0xFF1A1A1A),
@@ -253,7 +269,7 @@ fun PerformanceInsightCard() {
             }
             Spacer(Modifier.height(16.dp))
             Text(
-                text = "Your \"Special Doro Wat Combo\" is trending! Increase stock for the weekend rush.",
+                text = insightText,
                 color = Color.LightGray,
                 fontSize = 14.sp
             )

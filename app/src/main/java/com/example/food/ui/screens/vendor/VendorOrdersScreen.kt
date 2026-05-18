@@ -143,7 +143,7 @@ fun VendorProfessionalOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> U
             order.items.forEach { item ->
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(text = "${item.quantity}x ${item.name}", fontSize = 14.sp, color = Color.LightGray)
-                    Text(text = "ETB ${"%,.0f".format(item.price * item.quantity * 1000)}", fontSize = 14.sp, color = Color.Gray)
+                    Text(text = "ETB ${"%,.0f".format(item.price * item.quantity)}", fontSize = 14.sp, color = Color.Gray)
                 }
             }
             
@@ -155,7 +155,7 @@ fun VendorProfessionalOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> U
                 Column {
                     Text(text = "Total Amount", fontSize = 10.sp, color = Color.Gray)
                     Text(
-                        text = "ETB ${"%,.0f".format(order.totalAmount * 1000)}",
+                        text = "ETB ${"%,.0f".format(order.totalAmount)}",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Black,
                         color = Color(0xFFF16B24)

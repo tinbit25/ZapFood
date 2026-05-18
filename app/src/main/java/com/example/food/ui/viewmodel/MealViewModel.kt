@@ -78,4 +78,25 @@ class MealViewModel(
             onResult(result)
         }
     }
+
+    fun deleteMeal(id: String, onResult: (Resource<Unit>) -> Unit) {
+        viewModelScope.launch {
+            val result = mealUseCase.deleteMeal(id)
+            if (result is Resource.Success) {
+                fetchMeals()
+            }
+            onResult(result)
+        }
+    }
+
+    fun updateMeal(meal: Meal, onResult: (Resource<Unit>) -> Unit) {
+        viewModelScope.launch {
+            val result = mealUseCase.updateMeal(meal)
+            if (result is Resource.Success) {
+                fetchMeals()
+            }
+            onResult(result)
+        }
+    }
 }
+

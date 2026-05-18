@@ -51,8 +51,8 @@ fun CartScreen(
         }
     }
     
-    val deliveryFee = 2000.0 // ETB
-    val total = (cartState.subtotal * 1000) + deliveryFee
+    val deliveryFee = 50.0 // ETB
+    val total = cartState.subtotal + deliveryFee
 
     Column(
         modifier = Modifier
@@ -98,7 +98,7 @@ fun CartScreen(
                     HorizontalDivider(color = colorScheme.outline.copy(alpha = 0.3f))
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    ReceiptRow("Subtotal", "ETB ${"%,.0f".format(cartState.subtotal * 1000)}")
+                    ReceiptRow("Subtotal", "ETB ${"%,.0f".format(cartState.subtotal)}")
                     Spacer(modifier = Modifier.height(8.dp))
                     ReceiptRow("Delivery Fee", "ETB ${"%,.0f".format(deliveryFee)}")
                     Spacer(modifier = Modifier.height(8.dp))
@@ -190,7 +190,7 @@ fun CartItemRow(
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colorScheme.onSurface)
-                Text(text = "ETB ${"%,.0f".format(price * 1000)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = colorScheme.primary)
+                Text(text = "ETB ${"%,.0f".format(price)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = colorScheme.primary)
             }
             
             Row(verticalAlignment = Alignment.CenterVertically) {

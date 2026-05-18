@@ -144,7 +144,7 @@ fun MealSearchItem(meal: Meal, onClick: () -> Unit) {
                 Text(text = meal.businessName, fontSize = 12.sp, color = Color.Gray)
             }
             Text(
-                text = "ETB ${"%,.0f".format(meal.price * 1000)}",
+                text = "ETB ${"%,.0f".format(meal.price)}",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White

@@ -137,7 +137,7 @@ fun MealPlanDetailsScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(text = plan.name, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     Text(
-                        text = "ETB ${"%,.0f".format(plan.price * 1000)}/month",
+                        text = "ETB ${"%,.0f".format(plan.price)}/month",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color.White

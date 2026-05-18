@@ -132,7 +132,7 @@ fun SmartTableSessionScreen(
                                 Column {
                                     Text("Total Balance", color = Color.Gray, fontSize = 12.sp)
                                     Text(
-                                        "ETB ${"%,.0f".format(uiState.totalAmount * 1000)}",
+                                        "ETB ${"%,.0f".format(uiState.totalAmount)}",
                                         color = Color.White,
                                         fontWeight = FontWeight.Black,
                                         fontSize = 28.sp
@@ -291,7 +291,7 @@ fun BillItemRow(order: com.example.food.data.model.Order) {
                 }
             }
             Text(
-                text = "ETB ${"%,.0f".format(order.totalAmount * 1000)}",
+                text = "ETB ${"%,.0f".format(order.totalAmount)}",
                 color = Color.White,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 16.sp

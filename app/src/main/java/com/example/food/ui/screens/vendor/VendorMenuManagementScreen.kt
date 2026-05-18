@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -93,7 +94,31 @@ fun VendorMenuManagementScreen(
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             items(meals) { meal ->
-                                VendorMealItem(meal = meal)
+                                VendorMealItem(
+                                    meal = meal,
+                                    onToggleAvailability = { isAvailable ->
+                                        mealViewModel.updateMeal(meal.copy(isAvailable = isAvailable)) { result ->
+                                            if (result is Resource.Error) {
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar(result.message ?: "Failed to update availability")
+                                                }
+                                            }
+                                        }
+                                    },
+                                    onDelete = {
+                                        mealViewModel.deleteMeal(meal.id) { result ->
+                                            if (result is Resource.Success) {
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar("Meal deleted successfully")
+                                                }
+                                            } else if (result is Resource.Error) {
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar(result.message ?: "Failed to delete meal")
+                                                }
+                                            }
+                                        }
+                                    }
+                                )
                             }
                         }
                     }
@@ -207,7 +232,7 @@ fun AddMealDialog(
                     OutlinedTextField(
                         value = price,
                         onValueChange = { price = it },
-                        label = { Text("Price (in thousands ETB)") },
+                        label = { Text("Price (in ETB)") },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.Gray,
@@ -356,25 +381,63 @@ fun AddMealDialog(
 
 
 @Composable
-fun VendorMealItem(meal: Meal) {
+fun VendorMealItem(
+    meal: Meal,
+    onToggleAvailability: (Boolean) -> Unit,
+    onDelete: () -> Unit
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = Color(0xFF1A1A1A),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = meal.name, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp)
                 Text(text = meal.category, fontSize = 12.sp, color = Color(0xFFF16B24))
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = if (meal.isAvailable) "IN STOCK" else "OUT OF STOCK",
+                    color = if (meal.isAvailable) Color(0xFF4CAF50) else Color.Red,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
-            Text(
-                text = "ETB ${"%,.0f".format(meal.price * 1000)}",
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
+            
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "ETB ${"%,.0f".format(meal.price)}",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
+                
+                Switch(
+                    checked = meal.isAvailable,
+                    onCheckedChange = onToggleAvailability,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color(0xFF4CAF50),
+                        checkedTrackColor = Color(0xFF4CAF50).copy(alpha = 0.5f)
+                    )
+                )
+                
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete Meal",
+                        tint = Color.Red.copy(alpha = 0.8f)
+                    )
+                }
+            }
         }
     }
 }
+

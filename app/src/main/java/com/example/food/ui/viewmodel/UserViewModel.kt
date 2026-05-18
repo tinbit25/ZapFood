@@ -35,25 +35,28 @@ class UserViewModel(
     private fun fetchUser() {
         viewModelScope.launch {
             userRepository.getUserProfile().collect { profile ->
-                _user.value = profile
-                if (profile?.role == com.example.food.data.model.UserRole.VENDOR) {
-                    checkVendorProfile(profile.userId)
+                if (profile != null && profile.role == com.example.food.data.model.UserRole.VENDOR) {
+                    try {
+                        val vendor = vendorRepository.getVendorByUserId(profile.userId)
+                        if (vendor != null) {
+                            _user.value = profile.copy(businessName = vendor.businessName)
+                            _isVendorProfileComplete.value = true
+                        } else {
+                            _user.value = profile
+                            _isVendorProfileComplete.value = false
+                        }
+                    } catch (e: Exception) {
+                        _user.value = profile
+                        _isVendorProfileComplete.value = false
+                    }
+                } else {
+                    _user.value = profile
+                    _isVendorProfileComplete.value = null
                 }
             }
         }
     }
 
-    private fun checkVendorProfile(userId: String) {
-        if (userId.isBlank()) return
-        viewModelScope.launch {
-            try {
-                val vendor = vendorRepository.getVendorByUserId(userId)
-                _isVendorProfileComplete.value = vendor != null
-            } catch (e: Exception) {
-                _isVendorProfileComplete.value = false
-            }
-        }
-    }
 
     fun updateRewardPoints(points: Int) {
         val currentUser = _user.value ?: return

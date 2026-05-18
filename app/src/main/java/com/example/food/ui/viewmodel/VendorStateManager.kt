@@ -67,4 +67,19 @@ class VendorStateManager @Inject constructor(
             repository.completeOnboarding(vendorId)
         }
     }
+
+    fun toggleActiveStatus(isActive: Boolean) {
+        val currentVendor = _vendor.value ?: return
+        viewModelScope.launch {
+            try {
+                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("vendors")
+                    .document(currentVendor.userId)
+                    .update("isActive", isActive)
+            } catch (e: Exception) {
+                // Log or handle error
+            }
+        }
+    }
 }
+

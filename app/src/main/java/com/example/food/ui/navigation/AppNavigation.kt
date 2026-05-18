@@ -607,6 +607,7 @@ fun AppNavigation(
                         VendorDashboardScreen(
                             userViewModel = userViewModel,
                             orderViewModel = orderViewModel,
+                            vendorStateManager = vendorStateManager,
                             onNavigateToScan = { navController.navigate(Screen.VendorPickupScan.route) },
                             onNavigateToAddMeal = { navController.navigate(Screen.VendorMenu.route) }
                         )
@@ -651,7 +652,7 @@ fun AppNavigation(
             }
 
             composable(route = Screen.VendorAnalytics.route) {
-                VendorAnalyticsScreen()
+                VendorAnalyticsScreen(orderViewModel = orderViewModel)
             }
 
             composable(route = Screen.VendorStore.route) {

@@ -59,4 +59,13 @@ class MealUseCase(
         val businessName = vendor?.businessName ?: user.displayName ?: "Unknown Vendor"
         return mealRepository.seedMealsForVendor(user.userId, businessName)
     }
+
+    suspend fun deleteMeal(id: String): Resource<Unit> {
+        return mealRepository.deleteMeal(id)
+    }
+
+    suspend fun updateMeal(meal: Meal): Resource<Unit> {
+        return mealRepository.saveMeal(meal)
+    }
 }
+
