@@ -658,6 +658,7 @@ fun AppNavigation(
             composable(route = Screen.VendorStore.route) {
                 VendorStoreScreen(
                     userViewModel = userViewModel,
+                    vendorStateManager = vendorStateManager,
                     onLogout = {
                         authViewModel.logout()
                         navController.navigate(Screen.Login.route) {

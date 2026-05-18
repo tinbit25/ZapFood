@@ -11,6 +11,7 @@ data class Meal(
     val category: String = "General",
     val imageUrl: String = "",
     val price: Double = 0.0,
+    @get:com.google.firebase.firestore.PropertyName("isAvailable")
     val isAvailable: Boolean = true,
     val createdAt: Long = System.currentTimeMillis(),
 

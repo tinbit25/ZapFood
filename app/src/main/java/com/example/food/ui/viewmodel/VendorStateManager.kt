@@ -7,6 +7,7 @@ import com.example.food.data.model.VerificationStatus
 import com.example.food.data.repository.VendorRealtimeRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 sealed class VendorUIState {
@@ -74,10 +75,11 @@ class VendorStateManager @Inject constructor(
             try {
                 com.google.firebase.firestore.FirebaseFirestore.getInstance()
                     .collection("vendors")
-                    .document(currentVendor.userId)
+                    .document(currentVendor.id)
                     .update("isActive", isActive)
+                    .await()
             } catch (e: Exception) {
-                // Log or handle error
+                android.util.Log.e("VendorStateManager", "Error toggling active status: ${e.message}")
             }
         }
     }

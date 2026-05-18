@@ -20,13 +20,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.food.ui.components.TopNavBar
 import com.example.food.ui.viewmodel.UserViewModel
+import com.example.food.ui.viewmodel.VendorStateManager
 
 @Composable
 fun VendorStoreScreen(
     userViewModel: UserViewModel,
+    vendorStateManager: VendorStateManager,
     onLogout: () -> Unit
 ) {
     val user by userViewModel.user.collectAsState()
+    val vendor by vendorStateManager.vendor.collectAsState()
+    
+    val isStoreOpen = vendor?.isActive == true
     
     Scaffold(
         containerColor = Color(0xFF0F0F0F),
@@ -39,32 +44,22 @@ fun VendorStoreScreen(
         ) {
             // Profile Header
             item {
-                StoreProfileHeader(user?.businessName ?: "My Business", user?.email ?: "")
+                val displayName = vendor?.businessName ?: user?.displayName ?: "My Business"
+                val displayEmail = user?.email ?: ""
+                StoreProfileHeader(displayName, displayEmail)
             }
 
             // Status Section
             item {
-                StoreStatusCard()
+                StoreStatusCard(
+                    isOnline = isStoreOpen,
+                    onToggle = { vendorStateManager.toggleActiveStatus(it) }
+                )
             }
 
-            // Settings Groups
+            // Logout Button
             item {
-                SettingsGroup("Business Profile") {
-                    SettingsItem("Business Info", Icons.Default.Business)
-                    SettingsItem("Operating Hours", Icons.Default.Schedule)
-                    SettingsItem("Delivery Radius", Icons.Default.Map)
-                }
-            }
-
-            item {
-                SettingsGroup("Operations") {
-                    SettingsItem("Payout Settings", Icons.Default.AccountBalanceWallet)
-                    SettingsItem("Tax Documents", Icons.Default.Description)
-                    SettingsItem("Staff Management", Icons.Default.Badge)
-                }
-            }
-
-            item {
+                Spacer(Modifier.height(32.dp))
                 Button(
                     onClick = onLogout,
                     modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -95,7 +90,8 @@ fun StoreProfileHeader(name: String, email: String) {
                     .background(Color(0xFFF16B24)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(name.take(1), color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                val initial = if (name.isNotEmpty()) name.take(1).uppercase() else "V"
+                Text(initial, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.width(16.dp))
             Column {
@@ -107,8 +103,10 @@ fun StoreProfileHeader(name: String, email: String) {
 }
 
 @Composable
-fun StoreStatusCard() {
-    var isOnline by remember { mutableStateOf(true) }
+fun StoreStatusCard(
+    isOnline: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = if (isOnline) Color(0xFF4CAF50).copy(alpha = 0.1f) else Color.Red.copy(alpha = 0.1f),
@@ -126,54 +124,20 @@ fun StoreStatusCard() {
                     color = if (isOnline) Color(0xFF4CAF50) else Color.Red,
                     fontWeight = FontWeight.Bold
                 )
-                Text("Customers can place orders now", color = Color.Gray, fontSize = 12.sp)
+                Text(
+                    text = if (isOnline) "Customers can place orders now" else "You are not receiving new orders",
+                    color = Color.Gray, 
+                    fontSize = 12.sp
+                )
             }
             Switch(
                 checked = isOnline,
-                onCheckedChange = { isOnline = it },
+                onCheckedChange = onToggle,
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = Color(0xFF4CAF50),
                     checkedTrackColor = Color(0xFF4CAF50).copy(alpha = 0.5f)
                 )
             )
         }
-    }
-}
-
-@Composable
-fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Column {
-        Text(title, color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = Color(0xFF1A1A1A),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column {
-                content()
-            }
-        }
-    }
-}
-
-@Composable
-fun SettingsItem(title: String, icon: ImageVector) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                android.widget.Toast.makeText(context, "$title feature coming soon", android.widget.Toast.LENGTH_SHORT).show()
-            }
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(20.dp))
-            Spacer(Modifier.width(16.dp))
-            Text(title, color = Color.White, fontSize = 14.sp)
-        }
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.DarkGray)
     }
 }

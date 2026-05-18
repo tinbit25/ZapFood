@@ -50,7 +50,9 @@ class VendorRepository {
                     return@addSnapshotListener
                 }
                 val vendor = snapshot?.documents?.firstOrNull()?.let { doc ->
-                    try { doc.toObject(Vendor::class.java) } catch (e: Exception) { null }
+                    try { 
+                        doc.toObject(Vendor::class.java)?.copy(id = doc.id) 
+                    } catch (e: Exception) { null }
                 }
                 trySend(vendor)
             }

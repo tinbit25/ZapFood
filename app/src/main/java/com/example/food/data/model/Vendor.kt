@@ -60,6 +60,7 @@ data class Vendor(
     val verified: Boolean = false,
     val verificationStatus: VerificationStatus = VerificationStatus.PENDING_REVIEW,
     val profileCompleted: Boolean = false,
+    @get:com.google.firebase.firestore.PropertyName("isActive")
     val isActive: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val verificationInfo: VendorVerificationInfo? = null,

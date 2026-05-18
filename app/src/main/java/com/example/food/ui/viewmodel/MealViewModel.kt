@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 
 class MealViewModel(
     private val mealUseCase: MealUseCase = MealUseCase()
@@ -24,12 +25,15 @@ class MealViewModel(
     private val _currentFilters = MutableStateFlow(MealFilters())
     val currentFilters: StateFlow<MealFilters> = _currentFilters.asStateFlow()
 
+    private var fetchJob: Job? = null
+
     init {
         fetchMeals()
     }
 
     fun fetchMeals() {
-        viewModelScope.launch {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
             mealUseCase.getFilteredMeals(_currentFilters.value).collect {
                 _mealsState.value = it
             }
@@ -62,9 +66,6 @@ class MealViewModel(
     fun seedMeals(vendorIds: List<String>, onResult: (Resource<Unit>) -> Unit) {
         viewModelScope.launch {
             val result = mealUseCase.seedMeals(vendorIds)
-            if (result is Resource.Success) {
-                fetchMeals()
-            }
             onResult(result)
         }
     }
@@ -72,9 +73,6 @@ class MealViewModel(
     fun seedMealsForVendor(user: com.example.food.data.model.User, onResult: (Resource<Unit>) -> Unit) {
         viewModelScope.launch {
             val result = mealUseCase.seedMealsForVendor(user)
-            if (result is Resource.Success) {
-                fetchMeals()
-            }
             onResult(result)
         }
     }
@@ -82,9 +80,6 @@ class MealViewModel(
     fun deleteMeal(id: String, onResult: (Resource<Unit>) -> Unit) {
         viewModelScope.launch {
             val result = mealUseCase.deleteMeal(id)
-            if (result is Resource.Success) {
-                fetchMeals()
-            }
             onResult(result)
         }
     }
@@ -92,9 +87,6 @@ class MealViewModel(
     fun updateMeal(meal: Meal, onResult: (Resource<Unit>) -> Unit) {
         viewModelScope.launch {
             val result = mealUseCase.updateMeal(meal)
-            if (result is Resource.Success) {
-                fetchMeals()
-            }
             onResult(result)
         }
     }
