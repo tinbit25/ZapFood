@@ -90,19 +90,31 @@ class NotificationViewModel(
     }
 
     /**
-     * Mark a notification as read.
+     * Mark a single notification as read — updates local state immediately (optimistic)
+     * and persists the read receipt to Firestore in the background.
      */
     fun markAsRead(notificationId: String) {
+        // 1. Optimistic local update for instant UI response
         stateManager.markAsReadOptimistic(notificationId)
         _notificationsState.value = Resource.Success(stateManager.notifications.value)
+        // 2. Persist to Firestore so the badge clears on all devices/sessions
+        viewModelScope.launch {
+            notificationUseCase.markAsRead(notificationId)
+        }
     }
 
     /**
-     * Mark all as read.
+     * Mark all notifications as read — updates local state immediately and
+     * persists all read receipts to Firestore to clear the badge globally.
      */
     fun markAllAsRead(userId: String) {
+        // 1. Optimistic local update
         stateManager.markAllAsReadOptimistic(userId)
         _notificationsState.value = Resource.Success(stateManager.notifications.value)
+        // 2. Persist to Firestore
+        viewModelScope.launch {
+            notificationUseCase.markAllAsRead(userId)
+        }
     }
 
     /**

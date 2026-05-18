@@ -288,6 +288,7 @@ fun StatusBadge(status: OrderStatus) {
         OrderStatus.ACCEPTED, OrderStatus.PREPARING -> Color(0xFF00BFFF)
         OrderStatus.READY, OrderStatus.ON_THE_WAY, OrderStatus.ARRIVED -> Color(0xFF32CD32)
         OrderStatus.DELIVERED -> Color(0xFF008000)
+        OrderStatus.COMPLETED -> Color(0xFF4CAF50)   // QR-verified takeaway complete
         OrderStatus.CANCELLED -> Color(0xFFFF0000)
     }
     

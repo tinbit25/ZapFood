@@ -69,13 +69,18 @@ fun VendorOrdersScreen(
         }
     ) { padding ->
         val filteredOrders = remember(ordersState, selectedTab) {
-            val orders = (ordersState as? Resource.Success)?.data ?: emptyList()
+            val allOrders = (ordersState as? Resource.Success)?.data ?: emptyList()
+            // Payment gate: only show paid or cash orders
+            val orders = allOrders.filter { order ->
+                order.paymentStatus == com.example.food.data.model.PaymentStatus.SUCCESS ||
+                order.paymentMethod == com.example.food.data.model.PaymentMethod.CASH
+            }
             when (selectedTab) {
                 0 -> orders.filter { it.orderStatus == OrderStatus.PENDING || it.orderStatus == OrderStatus.BOOKED || it.orderStatus == OrderStatus.SENT_TO_VENDOR }
                 1 -> orders.filter { it.orderStatus == OrderStatus.ACCEPTED || it.orderStatus == OrderStatus.PREPARING }
                 2 -> orders.filter { it.orderStatus == OrderStatus.READY }
                 3 -> orders.filter { it.orderStatus == OrderStatus.ON_THE_WAY || it.orderStatus == OrderStatus.ARRIVED }
-                4 -> orders.filter { it.orderStatus == OrderStatus.DELIVERED }
+                4 -> orders.filter { it.orderStatus == OrderStatus.DELIVERED || it.orderStatus == OrderStatus.COMPLETED }
                 5 -> orders.filter { it.orderStatus == OrderStatus.CANCELLED }
                 else -> orders
             }

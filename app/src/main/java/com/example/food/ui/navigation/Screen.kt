@@ -20,12 +20,13 @@ sealed class Screen(val route: String) {
     }
 
     // Vendor Merchant OS Flow
-    object VendorDashboard : Screen("vendor_dashboard")
-    object VendorOrders : Screen("vendor_orders")
-    object VendorMenu : Screen("vendor_menu")
-    object VendorAnalytics : Screen("vendor_analytics")
-    object VendorStore : Screen("vendor_store")
-    object VendorPickupScan : Screen("vendor_pickup_scan")
+    object VendorDashboard      : Screen("vendor_dashboard")
+    object VendorOrders         : Screen("vendor_orders")
+    object VendorMenu           : Screen("vendor_menu")
+    object VendorAnalytics      : Screen("vendor_analytics")
+    object VendorStore          : Screen("vendor_store")
+    object VendorPickupScan     : Screen("vendor_pickup_scan")
+    object VendorPickupScanner  : Screen("vendor_pickup_scan") // alias for nav bar
 
     // Main App Flow
     object Home : Screen("home_screen")
@@ -60,12 +61,15 @@ sealed class Screen(val route: String) {
     }
 
     // Role-based Dashboards
-    object AdminDashboard : Screen("admin_dashboard_screen")
-    object AdminUserManagement : Screen("admin_user_management_screen")
+    object AdminDashboard        : Screen("admin_dashboard_screen")
+    object AdminUserManagement   : Screen("admin_user_management_screen")
     object AdminVendorManagement : Screen("admin_vendor_management_screen")
-    object AdminOrderMonitoring : Screen("admin_order_monitoring_screen")
-    object AdminAnalytics : Screen("admin_analytics_screen")
-    object AdminControlCenter : Screen("admin_control_center_screen")
+    object AdminOrderMonitoring  : Screen("admin_order_monitoring_screen")
+    object AdminOrders           : Screen("admin_order_monitoring_screen") // alias for nav bar
+    object AdminAnalytics        : Screen("admin_analytics_screen")
+    object AdminReports          : Screen("admin_analytics_screen")         // alias for nav bar
+    object AdminSettings         : Screen("admin_control_center_screen")    // alias for nav bar
+    object AdminControlCenter    : Screen("admin_control_center_screen")
 
     // Support and Feedback
     object SupportTickets : Screen("support_tickets_screen")

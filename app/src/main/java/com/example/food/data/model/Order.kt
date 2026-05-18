@@ -17,8 +17,9 @@ enum class OrderStatus {
     READY,
     ON_THE_WAY,
     DELIVERED,
+    COMPLETED,  // Terminal: used after QR pickup scan confirms takeaway handoff
     CANCELLED,
-    
+
     // Arrive & Eat States
     BOOKED,
     ARRIVED
@@ -87,16 +88,16 @@ data class Order(
     val paymentStatus: PaymentStatus = PaymentStatus.INITIATED,
     val paymentMethod: PaymentMethod = PaymentMethod.CARD,
     val orderType: OrderType = OrderType.DELIVERY,
-    
+
     // Unified Info Fields
     val deliveryInfo: DeliveryDetails? = null,
     val pickupInfo: TakeawayDetails? = null,
     val dineInInfo: DineInDetails? = null,
-    
+
     val deliveryTrackingId: String = "",
     val deliveryStatus: DeliveryStatus = DeliveryStatus.IDLE,
     val statusHistory: List<OrderStatusHistory> = emptyList(),
-    
+
     // QR Takeaway Pickup Flow Fields
     val pickupQRCode: String = "",
     val pickupToken: String = "",
@@ -104,6 +105,9 @@ data class Order(
     val pickupTimestamp: Long = 0L,
     val qrExpiresAt: Long = 0L,
     val tableClosed: Boolean = false,
+
+    // Dine-In Session Binding
+    val dineInSessionId: String = "",   // Links order to an active DiningSession document
 
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()

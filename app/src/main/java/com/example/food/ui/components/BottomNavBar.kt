@@ -15,44 +15,38 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.food.ui.navigation.Screen
 
+// ── Customer Navigation Only ────────────────────────────────────────────────
+// Vendor nav → VendorBottomNavBar.kt
+// Admin nav  → AdminBottomNavBar.kt
+
 sealed class BottomNavItem(val title: String, val icon: ImageVector, val route: String) {
-    object Home : BottomNavItem("Home", Icons.Default.Home, Screen.Home.route)
-    object Menu : BottomNavItem("Smart Picks", Icons.Default.Explore, Screen.Menu.route)
-    object Cart : BottomNavItem("Cart", Icons.Default.ShoppingCart, Screen.Cart.route)
-    object Profile : BottomNavItem("Profile", Icons.Default.Person, Screen.Profile.route)
+    object Home   : BottomNavItem("Home",        Icons.Default.Home,         Screen.Home.route)
+    object Menu   : BottomNavItem("Smart Picks", Icons.Default.Explore,      Screen.Menu.route)
+    object Cart   : BottomNavItem("Cart",        Icons.Default.ShoppingCart, Screen.Cart.route)
+    object Profile: BottomNavItem("Profile",     Icons.Default.Person,       Screen.Profile.route)
 }
 
 @Composable
-fun BottomNavBar(
-    currentRoute: String?,
-    onNavigate: (String) -> Unit
-) {
+fun BottomNavBar(currentRoute: String?, onNavigate: (String) -> Unit) {
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.Menu,
         BottomNavItem.Cart,
         BottomNavItem.Profile
     )
-
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.background,
-    ) {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.background) {
         items.forEach { item ->
             NavigationBarItem(
-                icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
+                icon  = { Icon(imageVector = item.icon, contentDescription = item.title) },
                 label = { Text(item.title) },
                 selected = currentRoute == item.route,
-                onClick = {
-                    if (currentRoute != item.route) {
-                        onNavigate(item.route)
-                    }
-                },
+                onClick  = { if (currentRoute != item.route) onNavigate(item.route) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    selectedIconColor   = MaterialTheme.colorScheme.primary,
+                    selectedTextColor   = MaterialTheme.colorScheme.primary,
                     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    indicatorColor = MaterialTheme.colorScheme.surfaceVariant
+                    indicatorColor      = MaterialTheme.colorScheme.surfaceVariant
                 )
             )
         }

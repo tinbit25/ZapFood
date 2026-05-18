@@ -41,6 +41,18 @@ fun VendorDashboardScreen(
         user?.let { orderViewModel.fetchVendorOrders(it.userId) }
     }
 
+    // Payment gate: only show orders that have been paid or are cash orders
+    val paidOrdersState = when (val state = ordersState) {
+        is com.example.food.core.util.Resource.Success -> {
+            val paidOrders = state.data?.filter { order ->
+                order.paymentStatus == com.example.food.data.model.PaymentStatus.SUCCESS ||
+                order.paymentMethod == com.example.food.data.model.PaymentMethod.CASH
+            } ?: emptyList()
+            com.example.food.core.util.Resource.Success(paidOrders)
+        }
+        else -> state
+    }
+
     Scaffold(
         containerColor = Color(0xFF0F0F0F),
         topBar = {
@@ -88,7 +100,7 @@ fun VendorDashboardScreen(
         ) {
             // Business Metrics Row
             item {
-                BusinessMetricsGrid(ordersState)
+                BusinessMetricsGrid(paidOrdersState)
             }
 
             // Quick Actions
@@ -108,7 +120,7 @@ fun VendorDashboardScreen(
 
             // Urgent Notifications / Pending
             item {
-                UrgentOrdersList(ordersState)
+                UrgentOrdersList(paidOrdersState)
             }
         }
     }
@@ -117,24 +129,68 @@ fun VendorDashboardScreen(
 @Composable
 fun BusinessMetricsGrid(ordersState: Resource<List<com.example.food.data.model.Order>>) {
     val orders = (ordersState as? Resource.Success)?.data ?: emptyList()
-    val activeOrders = orders.count { it.orderStatus != com.example.food.data.model.OrderStatus.DELIVERED && it.orderStatus != com.example.food.data.model.OrderStatus.CANCELLED }
-    val todayRevenue = orders.sumOf { it.totalAmount } * 1000 // Mock multiplier
+    val activeOrders = orders.count {
+        it.orderStatus != com.example.food.data.model.OrderStatus.DELIVERED &&
+        it.orderStatus != com.example.food.data.model.OrderStatus.CANCELLED
+    }
+    // Revenue = sum of actual paid order amounts (no mock multiplier)
+    val todayRevenue = orders
+        .filter { it.paymentStatus == com.example.food.data.model.PaymentStatus.SUCCESS ||
+                  it.paymentMethod == com.example.food.data.model.PaymentMethod.CASH }
+        .sumOf { it.totalAmount }
+    val pendingPickups = orders.count { it.orderStatus == com.example.food.data.model.OrderStatus.READY &&
+        it.orderType == com.example.food.data.model.OrderType.TAKEAWAY }
 
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        MetricCard(
-            title = "Active Orders",
-            value = activeOrders.toString(),
-            icon = Icons.Default.Assignment,
-            color = Color(0xFFF16B24),
-            modifier = Modifier.weight(1f)
-        )
-        MetricCard(
-            title = "Today's Revenue",
-            value = "ETB ${"%,.0f".format(todayRevenue)}",
-            icon = Icons.Default.Payments,
-            color = Color(0xFF4CAF50),
-            modifier = Modifier.weight(1f)
-        )
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            MetricCard(
+                title = "Active Orders",
+                value = activeOrders.toString(),
+                icon = Icons.Default.Assignment,
+                color = Color(0xFFF16B24),
+                modifier = Modifier.weight(1f)
+            )
+            MetricCard(
+                title = "Today's Revenue",
+                value = "ETB ${"%,.0f".format(todayRevenue)}",
+                icon = Icons.Default.Payments,
+                color = Color(0xFF4CAF50),
+                modifier = Modifier.weight(1f)
+            )
+        }
+        // Second row: pending pickups
+        if (pendingPickups > 0) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color(0xFF1A1A1A),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF16B24).copy(alpha = 0.4f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.QrCode, contentDescription = null, tint = Color(0xFFF16B24))
+                        Spacer(Modifier.width(12.dp))
+                        Text("$pendingPickups order(s) awaiting QR pickup scan", color = Color.White, fontSize = 13.sp)
+                    }
+                    Surface(
+                        color = Color(0xFFF16B24).copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            "SCAN NOW",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            color = Color(0xFFF16B24),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

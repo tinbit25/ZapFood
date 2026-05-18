@@ -93,15 +93,15 @@ class OrderRepository {
     fun getOrdersForVendor(vendorId: String): Flow<Resource<List<Order>>> = callbackFlow {
         trySend(Resource.Loading())
         
-        var query: Query = ordersCollection.whereEqualTo("vendorId", vendorId)
-        query = com.example.food.domain.manager.VendorOrderGatekeeper().filterVendorOrdersQuery(query)
+        // Simple single-field query to guarantee it works without composite indexes
+        val query = ordersCollection.whereEqualTo("vendorId", vendorId)
 
         val listener = query.addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     trySend(Resource.Error(error.localizedMessage ?: "Query failed"))
                     return@addSnapshotListener
                 }
-                val orders = snapshot?.documents?.mapNotNull { doc ->
+                val rawOrders = snapshot?.documents?.mapNotNull { doc ->
                     try {
                         doc.toObject(Order::class.java).also { order ->
                             android.util.Log.d("ORDER_SYNC", "Realtime update received for vendor: ${order?.orderStatus}")
@@ -110,8 +110,10 @@ class OrderRepository {
                         null
                     }
                 } ?: emptyList()
-                // Sort in memory to avoid index requirements
-                val sortedOrders = orders.sortedByDescending { it.createdAt }
+                
+                // Filter and sort in-memory
+                val filteredOrders = com.example.food.domain.manager.VendorOrderGatekeeper().filterVendorOrders(rawOrders)
+                val sortedOrders = filteredOrders.sortedByDescending { it.createdAt }
                 trySend(Resource.Success(sortedOrders))
             }
         awaitClose { listener.remove() }
@@ -132,7 +134,9 @@ class OrderRepository {
                 val currentStatus = snapshot.getString("orderStatus")
                 
                 // Business logic: Block updates on terminal orders
-                if (currentStatus == OrderStatus.CANCELLED.name || currentStatus == OrderStatus.DELIVERED.name) {
+                if (currentStatus == OrderStatus.CANCELLED.name ||
+                    currentStatus == OrderStatus.DELIVERED.name ||
+                    currentStatus == OrderStatus.COMPLETED.name) {
                     throw Exception("Cannot update status of a terminal order")
                 }
 
@@ -206,15 +210,15 @@ class OrderRepository {
         return try {
             firestore.runTransaction { transaction ->
                 val docRef = ordersCollection.document(orderId)
-                
+
                 val historyEntry = OrderStatusHistory(
-                    status = OrderStatus.DELIVERED,
+                    status = OrderStatus.COMPLETED,
                     actor = "VENDOR",
-                    notes = "Verified via QR Pickup",
+                    notes = "Verified via QR Pickup scan — order completed",
                     timestamp = System.currentTimeMillis()
                 )
 
-                transaction.update(docRef, "orderStatus", OrderStatus.DELIVERED)
+                transaction.update(docRef, "orderStatus", OrderStatus.COMPLETED)
                 transaction.update(docRef, "pickupVerified", true)
                 transaction.update(docRef, "pickupTimestamp", System.currentTimeMillis())
                 transaction.update(docRef, "updatedAt", System.currentTimeMillis())

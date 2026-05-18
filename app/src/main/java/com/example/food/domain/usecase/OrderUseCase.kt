@@ -54,7 +54,7 @@ class OrderUseCase(
             subtotal += (meal.price * quantity)
         }
 
-        val deliveryFee = 2.0 // Unit: thousands of ETB (e.g. 2.0 = 2000 ETB)
+        val deliveryFee = com.example.food.domain.manager.PricingEngine.calculateDeliveryFee(OrderType.DELIVERY)
         val order = Order(
             orderId = UUID.randomUUID().toString(),
             customerId = user.userId,
@@ -63,7 +63,7 @@ class OrderUseCase(
             businessName = businessName ?: "",
             mealPlanId = mealPlanId,
             items = orderItems,
-            totalAmount = subtotal + deliveryFee,
+            totalAmount = com.example.food.domain.manager.PricingEngine.calculateTotal(subtotal, deliveryFee, 0.0),
             deliveryFee = deliveryFee,
             orderStatus = OrderStatus.PENDING,
             createdAt = System.currentTimeMillis(),
@@ -87,20 +87,21 @@ class OrderUseCase(
      */
     private fun canTransition(current: OrderStatus, next: OrderStatus): Boolean {
         return when (current) {
-            OrderStatus.INITIATED -> next == OrderStatus.PAYMENT_PENDING || next == OrderStatus.CANCELLED || next == OrderStatus.PENDING || next == OrderStatus.SENT_TO_VENDOR
-            OrderStatus.PAYMENT_PENDING -> next == OrderStatus.PAYMENT_PROCESSING || next == OrderStatus.CANCELLED || next == OrderStatus.PAID
+            OrderStatus.INITIATED         -> next == OrderStatus.PAYMENT_PENDING || next == OrderStatus.CANCELLED || next == OrderStatus.PENDING || next == OrderStatus.SENT_TO_VENDOR
+            OrderStatus.PAYMENT_PENDING   -> next == OrderStatus.PAYMENT_PROCESSING || next == OrderStatus.CANCELLED || next == OrderStatus.PAID
             OrderStatus.PAYMENT_PROCESSING -> next == OrderStatus.PAID || next == OrderStatus.CANCELLED
-            OrderStatus.PAID -> next == OrderStatus.SENT_TO_VENDOR || next == OrderStatus.CANCELLED
-            OrderStatus.SENT_TO_VENDOR -> next == OrderStatus.ACCEPTED || next == OrderStatus.CANCELLED
+            OrderStatus.PAID              -> next == OrderStatus.SENT_TO_VENDOR || next == OrderStatus.CANCELLED
+            OrderStatus.SENT_TO_VENDOR    -> next == OrderStatus.ACCEPTED || next == OrderStatus.CANCELLED
 
             OrderStatus.PENDING, OrderStatus.BOOKED -> next == OrderStatus.ACCEPTED || next == OrderStatus.CANCELLED || next == OrderStatus.ARRIVED
-            OrderStatus.ACCEPTED -> next == OrderStatus.PREPARING || next == OrderStatus.CANCELLED
+            OrderStatus.ACCEPTED  -> next == OrderStatus.PREPARING || next == OrderStatus.CANCELLED
             OrderStatus.PREPARING -> next == OrderStatus.READY
-            OrderStatus.READY -> next == OrderStatus.ON_THE_WAY || next == OrderStatus.DELIVERED
-            OrderStatus.ARRIVED -> next == OrderStatus.READY || next == OrderStatus.DELIVERED
+            OrderStatus.READY     -> next == OrderStatus.ON_THE_WAY || next == OrderStatus.DELIVERED || next == OrderStatus.COMPLETED
+            OrderStatus.ARRIVED   -> next == OrderStatus.READY || next == OrderStatus.DELIVERED
             OrderStatus.ON_THE_WAY -> next == OrderStatus.DELIVERED
-            OrderStatus.DELIVERED -> false // Terminal state
-            OrderStatus.CANCELLED -> false // Terminal state
+            OrderStatus.DELIVERED -> false  // Terminal state
+            OrderStatus.COMPLETED -> false  // Terminal state (QR-confirmed takeaway)
+            OrderStatus.CANCELLED -> false  // Terminal state
         }
     }
 
@@ -153,14 +154,15 @@ class OrderUseCase(
 
         if (result is Resource.Success) {
             val notificationType = when (nextStatus) {
-                OrderStatus.ACCEPTED -> NotificationType.ORDER_ACCEPTED
-                OrderStatus.PREPARING -> NotificationType.MEAL_PREPARING
-                OrderStatus.READY -> NotificationType.ORDER_READY
-                OrderStatus.ARRIVED -> NotificationType.ORDER_STATUS_UPDATE // Or specific one
+                OrderStatus.ACCEPTED   -> NotificationType.ORDER_ACCEPTED
+                OrderStatus.PREPARING  -> NotificationType.MEAL_PREPARING
+                OrderStatus.READY      -> NotificationType.ORDER_READY
+                OrderStatus.ARRIVED    -> NotificationType.ORDER_STATUS_UPDATE
                 OrderStatus.ON_THE_WAY -> NotificationType.DELIVERY_ON_THE_WAY
-                OrderStatus.DELIVERED -> NotificationType.ORDER_DELIVERED
-                OrderStatus.CANCELLED -> NotificationType.ORDER_CANCELLED
-                else -> NotificationType.ORDER_STATUS_UPDATE
+                OrderStatus.DELIVERED,
+                OrderStatus.COMPLETED  -> NotificationType.ORDER_DELIVERED
+                OrderStatus.CANCELLED  -> NotificationType.ORDER_CANCELLED
+                else                   -> NotificationType.ORDER_STATUS_UPDATE
             }
             
             // Notify the customer about the status update
@@ -182,8 +184,11 @@ class OrderUseCase(
         return orderRepository.getOrdersForVendor(vendorId)
     }
 
-    suspend fun verifyPickup(orderId: String, token: String): Resource<Unit> {
+    suspend fun verifyPickup(vendorId: String, orderId: String, token: String): Resource<Unit> {
         val order = orderRepository.getOrderById(orderId) ?: return Resource.Error("Order not found")
+        if (order.vendorId != vendorId) {
+            return Resource.Error("Unauthorized: This order belongs to another restaurant.")
+        }
         return qrVerificationService.verifyToken(order, token)
     }
 }

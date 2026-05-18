@@ -85,8 +85,8 @@ class OrderStateSynchronizer(
      * status combinations).
      */
     fun isConsistent(order: Order): Boolean {
-        // A delivered order must have a successful payment.
-        if (order.orderStatus == OrderStatus.DELIVERED &&
+        // A delivered/completed order must have a successful payment.
+        if ((order.orderStatus == OrderStatus.DELIVERED || order.orderStatus == OrderStatus.COMPLETED) &&
             order.paymentStatus != PaymentStatus.SUCCESS) return false
         // A pending order should not have a refunded payment.
         if (order.orderStatus == OrderStatus.PENDING &&

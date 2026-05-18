@@ -60,9 +60,9 @@ class OrderViewModel(
         updateStatus(user, orderId, OrderStatus.ACCEPTED, onResult)
     }
 
-    fun verifyPickup(orderId: String, token: String, onResult: (Resource<Unit>) -> Unit) {
+    fun verifyPickup(vendorId: String, orderId: String, token: String, onResult: (Resource<Unit>) -> Unit) {
         viewModelScope.launch {
-            val result = orderUseCase.verifyPickup(orderId, token)
+            val result = orderUseCase.verifyPickup(vendorId, orderId, token)
             onResult(result)
         }
     }

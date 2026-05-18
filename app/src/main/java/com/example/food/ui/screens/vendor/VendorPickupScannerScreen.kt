@@ -45,14 +45,14 @@ fun VendorPickupScannerScreen(
 
     val scanLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
         if (result.contents != null) {
-            // Expected QR payload format: "PICKUP:<orderId>:<token>"
-            val parts = result.contents.split(":")
-            if (parts.size >= 3 && parts[0] == "PICKUP") {
-                scannedOrderId = parts[1]
-                scannedToken = parts[2]
+            val contentStr = result.contents.trim()
+            val securePayload = com.example.food.core.qr.SecureQRPayload.fromJson(contentStr)
+            
+            if (securePayload != null) {
+                scannedOrderId = securePayload.orderId
+                scannedToken = securePayload.pickupToken
                 scanState = ScanResult.SCANNING
-                // Verify the pickup token against the backend
-                orderViewModel.verifyPickup(scannedOrderId, scannedToken) { res ->
+                orderViewModel.verifyPickup(user?.userId ?: "", scannedOrderId, scannedToken) { res ->
                     when (res) {
                         is Resource.Success -> {
                             message = "✓ Pickup verified! Order #${scannedOrderId.take(6).uppercase()} handed off."
@@ -66,8 +66,56 @@ fun VendorPickupScannerScreen(
                     }
                 }
             } else {
-                message = "Invalid QR code. Ask customer to refresh their pickup code."
-                scanState = ScanResult.FAILURE
+                // Fallback to legacy formats:
+                val parts = contentStr.split(":")
+                if (parts.size >= 3 && parts[0] == "PICKUP") {
+                    scannedOrderId = parts[1]
+                    scannedToken = parts[2]
+                    scanState = ScanResult.SCANNING
+                    orderViewModel.verifyPickup(user?.userId ?: "", scannedOrderId, scannedToken) { res ->
+                        when (res) {
+                            is Resource.Success -> {
+                                message = "✓ Pickup verified! Order #${scannedOrderId.take(6).uppercase()} handed off."
+                                scanState = ScanResult.SUCCESS
+                            }
+                            is Resource.Error -> {
+                                message = res.message ?: "Invalid or expired QR code."
+                                scanState = ScanResult.FAILURE
+                            }
+                            else -> {}
+                        }
+                    }
+                } else if (contentStr.length == 6) {
+                    // Direct token scan fallback
+                    val tokenStr = contentStr.uppercase()
+                    val ordersList = (orderViewModel.vendorOrders.value as? Resource.Success)?.data ?: emptyList()
+                    val matchingOrder = ordersList.firstOrNull { it.pickupToken.equals(tokenStr, ignoreCase = true) }
+                    
+                    if (matchingOrder != null) {
+                        scannedOrderId = matchingOrder.orderId
+                        scannedToken = tokenStr
+                        scanState = ScanResult.SCANNING
+                        orderViewModel.verifyPickup(user?.userId ?: "", scannedOrderId, scannedToken) { res ->
+                            when (res) {
+                                is Resource.Success -> {
+                                    message = "✓ Pickup verified! Order #${scannedOrderId.take(6).uppercase()} handed off."
+                                    scanState = ScanResult.SUCCESS
+                                }
+                                is Resource.Error -> {
+                                    message = res.message ?: "Invalid or expired QR code."
+                                    scanState = ScanResult.FAILURE
+                                }
+                                else -> {}
+                            }
+                        }
+                    } else {
+                        message = "Order for token $tokenStr not found in vendor queue."
+                        scanState = ScanResult.FAILURE
+                    }
+                } else {
+                    message = "Invalid QR code. Ask customer to refresh their pickup code."
+                    scanState = ScanResult.FAILURE
+                }
             }
         }
     }
@@ -231,13 +279,29 @@ fun VendorPickupScannerScreen(
             AnimatedVisibility(visible = showManualEntry) {
                 ManualTokenEntry(
                     onVerify = { ordId, tok ->
-                        scannedOrderId = ordId
+                        var resolvedOrderId = ordId
+                        if (resolvedOrderId.isBlank()) {
+                            val ordersList = (orderViewModel.vendorOrders.value as? Resource.Success)?.data ?: emptyList()
+                            val matchingOrder = ordersList.firstOrNull { it.pickupToken.equals(tok, ignoreCase = true) }
+                            if (matchingOrder != null) {
+                                resolvedOrderId = matchingOrder.orderId
+                            }
+                        }
+                        
+                        if (resolvedOrderId.isBlank()) {
+                            message = "Error: Could not resolve Order ID for token $tok. Please provide Order ID."
+                            scanState = ScanResult.FAILURE
+                            showManualEntry = false
+                            return@ManualTokenEntry
+                        }
+
+                        scannedOrderId = resolvedOrderId
                         scannedToken = tok
                         scanState = ScanResult.SCANNING
-                        orderViewModel.verifyPickup(ordId, tok) { res ->
+                        orderViewModel.verifyPickup(user?.userId ?: "", resolvedOrderId, tok) { res ->
                             when (res) {
                                 is Resource.Success -> {
-                                    message = "✓ Pickup verified! Order #${ordId.take(6).uppercase()} marked as delivered."
+                                    message = "✓ Pickup verified! Order #${resolvedOrderId.take(6).uppercase()} marked as delivered."
                                     scanState = ScanResult.SUCCESS
                                 }
                                 is Resource.Error -> {
@@ -271,7 +335,7 @@ private fun ManualTokenEntry(onVerify: (orderId: String, token: String) -> Unit)
         OutlinedTextField(
             value = orderId,
             onValueChange = { orderId = it },
-            label = { Text("Order ID", color = Color.Gray) },
+            label = { Text("Order ID (Optional)", color = Color.Gray) },
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFFF16B24),
@@ -286,7 +350,7 @@ private fun ManualTokenEntry(onVerify: (orderId: String, token: String) -> Unit)
         OutlinedTextField(
             value = token,
             onValueChange = { token = it.uppercase() },
-            label = { Text("6-Digit Token", color = Color.Gray) },
+            label = { Text("6-Digit Token (Required)", color = Color.Gray) },
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFFF16B24),
@@ -299,7 +363,7 @@ private fun ManualTokenEntry(onVerify: (orderId: String, token: String) -> Unit)
             singleLine = true
         )
         Button(
-            onClick = { if (orderId.isNotBlank() && token.isNotBlank()) onVerify(orderId.trim(), token.trim()) },
+            onClick = { if (token.isNotBlank()) onVerify(orderId.trim(), token.trim()) },
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A1A1A)),
             shape = RoundedCornerShape(12.dp),
