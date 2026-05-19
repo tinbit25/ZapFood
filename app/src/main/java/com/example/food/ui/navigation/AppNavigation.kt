@@ -609,7 +609,13 @@ fun AppNavigation(
                             orderViewModel = orderViewModel,
                             vendorStateManager = vendorStateManager,
                             onNavigateToScan = { navController.navigate(Screen.VendorPickupScan.route) },
-                            onNavigateToAddMeal = { navController.navigate(Screen.VendorMenu.route) }
+                            onNavigateToAddMeal = { navController.navigate(Screen.VendorMenu.route) },
+                            onNavigateToFeedback = {
+                                val currentVendorId = vendorStateManager.vendor.value?.id
+                                if (currentVendorId != null) {
+                                    navController.navigate(Screen.VendorFeedback.createRoute(currentVendorId))
+                                }
+                            }
                         )
                     },
                     onPending = {
@@ -725,7 +731,8 @@ fun AppNavigation(
                         navController.navigate(Screen.Welcome.route) {
                             popUpTo(0) { inclusive = true }
                         }
-                    }
+                    },
+                    onNavigateToSupport = { navController.navigate(Screen.AdminSupportDashboard.route) }
                 )
             }
 
@@ -851,6 +858,17 @@ fun AppNavigation(
                     onMealClick = { mealId ->
                         navController.navigate(Screen.ProductDetails.createRoute(mealId))
                     }
+                )
+            }
+
+            composable(
+                route = Screen.VendorFeedback.route,
+                arguments = listOf(navArgument("vendorId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val vendorId = backStackEntry.arguments?.getString("vendorId") ?: ""
+                com.example.food.ui.screens.vendor.VendorFeedbackScreen(
+                    vendorId = vendorId,
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 

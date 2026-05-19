@@ -86,6 +86,9 @@ sealed class Screen(val route: String) {
     object VendorStorefront : Screen("vendor_storefront_screen/{vendorId}") {
         fun createRoute(vendorId: String) = "vendor_storefront_screen/$vendorId"
     }
+    object VendorFeedback : Screen("vendor_feedback_screen/{vendorId}") {
+        fun createRoute(vendorId: String) = "vendor_feedback_screen/$vendorId"
+    }
     object PickupQRCode : Screen("pickup_qr_code_screen/{orderId}") {
         fun createRoute(orderId: String) = "pickup_qr_code_screen/$orderId"
     }

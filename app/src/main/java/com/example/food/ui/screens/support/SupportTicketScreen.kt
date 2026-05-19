@@ -1,5 +1,6 @@
 package com.example.food.ui.screens.support
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,12 +8,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.food.core.util.Resource
 import com.example.food.data.model.SupportTicket
 import com.example.food.data.model.TicketCategory
+import com.example.food.data.model.TicketResponse
 import com.example.food.ui.viewmodel.SupportViewModel
 import com.example.food.ui.viewmodel.UserViewModel
 import java.text.SimpleDateFormat
@@ -33,6 +37,7 @@ fun SupportTicketScreen(
     var selectedCategory by remember { mutableStateOf(TicketCategory.GENERAL) }
     var message by remember { mutableStateOf("") }
     var createStatus by remember { mutableStateOf<Resource<Unit>?>(null) }
+    var selectedTicket by remember { mutableStateOf<SupportTicket?>(null) }
 
     LaunchedEffect(user) {
         user?.let {
@@ -72,7 +77,7 @@ fun SupportTicketScreen(
                     } else {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
                             items(tickets) { ticket ->
-                                TicketItem(ticket)
+                                TicketItem(ticket, onClick = { selectedTicket = ticket })
                             }
                         }
                     }
@@ -87,8 +92,6 @@ fun SupportTicketScreen(
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Category")
-                        // Simple dropdown or radio group. Using a simple text for now
-                        // In a real app, use DropdownMenu
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TicketCategory.values().forEach { cat ->
                                 FilterChip(
@@ -140,15 +143,153 @@ fun SupportTicketScreen(
                 }
             )
         }
+
+        if (selectedTicket != null) {
+            TicketDetailsDialog(
+                ticket = selectedTicket!!,
+                user = user,
+                supportViewModel = supportViewModel,
+                onDismiss = { selectedTicket = null }
+            )
+        }
     }
 }
 
 @Composable
-fun TicketItem(ticket: SupportTicket) {
+fun TicketDetailsDialog(
+    ticket: SupportTicket,
+    user: com.example.food.data.model.User?,
+    supportViewModel: SupportViewModel,
+    onDismiss: () -> Unit
+) {
+    val responsesState by supportViewModel.responsesState.collectAsState()
+    var replyText by remember { mutableStateOf("") }
+    var isSending by remember { mutableStateOf(false) }
+
+    LaunchedEffect(ticket.ticketId) {
+        supportViewModel.fetchResponses(ticket.ticketId)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text(text = "Ticket Details", style = MaterialTheme.typography.titleMedium)
+                Text(text = "Category: ${ticket.category.name}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp)
+            ) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(text = ticket.userName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(text = ticket.message, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                Box(modifier = Modifier.weight(1f)) {
+                    when (val state = responsesState) {
+                        is Resource.Loading -> {
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        }
+                        is Resource.Error -> {
+                            Text("Failed to load responses: ${state.message}", color = MaterialTheme.colorScheme.error)
+                        }
+                        is Resource.Success -> {
+                            val responses = state.data ?: emptyList()
+                            if (responses.isEmpty()) {
+                                Text("No responses yet.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            } else {
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    items(responses) { resp ->
+                                        val isMe = resp.senderId == user?.userId
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start
+                                        ) {
+                                            Card(
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = if (isMe) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
+                                                ),
+                                                modifier = Modifier.widthIn(max = 240.dp)
+                                            ) {
+                                                Column(modifier = Modifier.padding(8.dp)) {
+                                                    Text(text = resp.senderName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
+                                                    Spacer(modifier = Modifier.height(2.dp))
+                                                    Text(text = resp.message, style = MaterialTheme.typography.bodySmall)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = replyText,
+                        onValueChange = { replyText = it },
+                        placeholder = { Text("Type a reply...") },
+                        modifier = Modifier.weight(1f),
+                        maxLines = 3
+                    )
+                    Button(
+                        onClick = {
+                            val u = user ?: return@Button
+                            if (replyText.isNotBlank()) {
+                                isSending = true
+                                supportViewModel.sendResponse(u, ticket.ticketId, replyText) { res ->
+                                    isSending = false
+                                    if (res is Resource.Success) {
+                                        replyText = ""
+                                        supportViewModel.fetchResponses(ticket.ticketId)
+                                    }
+                                }
+                            }
+                        },
+                        enabled = replyText.isNotBlank() && !isSending
+                    ) {
+                        Text("Send")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@Composable
+fun TicketItem(ticket: SupportTicket, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

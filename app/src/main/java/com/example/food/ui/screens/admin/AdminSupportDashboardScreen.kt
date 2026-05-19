@@ -1,5 +1,6 @@
 package com.example.food.ui.screens.admin
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -86,6 +88,8 @@ fun TicketsTab(
     user: com.example.food.data.model.User?
 ) {
     var selectedStatusFilter by remember { mutableStateOf<TicketStatus?>(null) }
+    var selectedTicket by remember { mutableStateOf<SupportTicket?>(null) }
+
     Column(modifier = Modifier.fillMaxSize()) {
         ScrollableTabRow(
             selectedTabIndex = TicketStatus.values().indexOf(selectedStatusFilter) + 1,
@@ -128,6 +132,7 @@ fun TicketsTab(
                         items(filteredTickets) { ticket ->
                             AdminTicketItem(
                                 ticket = ticket,
+                                onClick = { selectedTicket = ticket },
                                 onUpdateStatus = { newStatus ->
                                     user?.let { u ->
                                         supportViewModel.updateTicketStatus(u, ticket.ticketId, newStatus) {}
@@ -140,6 +145,165 @@ fun TicketsTab(
             }
         }
     }
+
+    if (selectedTicket != null) {
+        val currentTicket = (ticketsState as? Resource.Success)?.data?.find { it.ticketId == selectedTicket!!.ticketId } ?: selectedTicket!!
+        AdminTicketDetailsDialog(
+            ticket = currentTicket,
+            user = user,
+            supportViewModel = supportViewModel,
+            onDismiss = { selectedTicket = null },
+            onUpdateStatus = { newStatus ->
+                user?.let { u ->
+                    supportViewModel.updateTicketStatus(u, currentTicket.ticketId, newStatus) {}
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun AdminTicketDetailsDialog(
+    ticket: SupportTicket,
+    user: com.example.food.data.model.User?,
+    supportViewModel: SupportViewModel,
+    onDismiss: () -> Unit,
+    onUpdateStatus: (TicketStatus) -> Unit
+) {
+    val responsesState by supportViewModel.responsesState.collectAsState()
+    var replyText by remember { mutableStateOf("") }
+    var isSending by remember { mutableStateOf(false) }
+
+    LaunchedEffect(ticket.ticketId) {
+        supportViewModel.fetchResponses(ticket.ticketId)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text(text = "Ticket Details (Admin)", style = MaterialTheme.typography.titleMedium)
+                Text(text = "Category: ${ticket.category.name} | User: ${ticket.userName}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 450.dp)
+            ) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(text = ticket.userName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(text = ticket.message, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Status:", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    TicketStatus.values().forEach { status ->
+                        FilterChip(
+                            selected = ticket.status == status,
+                            onClick = { onUpdateStatus(status) },
+                            label = { Text(status.name) }
+                        )
+                    }
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                Box(modifier = Modifier.weight(1f)) {
+                    when (val state = responsesState) {
+                        is Resource.Loading -> {
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        }
+                        is Resource.Error -> {
+                            Text("Failed to load responses: ${state.message}", color = MaterialTheme.colorScheme.error)
+                        }
+                        is Resource.Success -> {
+                            val responses = state.data ?: emptyList()
+                            if (responses.isEmpty()) {
+                                Text("No responses yet.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            } else {
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    items(responses) { resp ->
+                                        val isMe = resp.senderId == user?.userId
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start
+                                        ) {
+                                            Card(
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = if (isMe) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
+                                                ),
+                                                modifier = Modifier.widthIn(max = 240.dp)
+                                            ) {
+                                                Column(modifier = Modifier.padding(8.dp)) {
+                                                    Text(text = resp.senderName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
+                                                    Spacer(modifier = Modifier.height(2.dp))
+                                                    Text(text = resp.message, style = MaterialTheme.typography.bodySmall)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = replyText,
+                        onValueChange = { replyText = it },
+                        placeholder = { Text("Type an answer...") },
+                        modifier = Modifier.weight(1f),
+                        maxLines = 3
+                    )
+                    Button(
+                        onClick = {
+                            val u = user ?: return@Button
+                            if (replyText.isNotBlank()) {
+                                isSending = true
+                                supportViewModel.sendResponse(u, ticket.ticketId, replyText) { res ->
+                                    isSending = false
+                                    if (res is Resource.Success) {
+                                        replyText = ""
+                                        supportViewModel.fetchResponses(ticket.ticketId)
+                                    }
+                                }
+                            }
+                        },
+                        enabled = replyText.isNotBlank() && !isSending
+                    ) {
+                        Text("Send")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }
 
 @Composable
@@ -206,22 +370,32 @@ fun AdminFeedbackItem(feedback: Feedback) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminTicketItem(
     ticket: SupportTicket,
+    onClick: () -> Unit,
     onUpdateStatus: (TicketStatus) -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(text = "User: ${ticket.userName}", style = MaterialTheme.typography.titleMedium)
-                Text(text = ticket.category.name, style = MaterialTheme.typography.labelMedium)
+                Badge(
+                    containerColor = when(ticket.status) {
+                        com.example.food.data.model.TicketStatus.OPEN -> MaterialTheme.colorScheme.primary
+                        com.example.food.data.model.TicketStatus.IN_PROGRESS -> MaterialTheme.colorScheme.secondary
+                        com.example.food.data.model.TicketStatus.RESOLVED -> MaterialTheme.colorScheme.tertiary
+                        com.example.food.data.model.TicketStatus.CLOSED -> MaterialTheme.colorScheme.outline
+                    }
+                ) {
+                    Text(ticket.status.name, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
+                }
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = ticket.message, style = MaterialTheme.typography.bodyMedium)

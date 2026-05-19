@@ -31,7 +31,8 @@ fun VendorDashboardScreen(
     orderViewModel: OrderViewModel,
     vendorStateManager: com.example.food.ui.viewmodel.VendorStateManager,
     onNavigateToScan: () -> Unit,
-    onNavigateToAddMeal: () -> Unit
+    onNavigateToAddMeal: () -> Unit,
+    onNavigateToFeedback: () -> Unit
 ) {
     val user by userViewModel.user.collectAsState()
     val ordersState by orderViewModel.vendorOrders.collectAsState()
@@ -112,6 +113,10 @@ fun VendorDashboardScreen(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     QuickActionCard("Add Meal", Icons.Default.Add, Color(0xFFF16B24), Modifier.weight(1f), onNavigateToAddMeal)
                     QuickActionCard("Update Stock", Icons.Default.Inventory, Color(0xFF2196F3), Modifier.weight(1f), onNavigateToAddMeal)
+                }
+                Spacer(Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    QuickActionCard("Reviews & Feedback", Icons.Default.Star, Color(0xFFFFB300), Modifier.weight(1f), onNavigateToFeedback)
                 }
             }
 

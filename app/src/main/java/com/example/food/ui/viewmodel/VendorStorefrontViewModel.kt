@@ -3,9 +3,11 @@ package com.example.food.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.food.core.util.Resource
+import com.example.food.data.model.Feedback
 import com.example.food.data.model.Meal
 import com.example.food.data.model.Vendor
 import com.example.food.data.repository.MealRepository
+import com.example.food.data.repository.SupportRepository
 import com.example.food.data.repository.VendorRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +19,7 @@ data class StorefrontUiState(
     val vendor: Vendor? = null,
     val meals: List<Meal> = emptyList(),
     val filteredMeals: List<Meal> = emptyList(),
+    val reviews: List<Feedback> = emptyList(),
     val categories: List<String> = listOf("All", "Breakfast", "Lunch", "Dinner", "Drinks", "Desserts", "Traditional", "Vegan/Fasting"),
     val selectedCategory: String = "All",
     val searchQuery: String = "",
@@ -26,7 +29,8 @@ data class StorefrontUiState(
 
 class VendorStorefrontViewModel(
     private val vendorRepository: VendorRepository = VendorRepository(),
-    private val mealRepository: MealRepository = MealRepository()
+    private val mealRepository: MealRepository = MealRepository(),
+    private val supportRepository: SupportRepository = SupportRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StorefrontUiState())
@@ -41,24 +45,35 @@ class VendorStorefrontViewModel(
             _uiState.value = _uiState.value.copy(vendor = vendor)
             
             // Load Menu Items
-            mealRepository.getMealsByVendor(vendorId).collectLatest { resource ->
-                when (resource) {
-                    is Resource.Success -> {
-                        val allMeals = resource.data ?: emptyList()
-                        _uiState.value = _uiState.value.copy(
-                            meals = allMeals,
-                            filteredMeals = allMeals,
-                            isLoading = false
-                        )
+            launch {
+                mealRepository.getMealsByVendor(vendorId).collectLatest { resource ->
+                    when (resource) {
+                        is Resource.Success -> {
+                            val allMeals = resource.data ?: emptyList()
+                            _uiState.value = _uiState.value.copy(
+                                meals = allMeals,
+                                filteredMeals = allMeals,
+                                isLoading = false
+                            )
+                        }
+                        is Resource.Error -> {
+                            _uiState.value = _uiState.value.copy(
+                                error = resource.message,
+                                isLoading = false
+                            )
+                        }
+                        is Resource.Loading -> {
+                            _uiState.value = _uiState.value.copy(isLoading = true)
+                        }
                     }
-                    is Resource.Error -> {
-                        _uiState.value = _uiState.value.copy(
-                            error = resource.message,
-                            isLoading = false
-                        )
-                    }
-                    is Resource.Loading -> {
-                        _uiState.value = _uiState.value.copy(isLoading = true)
+                }
+            }
+
+            // Load Reviews/Feedback
+            launch {
+                supportRepository.getVendorFeedback(vendorId).collectLatest { resource ->
+                    if (resource is Resource.Success) {
+                        _uiState.value = _uiState.value.copy(reviews = resource.data ?: emptyList())
                     }
                 }
             }

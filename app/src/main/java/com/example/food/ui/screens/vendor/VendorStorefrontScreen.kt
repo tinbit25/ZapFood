@@ -32,6 +32,7 @@ import coil.compose.AsyncImage
 import com.example.food.data.model.Meal
 import com.example.food.data.model.Vendor
 import com.example.food.ui.viewmodel.VendorStorefrontViewModel
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +44,7 @@ fun VendorStorefrontScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    var showReviewsSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(vendorId) {
         viewModel.loadVendorStorefront(vendorId)
@@ -81,7 +83,11 @@ fun VendorStorefrontScreen(
 
                 // Vendor Info Card
                 item {
-                    VendorInfoCard(vendor = uiState.vendor!!)
+                    VendorInfoCard(
+                        vendor = uiState.vendor!!,
+                        reviewsCount = uiState.reviews.size,
+                        onShowReviewsClick = { showReviewsSheet = true }
+                    )
                 }
 
                 // C. Internal Vendor Search
@@ -126,6 +132,168 @@ fun VendorStorefrontScreen(
                         }
                     }
                 }
+            }
+        }
+    }
+
+    if (showReviewsSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showReviewsSheet = false },
+            containerColor = Color(0xFF121212),
+            contentColor = Color.White
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            ) {
+                Text(
+                    text = "Customer Reviews",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                if (uiState.reviews.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No reviews yet for this vendor.",
+                            color = Color.Gray,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                } else {
+                    val averageRating = uiState.reviews.map { it.rating }.average().takeIf { !it.isNaN() } ?: 0.0
+                    val totalReviews = uiState.reviews.size
+                    val ratingsCount = uiState.reviews.groupingBy { it.rating }.eachCount()
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(end = 24.dp)
+                        ) {
+                            Text(
+                                text = String.format(Locale.US, "%.1f", averageRating),
+                                style = MaterialTheme.typography.displayMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                repeat(5) { index ->
+                                    Icon(
+                                        imageVector = if (index < averageRating.toInt()) Icons.Default.Star else Icons.Default.StarBorder,
+                                        contentDescription = null,
+                                        tint = Color(0xFFFFB300),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                            Text(
+                                text = "$totalReviews reviews",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            for (star in 5 downTo 1) {
+                                val count = ratingsCount[star] ?: 0
+                                val fraction = if (totalReviews > 0) count.toFloat() / totalReviews else 0f
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "$star",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White,
+                                        modifier = Modifier.width(12.dp)
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.Star,
+                                        contentDescription = null,
+                                        tint = Color(0xFFFFB300),
+                                        modifier = Modifier.size(12.dp).padding(end = 4.dp)
+                                    )
+                                    LinearProgressIndicator(
+                                        progress = fraction,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(6.dp)
+                                            .clip(RoundedCornerShape(3.dp)),
+                                        color = Color(0xFFFFB300),
+                                        trackColor = Color(0xFF333333)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f, fill = false),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(uiState.reviews) { review ->
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = review.userName,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Default.Star,
+                                                contentDescription = null,
+                                                tint = Color(0xFFFFB300),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = "${review.rating}/5",
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                        }
+                                    }
+                                    if (review.comment.isNotEmpty()) {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = review.comment,
+                                            color = Color.LightGray,
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
@@ -204,7 +372,7 @@ fun VendorHeaderSection(vendor: Vendor) {
 }
 
 @Composable
-fun VendorInfoCard(vendor: Vendor) {
+fun VendorInfoCard(vendor: Vendor, reviewsCount: Int, onShowReviewsClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -229,7 +397,12 @@ fun VendorInfoCard(vendor: Vendor) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            InfoChip(icon = Icons.Default.Star, label = "${vendor.rating} (500+)", color = Color(0xFFFFB300))
+            InfoChip(
+                icon = Icons.Default.Star,
+                label = "${vendor.rating} ($reviewsCount reviews)",
+                color = Color(0xFFFFB300),
+                onClick = onShowReviewsClick
+            )
             InfoChip(icon = Icons.Default.Timer, label = "${vendor.deliveryTimeMin}-${vendor.deliveryTimeMax} min")
             InfoChip(icon = Icons.Default.LocalShipping, label = if (vendor.deliveryFee == 0.0) "Free" else "$${vendor.deliveryFee}")
         }
@@ -246,8 +419,17 @@ fun VendorInfoCard(vendor: Vendor) {
 }
 
 @Composable
-fun InfoChip(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, color: Color = MaterialTheme.colorScheme.primary) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+fun InfoChip(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    color: Color = MaterialTheme.colorScheme.primary,
+    onClick: (() -> Unit)? = null
+) {
+    val modifier = if (onClick != null) Modifier.clickable { onClick() } else Modifier
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.padding(vertical = 4.dp)
+    ) {
         Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
         Spacer(modifier = Modifier.width(4.dp))
         Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)

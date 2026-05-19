@@ -27,7 +27,8 @@ import kotlinx.coroutines.launch
 fun AdminControlCenterScreen(
     adminViewModel: com.example.food.ui.viewmodel.AdminViewModel,
     userViewModel: UserViewModel,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNavigateToSupport: () -> Unit
 ) {
     val user by userViewModel.user.collectAsState()
     val systemConfig by adminViewModel.systemConfigState.collectAsState()
@@ -137,6 +138,9 @@ fun AdminControlCenterScreen(
                     }
                     ControlCenterItem("Geofencing Rules", Icons.Default.Map, "Active delivery zones") {
                         showGeofencingDialog = true
+                    }
+                    ControlCenterItem("Support Dashboard", Icons.Default.SupportAgent, "Manage user tickets and feedback") {
+                        onNavigateToSupport()
                     }
                     ControlCenterItem(
                         "Maintenance Mode", 

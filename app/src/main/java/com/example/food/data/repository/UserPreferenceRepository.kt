@@ -12,6 +12,11 @@ class UserPreferenceRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
     fun observePreferences(userId: String): Flow<Resource<UserFoodPreference>> = callbackFlow {
+        if (userId.isBlank()) {
+            trySend(Resource.Success(UserFoodPreference()))
+            close()
+            return@callbackFlow
+        }
         trySend(Resource.Loading())
         val listener = firestore.collection("users").document(userId).collection("preferences").document("profile")
             .addSnapshotListener { snapshot, error ->
@@ -37,6 +42,9 @@ class UserPreferenceRepository(
     }
 
     suspend fun updatePreferences(preferences: UserFoodPreference): Resource<Unit> {
+        if (preferences.userId.isBlank()) {
+            return Resource.Error("User ID cannot be blank")
+        }
         return try {
             firestore.collection("users").document(preferences.userId)
                 .collection("preferences").document("profile")
@@ -48,6 +56,9 @@ class UserPreferenceRepository(
     }
     
     suspend fun getPreferences(userId: String): Resource<UserFoodPreference> {
+        if (userId.isBlank()) {
+            return Resource.Success(UserFoodPreference())
+        }
         return try {
             val snapshot = firestore.collection("users").document(userId)
                 .collection("preferences").document("profile").get().await()

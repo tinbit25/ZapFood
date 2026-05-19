@@ -27,55 +27,74 @@ fun AdminAnalyticsScreen(
     viewModel: AdminViewModel = viewModel()
 ) {
     val dashboardState by viewModel.dashboardState.collectAsState()
-    val dashboardData = (dashboardState as? Resource.Success)?.data
+    
     Scaffold(
         containerColor = Color(0xFF0A0A0A),
         topBar = { TopNavBar(title = "Platform Analytics") }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            item {
-                Text("Revenue Trajectory (Last 7 Days)", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
-                if (dashboardData != null && dashboardData.revenueByDay.isNotEmpty()) {
-                    RealLineChart(dashboardData.revenueByDay)
-                } else {
-                    MockLineChart()
+        when (val state = dashboardState) {
+            is Resource.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFFF16B24))
                 }
             }
-
-            item {
-                val avgOrder = if (dashboardData != null && dashboardData.totalOrders > 0) dashboardData.totalRevenue / dashboardData.totalOrders else 0.0
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    MiniStatCard("Avg Order Value", "ETB ${"%.0f".format(avgOrder)}", "+12%", Modifier.weight(1f))
-                    MiniStatCard("Active Users", "${dashboardData?.activeUsers ?: 0}", "+5%", Modifier.weight(1f))
+            is Resource.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = state.message ?: "Failed to load analytics", color = Color.Red)
                 }
             }
-
-            item {
-                Text("Peak Ordering Times", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
-                MockBarChart()
-            }
-
-            item {
-                Text("Top Performing Categories", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
-                if (dashboardData != null && dashboardData.categoryDistribution.isNotEmpty()) {
-                    val maxCount = dashboardData.categoryDistribution.values.maxOrNull()?.coerceAtLeast(1) ?: 1
-                    dashboardData.categoryDistribution.entries.sortedByDescending { it.value }.take(3).forEach { entry ->
-                        val catName = entry.key
-                        VendorPerformanceCard(catName, (entry.value * 100) / maxCount, "${entry.value} Orders")
+            is Resource.Success -> {
+                val data = state.data!!
+                LazyColumn(
+                    modifier = Modifier
+                        .padding(padding)
+                        .fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    item {
+                        Text("Revenue Trajectory (Last 7 Days)", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        RealLineChart(data.revenueByDay)
                     }
-                } else {
-                    VendorPerformanceCard("Traditional", 98, "450 Orders")
-                    VendorPerformanceCard("Fasting", 85, "320 Orders")
-                    VendorPerformanceCard("Drinks", 78, "210 Orders")
+
+                    item {
+                        val avgOrder = if (data.totalOrders > 0) data.totalRevenue / data.totalOrders else 0.0
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            MiniStatCard("Avg Order Value", "ETB ${"%.0f".format(avgOrder)}", "+12%", Modifier.weight(1f))
+                            MiniStatCard("Active Users", "${data.activeUsers}", "+5%", Modifier.weight(1f))
+                        }
+                    }
+
+                    item {
+                        Text("Peak Ordering Times", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        RealBarChart(data.hourlyDistribution)
+                    }
+
+                    item {
+                        Text("Top Performing Categories", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        if (data.categoryDistribution.isNotEmpty()) {
+                            val maxCount = data.categoryDistribution.values.maxOrNull()?.coerceAtLeast(1) ?: 1
+                            data.categoryDistribution.entries.sortedByDescending { it.value }.take(3).forEach { entry ->
+                                val catName = entry.key
+                                VendorPerformanceCard(catName, (entry.value * 100) / maxCount, "${entry.value} Orders")
+                            }
+                        } else {
+                            Text("No category data available yet", color = Color.Gray, fontSize = 14.sp)
+                        }
+                    }
                 }
             }
         }
@@ -141,65 +160,10 @@ private fun RealLineChart(data: Map<String, Double>) {
     }
 }
 
-@Composable
-private fun MockLineChart() {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp),
-        color = Color(0xFF1A1A1A),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            val width = size.width
-            val height = size.height
-            val points = listOf(
-                Offset(0f, height * 0.8f),
-                Offset(width * 0.2f, height * 0.6f),
-                Offset(width * 0.4f, height * 0.7f),
-                Offset(width * 0.6f, height * 0.4f),
-                Offset(width * 0.8f, height * 0.3f),
-                Offset(width, height * 0.1f)
-            )
 
-            val path = Path().apply {
-                moveTo(points.first().x, points.first().y)
-                for (i in 1 until points.size) {
-                    val p1 = points[i - 1]
-                    val p2 = points[i]
-                    cubicTo(
-                        (p1.x + p2.x) / 2, p1.y,
-                        (p1.x + p2.x) / 2, p2.y,
-                        p2.x, p2.y
-                    )
-                }
-            }
-
-            drawPath(
-                path = path,
-                color = Color(0xFF4CAF50),
-                style = Stroke(width = 4.dp.toPx())
-            )
-            
-            // Draw gradient below line
-            val fillPath = Path().apply {
-                addPath(path)
-                lineTo(width, height)
-                lineTo(0f, height)
-                close()
-            }
-            drawPath(
-                path = fillPath,
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF4CAF50).copy(alpha = 0.3f), Color.Transparent)
-                )
-            )
-        }
-    }
-}
 
 @Composable
-private fun MockBarChart() {
+private fun RealBarChart(hourlyDistribution: Map<Int, Int>) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -212,18 +176,21 @@ private fun MockBarChart() {
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.Bottom
         ) {
-            val heights = listOf(0.3f, 0.5f, 0.8f, 1.0f, 0.7f, 0.4f, 0.9f)
+            val hours = listOf(10, 12, 14, 16, 18, 20, 22)
             val labels = listOf("10A", "12P", "2P", "4P", "6P", "8P", "10P")
+            val counts = hours.map { hourlyDistribution[it] ?: 0 }
+            val maxCount = counts.maxOrNull()?.coerceAtLeast(1) ?: 1
             
-            heights.zip(labels).forEach { (h, label) ->
+            counts.zip(labels).forEach { (count, label) ->
+                val hFraction = count.toFloat() / maxCount.toFloat()
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(
                         modifier = Modifier
                             .width(20.dp)
-                            .fillMaxHeight(h)
+                            .fillMaxHeight(hFraction.coerceAtLeast(0.1f))
                             .background(Color(0xFFF16B24), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(label, color = Color.Gray, fontSize = 10.sp)
                 }
             }

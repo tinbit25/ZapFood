@@ -236,19 +236,52 @@ class AdminRepository {
     }
 
     suspend fun getAnalytics(): Resource<AdminDashboardData> {
-        // ... existing getAnalytics ...
         return try {
             val allOrders = ordersCollection.get().await().documents.mapNotNull { it.toObject(Order::class.java) }
             val allUsers = usersCollection.get().await().documents.mapNotNull { it.toObject(User::class.java) }
+            val allVendors = firestore.collection("vendors").get().await().documents.mapNotNull { it.toObject(Vendor::class.java) }
             
             val totalRevenue = allOrders.filter { it.orderStatus == OrderStatus.DELIVERED }.sumOf { it.totalAmount }
-                val pendingVendors = allUsers.count { it.role == UserRole.VENDOR } // Status filter moved to Vendor collection
+            val pendingVendors = allVendors.count { it.verificationStatus == VerificationStatus.PENDING_REVIEW }
+            val activeVendors = allVendors.count { it.verificationStatus == VerificationStatus.ACTIVE || it.verificationStatus == VerificationStatus.APPROVED }
+            val suspendedVendors = allVendors.count { it.verificationStatus == VerificationStatus.SUSPENDED }
             
             val recentOrders = allOrders.sortedByDescending { it.createdAt }.take(10)
             
-            val mealIds = allOrders.flatMap { order -> order.items.map { it.mealId } }
+            val allItems = allOrders.flatMap { order -> order.items }
+            val mealIds = allItems.map { it.mealId }
             val mealCounts = mealIds.groupingBy { it }.eachCount()
             val topMeals = mealCounts.entries.sortedByDescending { it.value }.take(5).map { it.key to it.value }
+            
+            val categoryDistribution = allItems.groupingBy { it.category }.eachCount()
+            val fastingCount = allItems.count { it.fastingFriendly }
+            val fastingRatio = if (allItems.isNotEmpty()) (fastingCount.toDouble() / allItems.size) * 100.0 else 0.0
+
+            val sdf = java.text.SimpleDateFormat("EEE", java.util.Locale.getDefault())
+            val last7DaysRevenue = java.util.LinkedHashMap<String, Double>()
+            val cal = Calendar.getInstance()
+            val daysList = mutableListOf<String>()
+            for (i in 0..6) {
+                daysList.add(sdf.format(cal.time))
+                cal.add(Calendar.DAY_OF_YEAR, -1)
+            }
+            daysList.reverse()
+            daysList.forEach { day ->
+                last7DaysRevenue[day] = 0.0
+            }
+
+            allOrders.filter { it.orderStatus == OrderStatus.DELIVERED }.forEach { order ->
+                val orderCal = Calendar.getInstance().apply { timeInMillis = order.createdAt }
+                val dayStr = sdf.format(orderCal.time)
+                if (last7DaysRevenue.containsKey(dayStr)) {
+                    last7DaysRevenue[dayStr] = (last7DaysRevenue[dayStr] ?: 0.0) + order.totalAmount
+                }
+            }
+
+            val hourlyDistribution = allOrders.groupingBy { 
+                val orderCal = Calendar.getInstance().apply { timeInMillis = it.createdAt }
+                orderCal.get(Calendar.HOUR_OF_DAY)
+            }.eachCount()
 
             Resource.Success(
                 AdminDashboardData(
@@ -256,8 +289,14 @@ class AdminRepository {
                     totalOrders = allOrders.size,
                     activeUsers = allUsers.count { it.isActive },
                     pendingVendors = pendingVendors,
+                    activeVendors = activeVendors,
+                    suspendedVendors = suspendedVendors,
                     recentOrders = recentOrders,
-                    topSellingMeals = topMeals
+                    topSellingMeals = topMeals,
+                    categoryDistribution = categoryDistribution,
+                    fastingRatio = fastingRatio,
+                    revenueByDay = last7DaysRevenue,
+                    hourlyDistribution = hourlyDistribution
                 )
             )
         } catch (e: Exception) {
