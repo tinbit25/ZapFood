@@ -32,8 +32,22 @@ class AdminViewModel(
     private val _systemHealth = MutableStateFlow(analyticsUseCase.getSystemHealth())
     val systemHealth: StateFlow<SystemHealth> = _systemHealth.asStateFlow()
 
+    private val _systemConfigState = MutableStateFlow(SystemConfig())
+    val systemConfigState: StateFlow<SystemConfig> = _systemConfigState.asStateFlow()
+
+    private val _adminLogsState = MutableStateFlow<List<Map<String, Any>>>(emptyList())
+    val adminLogsState: StateFlow<List<Map<String, Any>>> = _adminLogsState.asStateFlow()
+
+    private val _abuseReportsCountState = MutableStateFlow(0)
+    val abuseReportsCountState: StateFlow<Int> = _abuseReportsCountState.asStateFlow()
+
+    private val _lastBackupTimeState = MutableStateFlow(0L)
+    val lastBackupTimeState: StateFlow<Long> = _lastBackupTimeState.asStateFlow()
+
     init {
         observeDashboard()
+        observeSystemConfig()
+        observeLogsAndMetrics()
     }
 
     private fun observeDashboard() {
@@ -89,6 +103,51 @@ class AdminViewModel(
         viewModelScope.launch {
             val result = adminUseCase.sendBroadcast(message)
             onResult(result)
+        }
+    }
+
+    private fun observeSystemConfig() {
+        viewModelScope.launch {
+            adminUseCase.observeSystemConfig().collect {
+                _systemConfigState.value = it
+            }
+        }
+    }
+
+    fun updateSystemConfig(config: SystemConfig) {
+        viewModelScope.launch {
+            adminUseCase.updateSystemConfig(config)
+        }
+    }
+
+    private fun observeLogsAndMetrics() {
+        viewModelScope.launch {
+            adminUseCase.observeAdminLogs().collect {
+                _adminLogsState.value = it
+            }
+        }
+        viewModelScope.launch {
+            adminUseCase.observeAbuseReportsCount().collect {
+                _abuseReportsCountState.value = it
+            }
+        }
+        viewModelScope.launch {
+            adminUseCase.observeLastBackupTime().collect {
+                _lastBackupTimeState.value = it
+            }
+        }
+    }
+
+    fun triggerBackup(adminId: String, onComplete: () -> Unit = {}) {
+        viewModelScope.launch {
+            adminUseCase.triggerBackup(adminId)
+            onComplete()
+        }
+    }
+
+    fun logAdminActivity(adminId: String, action: String, details: String) {
+        viewModelScope.launch {
+            adminUseCase.logAdminActivity(adminId, action, details)
         }
     }
 }

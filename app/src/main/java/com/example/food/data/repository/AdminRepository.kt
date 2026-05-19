@@ -99,6 +99,7 @@ class AdminRepository {
         var latestOrders: List<Order>? = null
         var latestUsers: List<User>? = null
         var latestVendors: List<Vendor>? = null
+        var commissionRateVal = 15
 
         fun emitDashboardData() {
             val orders = latestOrders
@@ -118,8 +119,8 @@ class AdminRepository {
             val todayOrdersList = orders.filter { it.createdAt >= todayStart }
             
             val totalRevenue = orders.filter { it.orderStatus == OrderStatus.DELIVERED }.sumOf { it.totalAmount }
-            val commission = totalRevenue * 0.15
-            val pendingPayout = totalRevenue * 0.85
+            val commission = totalRevenue * (commissionRateVal.toDouble() / 100.0)
+            val pendingPayout = totalRevenue * (1.0 - (commissionRateVal.toDouble() / 100.0))
 
             val liveStatuses = listOf(OrderStatus.PENDING, OrderStatus.ACCEPTED, OrderStatus.PREPARING, OrderStatus.READY, OrderStatus.ON_THE_WAY)
             val liveOrders = orders.count { it.orderStatus in liveStatuses }
@@ -142,6 +143,33 @@ class AdminRepository {
             val fastingCount = allItems.count { it.fastingFriendly }
             val fastingRatio = if (allItems.isNotEmpty()) (fastingCount.toDouble() / allItems.size) * 100.0 else 0.0
 
+            val sdf = java.text.SimpleDateFormat("EEE", java.util.Locale.getDefault())
+            val last7DaysRevenue = java.util.LinkedHashMap<String, Double>()
+            val cal = Calendar.getInstance()
+            // We want chronological order (oldest to newest), so let's pre-populate the days
+            val daysList = mutableListOf<String>()
+            for (i in 0..6) {
+                daysList.add(sdf.format(cal.time))
+                cal.add(Calendar.DAY_OF_YEAR, -1)
+            }
+            daysList.reverse()
+            daysList.forEach { day ->
+                last7DaysRevenue[day] = 0.0
+            }
+
+            orders.filter { it.orderStatus == OrderStatus.DELIVERED }.forEach { order ->
+                val orderCal = Calendar.getInstance().apply { timeInMillis = order.createdAt }
+                val dayStr = sdf.format(orderCal.time)
+                if (last7DaysRevenue.containsKey(dayStr)) {
+                    last7DaysRevenue[dayStr] = (last7DaysRevenue[dayStr] ?: 0.0) + order.totalAmount
+                }
+            }
+
+            val hourlyDistribution = orders.groupingBy { 
+                val orderCal = Calendar.getInstance().apply { timeInMillis = it.createdAt }
+                orderCal.get(Calendar.HOUR_OF_DAY)
+            }.eachCount()
+
             trySend(Resource.Success(
                 AdminDashboardData(
                     totalRevenue = totalRevenue,
@@ -159,7 +187,9 @@ class AdminRepository {
                     recentOrders = recentOrders,
                     topSellingMeals = topMeals,
                     categoryDistribution = categoryDistribution,
-                    fastingRatio = fastingRatio
+                    fastingRatio = fastingRatio,
+                    revenueByDay = last7DaysRevenue,
+                    hourlyDistribution = hourlyDistribution
                 )
             ))
         }
@@ -191,10 +221,17 @@ class AdminRepository {
             emitDashboardData()
         }
         
+        val configListener = firestore.collection("settings").document("system_config")
+            .addSnapshotListener { snapshot, _ ->
+                commissionRateVal = snapshot?.getLong("commissionRate")?.toInt() ?: 15
+                emitDashboardData()
+            }
+        
         awaitClose { 
             ordersListener.remove()
             usersListener.remove()
             vendorsListener.remove()
+            configListener.remove()
         }
     }
 
@@ -250,5 +287,85 @@ class AdminRepository {
         } catch (e: Exception) {
             Resource.Error(e.localizedMessage ?: "Failed to send broadcast")
         }
+    }
+
+    fun observeSystemConfig(): Flow<SystemConfig> = callbackFlow {
+        val listener = firestore.collection("settings").document("system_config")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(SystemConfig())
+                    return@addSnapshotListener
+                }
+                val rate = snapshot?.getLong("commissionRate")?.toInt() ?: 15
+                val maintenance = snapshot?.getBoolean("maintenanceMode") ?: false
+                trySend(SystemConfig(rate, maintenance))
+            }
+        awaitClose { listener.remove() }
+    }
+
+    suspend fun updateSystemConfig(config: SystemConfig): Resource<Unit> {
+        return try {
+            firestore.collection("settings").document("system_config").set(config).await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Failed to update configuration")
+        }
+    }
+
+    suspend fun logAdminActivity(adminId: String, action: String, details: String) {
+        val log = mapOf(
+            "adminId" to adminId,
+            "action" to action,
+            "details" to details,
+            "timestamp" to System.currentTimeMillis()
+        )
+        try {
+            firestore.collection("admin_logs").add(log).await()
+        } catch (e: Exception) {
+            // Ignore
+        }
+    }
+
+    fun observeAdminLogs(): Flow<List<Map<String, Any>>> = callbackFlow {
+        val listener = firestore.collection("admin_logs")
+            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .limit(50)
+            .addSnapshotListener { snapshot, _ ->
+                val logs = snapshot?.documents?.map { it.data ?: emptyMap() } ?: emptyList()
+                trySend(logs)
+            }
+        awaitClose { listener.remove() }
+    }
+
+    fun observeAbuseReportsCount(): Flow<Int> = callbackFlow {
+        val listener = firestore.collection("abuse_reports")
+            .whereEqualTo("status", "PENDING")
+            .addSnapshotListener { snapshot, _ ->
+                trySend(snapshot?.size() ?: 0)
+            }
+        awaitClose { listener.remove() }
+    }
+
+    suspend fun triggerBackup(adminId: String): Resource<Unit> {
+        return try {
+            val updateMap = mapOf(
+                "lastBackupTime" to System.currentTimeMillis(),
+                "lastBackupBy" to adminId
+            )
+            firestore.collection("settings").document("backup_info").set(updateMap).await()
+            logAdminActivity(adminId, "Backup Triggered", "System data backup completed successfully.")
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Backup failed")
+        }
+    }
+
+    fun observeLastBackupTime(): Flow<Long> = callbackFlow {
+        val listener = firestore.collection("settings").document("backup_info")
+            .addSnapshotListener { snapshot, _ ->
+                val time = snapshot?.getLong("lastBackupTime") ?: 0L
+                trySend(time)
+            }
+        awaitClose { listener.remove() }
     }
 }

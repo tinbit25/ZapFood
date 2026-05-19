@@ -66,6 +66,34 @@ class AdminUseCase(
     suspend fun sendBroadcast(message: String): Resource<Unit> {
         return adminRepository.sendBroadcast(message)
     }
+
+    fun observeSystemConfig(): Flow<SystemConfig> {
+        return adminRepository.observeSystemConfig()
+    }
+
+    suspend fun updateSystemConfig(config: SystemConfig): Resource<Unit> {
+        return adminRepository.updateSystemConfig(config)
+    }
+
+    suspend fun logAdminActivity(adminId: String, action: String, details: String) {
+        adminRepository.logAdminActivity(adminId, action, details)
+    }
+
+    fun observeAdminLogs(): Flow<List<Map<String, Any>>> {
+        return adminRepository.observeAdminLogs()
+    }
+
+    fun observeAbuseReportsCount(): Flow<Int> {
+        return adminRepository.observeAbuseReportsCount()
+    }
+
+    suspend fun triggerBackup(adminId: String): Resource<Unit> {
+        return adminRepository.triggerBackup(adminId)
+    }
+
+    fun observeLastBackupTime(): Flow<Long> {
+        return adminRepository.observeLastBackupTime()
+    }
 }
 
 enum class VendorAction {

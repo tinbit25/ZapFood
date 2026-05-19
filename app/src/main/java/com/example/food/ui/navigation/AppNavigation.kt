@@ -716,7 +716,9 @@ fun AppNavigation(
             }
 
             composable(route = Screen.AdminControlCenter.route) {
+                val adminViewModel: com.example.food.ui.viewmodel.AdminViewModel = viewModel()
                 AdminControlCenterScreen(
+                    adminViewModel = adminViewModel,
                     userViewModel = userViewModel,
                     onLogout = {
                         authViewModel.logout()

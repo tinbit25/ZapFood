@@ -315,6 +315,7 @@ fun VerificationStep(viewModel: VendorRegistrationViewModel) {
     val taxId by viewModel.taxId.collectAsState()
     val bankInfo by viewModel.bankInfo.collectAsState()
     val mobileMoney by viewModel.mobileMoney.collectAsState()
+    val payoutAccountName by viewModel.payoutAccountName.collectAsState()
 
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text("Legal & Financial Info", fontSize = 20.sp, fontWeight = FontWeight.Bold)
@@ -350,8 +351,17 @@ fun VerificationStep(viewModel: VendorRegistrationViewModel) {
             leadingIcon = { Text("+251 ", modifier = Modifier.padding(start = 12.dp), fontWeight = FontWeight.Bold) }
         )
 
+        OutlinedTextField(
+            value = payoutAccountName,
+            onValueChange = { viewModel.payoutAccountName.value = it },
+            label = { Text("Payout Account Holder Name") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        )
+
         val licenseUri by viewModel.licenseUri.collectAsState()
         val sanitationUri by viewModel.sanitationUri.collectAsState()
+        val nationalIdUri by viewModel.nationalIdUri.collectAsState()
 
         val licenseLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
             contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
@@ -363,6 +373,12 @@ fun VerificationStep(viewModel: VendorRegistrationViewModel) {
             contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
         ) { uri ->
             viewModel.sanitationUri.value = uri
+        }
+
+        val nationalIdLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+        ) { uri ->
+            viewModel.nationalIdUri.value = uri
         }
 
         // Document Upload
@@ -380,6 +396,15 @@ fun VerificationStep(viewModel: VendorRegistrationViewModel) {
             icon = Icons.Default.Check,
             isSelected = sanitationUri != null,
             onClick = { sanitationLauncher.launch("image/*") }
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        DocumentUploadItem(
+            title = if (nationalIdUri != null) "National ID Attached" else "National ID / Passport ID", 
+            icon = Icons.Default.AccountBox,
+            isSelected = nationalIdUri != null,
+            onClick = { nationalIdLauncher.launch("image/*") }
         )
     }
 }

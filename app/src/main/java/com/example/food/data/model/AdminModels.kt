@@ -19,7 +19,8 @@ data class AdminDashboardData(
     val revenueByDay: Map<String, Double> = emptyMap(), // Date string to revenue
     val topSellingMeals: List<Pair<String, Int>> = emptyList(), // Meal name to count
     val categoryDistribution: Map<String, Int> = emptyMap(),
-    val fastingRatio: Double = 0.0 // Percentage of fasting friendly meals ordered
+    val fastingRatio: Double = 0.0, // Percentage of fasting friendly meals ordered
+    val hourlyDistribution: Map<Int, Int> = emptyMap()
 )
 
 data class SystemHealth(
@@ -50,4 +51,9 @@ data class SystemBroadcast(
     val timestamp: Long = System.currentTimeMillis(),
     val senderId: String = "admin",
     val active: Boolean = true
+)
+
+data class SystemConfig(
+    val commissionRate: Int = 15,
+    val maintenanceMode: Boolean = false
 )
