@@ -5,10 +5,11 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.navigation.compose.rememberNavController
 import com.example.food.core.util.NotificationChannelManager
 import com.example.food.data.remote.FCMTokenManager
@@ -83,8 +84,16 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val navController = rememberNavController()
-                    AppNavigation(navController = navController)
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        val navController = rememberNavController()
+                        AppNavigation(navController = navController)
+                        
+                        com.example.food.ui.components.BroadcastBanner(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .statusBarsPadding()
+                        )
+                    }
                 }
             }
         }

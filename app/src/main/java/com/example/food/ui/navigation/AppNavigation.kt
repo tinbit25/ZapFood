@@ -682,6 +682,7 @@ fun AppNavigation(
                     onNavigateToUsers = { navController.navigate(Screen.AdminUserManagement.route) },
                     onNavigateToVendors = { navController.navigate(Screen.AdminVendorManagement.route) },
                     onNavigateToOrders = { navController.navigate(Screen.AdminOrderMonitoring.route) },
+                    onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
                     viewModel = adminViewModel,
                     mealViewModel = mealViewModel,
                     mealPlanViewModel = mealPlanViewModel

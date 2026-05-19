@@ -96,53 +96,105 @@ class AdminRepository {
     fun observeAnalytics(): Flow<Resource<AdminDashboardData>> = callbackFlow {
         trySend(Resource.Loading())
         
-        // Listen to both orders and users for comprehensive realtime dashboard
-        val ordersListener = ordersCollection.addSnapshotListener { ordersSnapshot, ordersError ->
-            if (ordersError != null) {
-                trySend(Resource.Error(ordersError.localizedMessage ?: "Orders sync failed"))
+        var latestOrders: List<Order>? = null
+        var latestUsers: List<User>? = null
+        var latestVendors: List<Vendor>? = null
+
+        fun emitDashboardData() {
+            val orders = latestOrders
+            val users = latestUsers
+            val vendors = latestVendors
+            
+            if (orders == null || users == null || vendors == null) return
+
+            val now = Calendar.getInstance()
+            val todayStart = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+
+            val todayOrdersList = orders.filter { it.createdAt >= todayStart }
+            
+            val totalRevenue = orders.filter { it.orderStatus == OrderStatus.DELIVERED }.sumOf { it.totalAmount }
+            val commission = totalRevenue * 0.15
+            val pendingPayout = totalRevenue * 0.85
+
+            val liveStatuses = listOf(OrderStatus.PENDING, OrderStatus.ACCEPTED, OrderStatus.PREPARING, OrderStatus.READY, OrderStatus.ON_THE_WAY)
+            val liveOrders = orders.count { it.orderStatus in liveStatuses }
+            val failedOrders = orders.count { it.orderStatus == OrderStatus.CANCELLED }
+
+            val pendingVendors = vendors.count { it.verificationStatus == VerificationStatus.PENDING_REVIEW }
+            val activeVendors = vendors.count { it.verificationStatus == VerificationStatus.ACTIVE || it.verificationStatus == VerificationStatus.APPROVED }
+            val suspendedVendors = vendors.count { it.verificationStatus == VerificationStatus.SUSPENDED }
+            
+            val systemWarnings = pendingVendors + suspendedVendors + failedOrders
+
+            val recentOrders = orders.sortedByDescending { it.createdAt }.take(10)
+            
+            val allItems = orders.flatMap { it.items }
+            val mealIds = allItems.map { it.mealId }
+            val mealCounts = mealIds.groupingBy { it }.eachCount()
+            val topMeals = mealCounts.entries.sortedByDescending { it.value }.take(5).map { it.key to it.value }
+            
+            val categoryDistribution = allItems.groupingBy { it.category }.eachCount()
+            val fastingCount = allItems.count { it.fastingFriendly }
+            val fastingRatio = if (allItems.isNotEmpty()) (fastingCount.toDouble() / allItems.size) * 100.0 else 0.0
+
+            trySend(Resource.Success(
+                AdminDashboardData(
+                    totalRevenue = totalRevenue,
+                    totalOrders = orders.size,
+                    activeUsers = users.count { it.isActive },
+                    pendingVendors = pendingVendors,
+                    activeVendors = activeVendors,
+                    suspendedVendors = suspendedVendors,
+                    liveOrders = liveOrders,
+                    failedOrders = failedOrders,
+                    todayOrders = todayOrdersList.size,
+                    commission = commission,
+                    pendingPayout = pendingPayout,
+                    systemWarnings = systemWarnings,
+                    recentOrders = recentOrders,
+                    topSellingMeals = topMeals,
+                    categoryDistribution = categoryDistribution,
+                    fastingRatio = fastingRatio
+                )
+            ))
+        }
+
+        val ordersListener = ordersCollection.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                trySend(Resource.Error(error.localizedMessage ?: "Orders sync failed"))
                 return@addSnapshotListener
             }
-            
-            val usersListener = usersCollection.addSnapshotListener { usersSnapshot, usersError ->
-                if (usersError != null) {
-                    trySend(Resource.Error(usersError.localizedMessage ?: "Users sync failed"))
-                    return@addSnapshotListener
-                }
-                
-                val allOrders = ordersSnapshot?.documents?.mapNotNull { it.toObject(Order::class.java) } ?: emptyList()
-                val allUsers = usersSnapshot?.documents?.mapNotNull { it.toObject(User::class.java) } ?: emptyList()
-                
-                val totalRevenue = allOrders.filter { it.orderStatus == OrderStatus.DELIVERED }.sumOf { it.totalAmount }
-                    val pendingVendors = allUsers.count { it.role == UserRole.VENDOR } // Status filter moved to Vendor collection
-                val recentOrders = allOrders.sortedByDescending { it.createdAt }.take(10)
-                
-                val allItems = allOrders.flatMap { it.items }
-                val mealIds = allItems.map { it.mealId }
-                val mealCounts = mealIds.groupingBy { it }.eachCount()
-                val topMeals = mealCounts.entries.sortedByDescending { it.value }.take(5).map { it.key to it.value }
-                
-                val categoryDistribution = allItems.groupingBy { it.category }.eachCount()
-                val fastingCount = allItems.count { it.fastingFriendly }
-                val fastingRatio = if (allItems.isNotEmpty()) (fastingCount.toDouble() / allItems.size) * 100.0 else 0.0
-
-                trySend(Resource.Success(
-                    AdminDashboardData(
-                        totalRevenue = totalRevenue,
-                        totalOrders = allOrders.size,
-                        activeUsers = allUsers.count { it.isActive },
-                        pendingVendors = pendingVendors,
-                        recentOrders = recentOrders,
-                        topSellingMeals = topMeals,
-                        categoryDistribution = categoryDistribution,
-                        fastingRatio = fastingRatio
-                    )
-                ))
+            latestOrders = snapshot?.documents?.mapNotNull { it.toObject(Order::class.java) } ?: emptyList()
+            emitDashboardData()
+        }
+        
+        val usersListener = usersCollection.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                trySend(Resource.Error(error.localizedMessage ?: "Users sync failed"))
+                return@addSnapshotListener
             }
+            latestUsers = snapshot?.documents?.mapNotNull { it.toObject(User::class.java) } ?: emptyList()
+            emitDashboardData()
+        }
+
+        val vendorsListener = firestore.collection("vendors").addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                trySend(Resource.Error(error.localizedMessage ?: "Vendors sync failed"))
+                return@addSnapshotListener
+            }
+            latestVendors = snapshot?.documents?.mapNotNull { it.toObject(Vendor::class.java) } ?: emptyList()
+            emitDashboardData()
         }
         
         awaitClose { 
-            // In a real multi-listener callbackFlow, we'd manage multiple registrations
-            // but for simplicity here we rely on the parent listener structure
+            ordersListener.remove()
+            usersListener.remove()
+            vendorsListener.remove()
         }
     }
 
@@ -187,6 +239,16 @@ class AdminRepository {
             Resource.Success(orders)
         } catch (e: Exception) {
             Resource.Error(e.localizedMessage ?: "Failed to fetch filtered orders")
+        }
+    }
+
+    suspend fun sendBroadcast(message: String): Resource<Unit> {
+        return try {
+            val broadcast = SystemBroadcast(message = message)
+            firestore.collection("broadcasts").document(broadcast.id).set(broadcast).await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Failed to send broadcast")
         }
     }
 }

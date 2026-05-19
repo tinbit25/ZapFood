@@ -62,6 +62,10 @@ class AdminUseCase(
     suspend fun getDashboardData(): Resource<AdminDashboardData> {
         return adminRepository.getAnalytics()
     }
+
+    suspend fun sendBroadcast(message: String): Resource<Unit> {
+        return adminRepository.sendBroadcast(message)
+    }
 }
 
 enum class VendorAction {

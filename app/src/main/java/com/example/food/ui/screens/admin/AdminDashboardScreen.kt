@@ -29,6 +29,7 @@ fun AdminDashboardScreen(
     onNavigateToUsers: () -> Unit,
     onNavigateToVendors: () -> Unit,
     onNavigateToOrders: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     viewModel: AdminViewModel = viewModel(),
     mealViewModel: com.example.food.ui.viewmodel.MealViewModel = viewModel(),
     mealPlanViewModel: com.example.food.ui.viewmodel.MealPlanViewModel = viewModel()
@@ -79,10 +80,15 @@ fun AdminDashboardScreen(
                             )
                         }
                     }
-                    IconButton(onClick = { /* TODO Notifications */ }) {
-                        BadgedBox(
-                            badge = { Badge(containerColor = Color.Red) { Text("2") } }
-                        ) {
+                    IconButton(onClick = onNavigateToNotifications) {
+                        val warnings = if (dashboardData is Resource.Success) dashboardData.data?.systemWarnings ?: 0 else 0
+                        if (warnings > 0) {
+                            BadgedBox(
+                                badge = { Badge(containerColor = Color.Red) { Text(warnings.toString()) } }
+                            ) {
+                                Icon(Icons.Default.Notifications, contentDescription = null, tint = Color.White)
+                            }
+                        } else {
                             Icon(Icons.Default.Notifications, contentDescription = null, tint = Color.White)
                         }
                     }
@@ -110,9 +116,10 @@ fun AdminDashboardScreen(
                     onClick = onNavigateToVendors
                 ) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        MetricItem("Pending", "${if (dashboardData is Resource.Success) dashboardData.data?.pendingVendors ?: 0 else "--"}", Color(0xFFE91E63))
-                        MetricItem("Active", "142", Color.White)
-                        MetricItem("Suspended", "3", Color.Red)
+                        val data = (dashboardData as? Resource.Success)?.data
+                        MetricItem("Pending", "${data?.pendingVendors ?: 0}", Color(0xFFE91E63))
+                        MetricItem("Active", "${data?.activeVendors ?: 0}", Color.White)
+                        MetricItem("Suspended", "${data?.suspendedVendors ?: 0}", Color.Red)
                     }
                 }
             }
@@ -126,9 +133,10 @@ fun AdminDashboardScreen(
                     onClick = onNavigateToOrders
                 ) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        MetricItem("Live", "28", Color(0xFF2196F3))
-                        MetricItem("Total Today", "${if (dashboardData is Resource.Success) dashboardData.data?.totalOrders ?: 0 else "--"}", Color.White)
-                        MetricItem("Failed", "1", Color.Red)
+                        val data = (dashboardData as? Resource.Success)?.data
+                        MetricItem("Live", "${data?.liveOrders ?: 0}", Color(0xFF2196F3))
+                        MetricItem("Total Today", "${data?.todayOrders ?: 0}", Color.White)
+                        MetricItem("Failed", "${data?.failedOrders ?: 0}", Color.Red)
                     }
                 }
             }
@@ -142,9 +150,10 @@ fun AdminDashboardScreen(
                     onClick = {}
                 ) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        MetricItem("Today", "ETB ${if (dashboardData is Resource.Success) "%,.0f".format(dashboardData.data?.totalRevenue ?: 0.0) else "--"}", Color(0xFF4CAF50))
-                        MetricItem("Commission", "ETB 45K", Color.White)
-                        MetricItem("Pending Payout", "ETB 12K", Color.Gray)
+                        val data = (dashboardData as? Resource.Success)?.data
+                        MetricItem("Today", "ETB ${"%,.0f".format(data?.totalRevenue ?: 0.0)}", Color(0xFF4CAF50))
+                        MetricItem("Commission", "ETB ${"%,.0f".format(data?.commission ?: 0.0)}", Color.White)
+                        MetricItem("Pending Payout", "ETB ${"%,.0f".format(data?.pendingPayout ?: 0.0)}", Color.Gray)
                     }
                 }
             }
@@ -191,8 +200,17 @@ fun AdminDashboardScreen(
                 confirmButton = {
                     Button(
                         onClick = { 
+                            val message = broadcastMessage
                             showBroadcastDialog = false
-                            scope.launch { snackbarHostState.showSnackbar("Broadcast sent: $broadcastMessage") }
+                            if (message.isNotBlank()) {
+                                viewModel.sendBroadcast(message) { result ->
+                                    if (result is Resource.Success) {
+                                        scope.launch { snackbarHostState.showSnackbar("Broadcast sent: $message") }
+                                    } else if (result is Resource.Error) {
+                                        scope.launch { snackbarHostState.showSnackbar("Failed to send: ${result.message}") }
+                                    }
+                                }
+                            }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
                     ) {

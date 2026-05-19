@@ -173,4 +173,11 @@ class NotificationUseCase(
                 "Order Update" to "The status of your order #$shortId has changed."
         }
     }
+
+    /**
+     * Observe the latest active system broadcast in realtime.
+     */
+    fun observeLatestBroadcast(): Flow<com.example.food.data.model.SystemBroadcast?> {
+        return notificationRepository.observeLatestBroadcast()
+    }
 }

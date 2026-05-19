@@ -84,4 +84,11 @@ class AdminViewModel(
             }
         }
     }
+
+    fun sendBroadcast(message: String, onResult: (Resource<Unit>) -> Unit = {}) {
+        viewModelScope.launch {
+            val result = adminUseCase.sendBroadcast(message)
+            onResult(result)
+        }
+    }
 }

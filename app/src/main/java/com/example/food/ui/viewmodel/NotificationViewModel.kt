@@ -30,8 +30,12 @@ class NotificationViewModel(
     private val _unreadCountState = mutableStateOf<Int>(0)
     val unreadCountState: State<Int> = _unreadCountState
 
+    private val _latestBroadcastState = mutableStateOf<com.example.food.data.model.SystemBroadcast?>(null)
+    val latestBroadcastState: State<com.example.food.data.model.SystemBroadcast?> = _latestBroadcastState
+
     private var observationJob: Job? = null
     private var unreadCountJob: Job? = null
+    private var broadcastJob: Job? = null
     
     private val allNotifications = mutableListOf<Notification>()
     private var lastTimestamp: Long? = null
@@ -58,6 +62,17 @@ class NotificationViewModel(
 
         // Initial Load
         loadNotifications(userId)
+        
+        // Start observing broadcasts
+        startObservingBroadcasts()
+    }
+
+    fun startObservingBroadcasts() {
+        broadcastJob?.cancel()
+        broadcastJob = notificationUseCase.observeLatestBroadcast()
+            .onEach { broadcast ->
+                _latestBroadcastState.value = broadcast
+            }.launchIn(viewModelScope)
     }
 
     /**
@@ -130,5 +145,6 @@ class NotificationViewModel(
         super.onCleared()
         observationJob?.cancel()
         unreadCountJob?.cancel()
+        broadcastJob?.cancel()
     }
 }

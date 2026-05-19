@@ -190,4 +190,21 @@ class NotificationRepository : INotificationRepository {
             Resource.Error(e.localizedMessage ?: "Failed to clear notifications")
         }
     }
+
+    override fun observeLatestBroadcast(): Flow<com.example.food.data.model.SystemBroadcast?> = callbackFlow {
+        val listener = firestore.collection("broadcasts")
+            .whereEqualTo("active", true)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(null)
+                    return@addSnapshotListener
+                }
+                val broadcasts = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(com.example.food.data.model.SystemBroadcast::class.java)
+                } ?: emptyList()
+                val latest = broadcasts.maxByOrNull { it.timestamp }
+                trySend(latest)
+            }
+        awaitClose { listener.remove() }
+    }
 }

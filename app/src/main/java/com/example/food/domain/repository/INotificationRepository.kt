@@ -65,4 +65,9 @@ interface INotificationRepository {
      * Delete all notifications for a user.
      */
     suspend fun clearAllNotifications(userId: String): Resource<Unit>
+
+    /**
+     * Observe the latest active system broadcast in realtime.
+     */
+    fun observeLatestBroadcast(): Flow<com.example.food.data.model.SystemBroadcast?>
 }

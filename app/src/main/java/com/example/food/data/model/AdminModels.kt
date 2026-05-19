@@ -7,6 +7,14 @@ data class AdminDashboardData(
     val totalOrders: Int = 0,
     val activeUsers: Int = 0,
     val pendingVendors: Int = 0,
+    val activeVendors: Int = 0,
+    val suspendedVendors: Int = 0,
+    val liveOrders: Int = 0,
+    val failedOrders: Int = 0,
+    val todayOrders: Int = 0,
+    val commission: Double = 0.0,
+    val pendingPayout: Double = 0.0,
+    val systemWarnings: Int = 0,
     val recentOrders: List<Order> = emptyList(),
     val revenueByDay: Map<String, Double> = emptyMap(), // Date string to revenue
     val topSellingMeals: List<Pair<String, Int>> = emptyList(), // Meal name to count
@@ -35,3 +43,11 @@ data class AdminReport(
 enum class ReportType {
     DAILY, WEEKLY, MONTHLY
 }
+
+data class SystemBroadcast(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val message: String = "",
+    val timestamp: Long = System.currentTimeMillis(),
+    val senderId: String = "admin",
+    val active: Boolean = true
+)
