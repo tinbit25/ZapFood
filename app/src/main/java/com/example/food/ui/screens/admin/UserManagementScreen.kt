@@ -104,7 +104,7 @@ fun UserManagementScreen(
                         val users = usersState.data ?: emptyList()
                         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             items(users) { user ->
-                                UserCard(user, onStatusToggle = { viewModel.toggleUserStatus(user) })
+                                UserCard(user)
                             }
                         }
                     }
@@ -115,7 +115,7 @@ fun UserManagementScreen(
 }
 
 @Composable
-fun UserCard(user: User, onStatusToggle: () -> Unit) {
+fun UserCard(user: User) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -156,17 +156,6 @@ fun UserCard(user: User, onStatusToggle: () -> Unit) {
                     }
                 }
             }
-            
-            Switch(
-                checked = user.isActive,
-                onCheckedChange = { onStatusToggle() },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = Color(0xFF4CAF50),
-                    uncheckedThumbColor = Color.Gray,
-                    uncheckedTrackColor = Color(0xFF333333)
-                )
-            )
         }
     }
 }
