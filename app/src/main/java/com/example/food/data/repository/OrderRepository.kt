@@ -22,9 +22,14 @@ class OrderRepository {
 
     suspend fun saveOrder(order: Order): Resource<Unit> {
         return try {
+            android.util.Log.d("ORDER_REPO", "Saving order: ${order.orderId}, vendorId: ${order.vendorId}, customerId: ${order.customerId}")
+            android.util.Log.d("ORDER_REPO", "Order customerPhone: ${order.customerPhone}")
+            android.util.Log.d("ORDER_REPO", "Order deliveryInfo: ${order.deliveryInfo}")
             ordersCollection.document(order.orderId).set(order).await()
+            android.util.Log.d("ORDER_REPO", "Order saved successfully")
             Resource.Success(Unit)
         } catch (e: Exception) {
+            android.util.Log.e("ORDER_REPO", "Failed to save order: ${e.localizedMessage}", e)
             Resource.Error(e.localizedMessage ?: "Failed to save order")
         }
     }

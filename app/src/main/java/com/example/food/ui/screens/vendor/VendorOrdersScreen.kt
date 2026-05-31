@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,7 +37,10 @@ fun VendorOrdersScreen(
     val tabs = listOf("New", "Preparing", "Ready", "Pickup", "Completed", "Cancelled")
 
     LaunchedEffect(user) {
-        user?.let { orderViewModel.fetchVendorOrders(it.userId) }
+        user?.let {
+            android.util.Log.d("VENDOR_ORDERS", "Fetching orders for vendor: ${it.userId}")
+            orderViewModel.fetchVendorOrders(it.userId)
+        }
     }
 
     Scaffold(
@@ -70,6 +74,10 @@ fun VendorOrdersScreen(
     ) { padding ->
         val filteredOrders = remember(ordersState, selectedTab) {
             val allOrders = (ordersState as? Resource.Success)?.data ?: emptyList()
+            android.util.Log.d("VENDOR_ORDERS", "Total orders fetched: ${allOrders.size}")
+            allOrders.forEach { order ->
+                android.util.Log.d("VENDOR_ORDERS", "Order: ${order.orderId}, vendorId: ${order.vendorId}, status: ${order.orderStatus}, paymentStatus: ${order.paymentStatus}")
+            }
             // Remove payment gate - show all orders regardless of payment status
             val orders = allOrders
             when (selectedTab) {
@@ -82,6 +90,7 @@ fun VendorOrdersScreen(
                 else -> orders
             }
         }
+        android.util.Log.d("VENDOR_ORDERS", "Filtered orders count: ${filteredOrders.size}")
 
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (ordersState is Resource.Loading) {
@@ -114,6 +123,7 @@ fun VendorOrdersScreen(
 
 @Composable
 fun VendorProfessionalOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> Unit) {
+    val context = LocalContext.current
     val dateFormat = remember { SimpleDateFormat("HH:mm, dd MMM", Locale.getDefault()) }
     
     Surface(
@@ -210,6 +220,8 @@ fun VendorProfessionalOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> U
                                     )
                                     val mapIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, gmmIntentUri)
                                     mapIntent.setPackage("com.google.android.apps.maps")
+                                    mapIntent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    context.startActivity(mapIntent)
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4285F4)),
                                 shape = RoundedCornerShape(8.dp),
