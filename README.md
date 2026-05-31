@@ -1,5 +1,5 @@
 
-# 🍽️ ZapFood — AI-Powered Food Delivery & Restaurant Intelligence Platform
+# 🍽️ ZapFood — A Real-Time Food Discovery and Flexible Ordering Platform for the Ethiopian Market
 
 > A next-generation Ethiopian food delivery ecosystem combining intelligent meal discovery, smart dine-in experiences, real-time order management, and AI-ready culinary intelligence.
 
