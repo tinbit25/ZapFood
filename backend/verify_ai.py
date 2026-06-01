@@ -89,6 +89,29 @@ async def test_hybrid_logic():
         except Exception as e:
             print(f"❌ Hybrid request failed: {e}")
 
+async def test_chat_endpoint():
+    print("\n--- 5. Testing AI ChatBot (Gemini / Heuristics Fallback) ---")
+    url = f"{BASE_URL}/api/ai/chat"
+    payload = {
+        "userId": "user123",
+        "message": "I'm looking for fasting options please."
+    }
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            response = await client.post(url, json=payload)
+            if response.status_code == 200:
+                data = response.json()
+                print("✅ ChatBot responded successfully")
+                print(f"   Reply: {data.get('replyText')}")
+                suggested = data.get("suggestedMeals", [])
+                print(f"   Suggested Meals count: {len(suggested)}")
+                for m in suggested:
+                    print(f"     - {m.get('name')} (Price: {m.get('price')} ETB, Score: {m.get('matchScore')})")
+            else:
+                print(f"❌ ChatBot API failed {response.status_code}: {response.text}")
+        except Exception as e:
+            print(f"❌ ChatBot request failed: {e}")
+
 async def main():
     print("==================================================")
     print("      ZapFood AI System Verification Tool")
@@ -100,6 +123,7 @@ async def main():
     await asyncio.sleep(1)
     await test_ai_recommendations()
     await test_hybrid_logic()
+    await test_chat_endpoint()
     
     print("\n==================================================")
     print("      Verification Complete")

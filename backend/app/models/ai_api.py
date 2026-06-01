@@ -32,3 +32,12 @@ class AIRecommendationResponse(BaseModel):
     recommendedMeals: List[ScoredMealResponse]
     generatedAt: str
     processingTimeMs: float
+
+class AIChatRequest(BaseModel):
+    userId: str
+    message: str
+
+class AIChatResponse(BaseModel):
+    replyText: str
+    suggestedMeals: List[ScoredMealResponse]
+    generatedAt: str

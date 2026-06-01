@@ -8,6 +8,7 @@ class Meal(BaseModel):
     category: str
     vendorId: str
     vendorName: str
+    imageUrl: str = ""
     fastingFriendly: bool = False
     veganFriendly: bool = False
     foodType: str = "NON_FASTING" # FASTING, NON_FASTING
@@ -21,6 +22,10 @@ class Meal(BaseModel):
     popularityScore: float = 0.0
     averageRating: float = 0.0
 
+    @property
+    def mealTimes(self) -> List[str]:
+        return self.mealTime
+
 class UserFoodPreference(BaseModel):
     userId: str
     fastingMode: bool = False
@@ -32,6 +37,22 @@ class UserFoodPreference(BaseModel):
     favoriteVendors: List[str] = []
     favoriteCategories: List[str] = []
     lastUpdated: Optional[int] = None
+
+    @property
+    def spiceTolerance(self) -> str:
+        return self.spicePreference
+
+    @property
+    def frequentlyOrderedCategories(self) -> List[str]:
+        return self.favoriteCategories
+
+    @property
+    def favoriteMeals(self) -> List[str]:
+        return self.favoriteFoods
+
+    @property
+    def dislikedMeals(self) -> List[str]:
+        return []
 
 class RecommendationRequest(BaseModel):
     user_preference: UserFoodPreference

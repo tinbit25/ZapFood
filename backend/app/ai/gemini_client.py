@@ -21,14 +21,16 @@ class GeminiClient:
             }
         )
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
     def generate_recommendations(self, prompt: str) -> dict:
         """
         Sends a prompt to Gemini and parses the structured JSON response.
         """
         if not self.settings.gemini_api_key:
             raise ValueError("Gemini API Key missing")
+        return self._call_gemini_api(prompt)
 
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+    def _call_gemini_api(self, prompt: str) -> dict:
         try:
             logger.info(f"Sending prompt to Gemini (Model: {self.settings.gemini_model_name})")
             response = self.model.generate_content(prompt)
