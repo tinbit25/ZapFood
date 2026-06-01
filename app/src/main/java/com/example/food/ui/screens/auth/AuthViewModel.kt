@@ -7,6 +7,7 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.food.core.util.Resource
+import com.example.food.core.util.ValidationUtils
 import com.example.food.data.model.*
 import com.example.food.domain.usecase.AuthUseCase
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -40,6 +41,42 @@ sealed class PhoneAuthState {
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val authUseCase = AuthUseCase(application)
+
+    // Validation State Flows
+    private val _emailError = MutableStateFlow<String?>(null)
+    val emailError: StateFlow<String?> = _emailError.asStateFlow()
+
+    private val _passwordError = MutableStateFlow<String?>(null)
+    val passwordError: StateFlow<String?> = _passwordError.asStateFlow()
+
+    private val _fullNameError = MutableStateFlow<String?>(null)
+    val fullNameError: StateFlow<String?> = _fullNameError.asStateFlow()
+
+    private val _confirmPasswordError = MutableStateFlow<String?>(null)
+    val confirmPasswordError: StateFlow<String?> = _confirmPasswordError.asStateFlow()
+
+    fun onEmailChanged(email: String) {
+        _emailError.value = ValidationUtils.validateEmail(email)
+    }
+
+    fun onPasswordChanged(password: String) {
+        _passwordError.value = ValidationUtils.validatePassword(password)
+    }
+
+    fun onFullNameChanged(name: String) {
+        _fullNameError.value = ValidationUtils.validateFullName(name)
+    }
+
+    fun onConfirmPasswordChanged(confirm: String, password: String) {
+        _confirmPasswordError.value = if (confirm != password) "Passwords do not match" else null
+    }
+
+    fun clearValidationErrors() {
+        _emailError.value = null
+        _passwordError.value = null
+        _fullNameError.value = null
+        _confirmPasswordError.value = null
+    }
 
     private val _authState = MutableStateFlow<AdvancedAuthState>(AdvancedAuthState.Idle)
     val authState: StateFlow<AdvancedAuthState> = _authState.asStateFlow()
@@ -302,5 +339,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetState() {
         _authState.value = AdvancedAuthState.Idle
+        clearValidationErrors()
     }
 }

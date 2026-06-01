@@ -36,6 +36,15 @@ fun SignUpScreen(
     val authState by viewModel.authState.collectAsState()
     var selectedRole by remember { mutableStateOf(com.example.food.data.model.UserRole.CUSTOMER) }
 
+    val emailError by viewModel.emailError.collectAsState()
+    val passwordError by viewModel.passwordError.collectAsState()
+    val fullNameError by viewModel.fullNameError.collectAsState()
+    val confirmPasswordError by viewModel.confirmPasswordError.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.clearValidationErrors()
+    }
+
     LaunchedEffect(authState) {
         if (authState is AdvancedAuthState.Success) {
             onNavigateToOnboarding(selectedRole)
@@ -47,6 +56,10 @@ fun SignUpScreen(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+
+    val isFormValid = fullName.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && confirmPassword.isNotEmpty() &&
+            fullNameError == null && emailError == null && passwordError == null && confirmPasswordError == null
 
     Column(
         modifier = Modifier
@@ -103,28 +116,43 @@ fun SignUpScreen(
 
             CustomTextField(
                 value = fullName,
-                onValueChange = { fullName = it },
+                onValueChange = { 
+                    fullName = it
+                    viewModel.onFullNameChanged(it)
+                },
                 placeholder = "Full Name",
-                leadingIcon = Icons.Default.Person
+                leadingIcon = Icons.Default.Person,
+                errorText = fullNameError
             )
             Spacer(modifier = Modifier.height(16.dp))
 
             CustomTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = { 
+                    email = it
+                    viewModel.onEmailChanged(it)
+                },
                 placeholder = "Email Address",
                 leadingIcon = Icons.Default.Email,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                errorText = emailError
             )
             Spacer(modifier = Modifier.height(16.dp))
 
             CustomTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { 
+                    password = it
+                    viewModel.onPasswordChanged(it)
+                    if (confirmPassword.isNotEmpty()) {
+                        viewModel.onConfirmPasswordChanged(confirmPassword, it)
+                    }
+                },
                 placeholder = "Password",
                 leadingIcon = Icons.Default.Lock,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                errorText = passwordError,
                 trailingIcon = {
                     val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -136,11 +164,21 @@ fun SignUpScreen(
 
             CustomTextField(
                 value = confirmPassword,
-                onValueChange = { confirmPassword = it },
+                onValueChange = { 
+                    confirmPassword = it
+                    viewModel.onConfirmPasswordChanged(it, password)
+                },
                 placeholder = "Confirm Password",
                 leadingIcon = Icons.Default.Lock,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                errorText = confirmPasswordError,
+                trailingIcon = {
+                    val image = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                    IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                        Icon(imageVector = image, contentDescription = "Toggle password visibility", tint = Color.Gray)
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -148,7 +186,8 @@ fun SignUpScreen(
             PrimaryButton(
                 text = "Create Account",
                 onClick = { viewModel.register(fullName, email, password, selectedRole) },
-                enabled = email.isNotEmpty() && password == confirmPassword && authState !is AdvancedAuthState.Loading,
+                enabled = isFormValid && authState !is AdvancedAuthState.Loading,
+                isLoading = authState is AdvancedAuthState.Loading,
                 backgroundColor = Color(0xFFF16B24)
             )
 
@@ -171,11 +210,6 @@ fun SignUpScreen(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(text = "Sign Up with Google", fontWeight = FontWeight.Bold)
-            }
-
-            if (authState is AdvancedAuthState.Loading) {
-                Spacer(modifier = Modifier.height(16.dp))
-                CircularProgressIndicator(color = Color(0xFFF16B24))
             }
 
             if (authState is AdvancedAuthState.Error) {

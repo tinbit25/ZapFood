@@ -27,13 +27,16 @@ fun CustomTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     singleLine: Boolean = true,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    errorText: String? = null
 ) {
+    val isError = !errorText.isNullOrEmpty()
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.fillMaxWidth(),
         enabled = enabled,
+        isError = isError,
         placeholder = { Text(text = placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         leadingIcon = leadingIcon?.let {
             { Icon(imageVector = it, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -43,6 +46,9 @@ fun CustomTextField(
         keyboardOptions = keyboardOptions,
         singleLine = singleLine,
         shape = RoundedCornerShape(12.dp),
+        supportingText = errorText?.let {
+            { Text(text = it, color = MaterialTheme.colorScheme.error) }
+        },
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -51,7 +57,12 @@ fun CustomTextField(
             unfocusedBorderColor = MaterialTheme.colorScheme.outline,
             focusedTextColor = MaterialTheme.colorScheme.onSurface,
             unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-            cursorColor = MaterialTheme.colorScheme.primary
+            cursorColor = MaterialTheme.colorScheme.primary,
+            errorContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            errorBorderColor = MaterialTheme.colorScheme.error,
+            errorCursorColor = MaterialTheme.colorScheme.error,
+            errorLeadingIconColor = MaterialTheme.colorScheme.error,
+            errorTrailingIconColor = MaterialTheme.colorScheme.error
         )
     )
 }

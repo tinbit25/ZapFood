@@ -34,6 +34,12 @@ fun LoginScreen(
     viewModel: AuthViewModel = viewModel()
 ) {
     val authState by viewModel.authState.collectAsState()
+    val emailError by viewModel.emailError.collectAsState()
+    val passwordError by viewModel.passwordError.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.clearValidationErrors()
+    }
 
     LaunchedEffect(authState) {
         if (authState is AdvancedAuthState.Success) {
@@ -76,20 +82,28 @@ fun LoginScreen(
 
             CustomTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = { 
+                    email = it
+                    viewModel.onEmailChanged(it)
+                },
                 placeholder = "Email Address",
                 leadingIcon = Icons.Default.Email,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                errorText = emailError
             )
             Spacer(modifier = Modifier.height(16.dp))
 
             CustomTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { 
+                    password = it
+                    viewModel.onPasswordChanged(it)
+                },
                 placeholder = "Password",
                 leadingIcon = Icons.Default.Lock,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                errorText = passwordError,
                 trailingIcon = {
                     val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -116,7 +130,8 @@ fun LoginScreen(
             PrimaryButton(
                 text = "Log In",
                 onClick = { viewModel.login(email, password) },
-                enabled = authState !is AdvancedAuthState.Loading,
+                enabled = email.isNotEmpty() && password.isNotEmpty() && authState !is AdvancedAuthState.Loading && emailError == null && passwordError == null,
+                isLoading = authState is AdvancedAuthState.Loading,
                 backgroundColor = Color(0xFFF16B24)
             )
 
@@ -169,10 +184,7 @@ fun LoginScreen(
                 Text(text = "Log In with Phone Number", fontWeight = FontWeight.Bold)
             }
 
-            if (authState is AdvancedAuthState.Loading) {
-                Spacer(modifier = Modifier.height(16.dp))
-                CircularProgressIndicator(color = Color(0xFFF16B24))
-            }
+            // Removed duplicate loading indicator as PrimaryButton handles it now
 
             if (authState is AdvancedAuthState.Error) {
                 Text(

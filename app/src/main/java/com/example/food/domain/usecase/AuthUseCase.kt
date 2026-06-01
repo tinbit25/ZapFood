@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.food.core.security.SecurityManager
 import com.example.food.core.util.Resource
 import com.example.food.core.util.Validator
+import com.example.food.core.util.ValidationUtils
 import com.example.food.data.model.*
 import com.example.food.data.repository.AuthRepository
 import com.example.food.data.repository.UserRepository
@@ -25,20 +26,19 @@ class AuthUseCase(
         val sanitizedName = Validator.sanitizeInput(fullName)
         val sanitizedEmail = Validator.sanitizeInput(email)
         
-        if (sanitizedName.isEmpty()) {
-            emit(Resource.Error("Full name is required"))
+        val nameError = ValidationUtils.validateFullName(sanitizedName)
+        if (nameError != null) {
+            emit(Resource.Error(nameError))
             return@flow
         }
-        if (!Validator.validateEmail(sanitizedEmail)) {
-            emit(Resource.Error("Invalid email address"))
+        val emailError = ValidationUtils.validateEmail(sanitizedEmail)
+        if (emailError != null) {
+            emit(Resource.Error(emailError))
             return@flow
         }
-        if (password.isEmpty()) {
-            emit(Resource.Error("Password is required"))
-            return@flow
-        }
-        if (!Validator.validatePassword(password)) {
-            emit(Resource.Error("Password too weak (8+ chars, upper, lower, number, special)"))
+        val passwordError = ValidationUtils.validatePassword(password)
+        if (passwordError != null) {
+            emit(Resource.Error(passwordError))
             return@flow
         }
 
@@ -184,8 +184,9 @@ class AuthUseCase(
             return@flow
         }
 
-        if (!Validator.validatePassword(newPassword)) {
-            emit(Resource.Error("Password too weak"))
+        val passwordError = ValidationUtils.validatePassword(newPassword)
+        if (passwordError != null) {
+            emit(Resource.Error(passwordError))
             return@flow
         }
 
@@ -216,8 +217,9 @@ class AuthUseCase(
             }
 
             // 3. Validate new password strength
-            if (!Validator.validatePassword(newPassword)) {
-                emit(Resource.Error("New password too weak"))
+            val passwordError = ValidationUtils.validatePassword(newPassword)
+            if (passwordError != null) {
+                emit(Resource.Error(passwordError))
                 return@flow
             }
 
