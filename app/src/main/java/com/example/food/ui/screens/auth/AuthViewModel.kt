@@ -7,7 +7,7 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.food.core.util.Resource
-import com.example.food.core.util.ValidationUtils
+import com.example.food.core.error.ValidationMapper
 import com.example.food.data.model.*
 import com.example.food.domain.usecase.AuthUseCase
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -56,15 +56,15 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     val confirmPasswordError: StateFlow<String?> = _confirmPasswordError.asStateFlow()
 
     fun onEmailChanged(email: String) {
-        _emailError.value = ValidationUtils.validateEmail(email)
+        _emailError.value = ValidationMapper.getEmailErrorMessage(email)
     }
 
     fun onPasswordChanged(password: String) {
-        _passwordError.value = ValidationUtils.validatePassword(password)
+        _passwordError.value = ValidationMapper.getPasswordErrorMessage(password)
     }
 
     fun onFullNameChanged(name: String) {
-        _fullNameError.value = ValidationUtils.validateFullName(name)
+        _fullNameError.value = ValidationMapper.getDisplayNameErrorMessage(name)
     }
 
     fun onConfirmPasswordChanged(confirm: String, password: String) {

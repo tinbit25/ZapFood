@@ -56,6 +56,32 @@ class CartViewModel : ViewModel() {
         }
     }
 
+    fun decreaseMeal(mealId: String) {
+        _cartState.update { state ->
+            val existing = state.meals.find { it.first.id == mealId } ?: return@update state
+            if (existing.second <= 1) {
+                state.copy(meals = state.meals.filter { it.first.id != mealId })
+            } else {
+                state.copy(meals = state.meals.map {
+                    if (it.first.id == mealId) it.first to it.second - 1 else it
+                })
+            }
+        }
+    }
+
+    fun decreaseMealPlan(planId: String) {
+        _cartState.update { state ->
+            val existing = state.mealPlans.find { it.first.id == planId } ?: return@update state
+            if (existing.second <= 1) {
+                state.copy(mealPlans = state.mealPlans.filter { it.first.id != planId })
+            } else {
+                state.copy(mealPlans = state.mealPlans.map {
+                    if (it.first.id == planId) it.first to it.second - 1 else it
+                })
+            }
+        }
+    }
+
     fun removeMeal(mealId: String) {
         _cartState.update { state ->
             state.copy(meals = state.meals.filter { it.first.id != mealId })

@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun SplashScreen(
@@ -27,14 +28,13 @@ fun SplashScreen(
     LaunchedEffect(key1 = true) {
         delay(2000L) // 2 second delay for splash
         
-        onboardingDataStore.readOnboardingState().collect { completed ->
-            if (!completed) {
-                onNavigateToOnboarding()
-            } else if (FirebaseAuth.getInstance().currentUser != null) {
-                onNavigateToHome()
-            } else {
-                onNavigateToWelcome()
-            }
+        val completed = onboardingDataStore.readOnboardingState().first()
+        if (!completed) {
+            onNavigateToOnboarding()
+        } else if (FirebaseAuth.getInstance().currentUser != null) {
+            onNavigateToHome()
+        } else {
+            onNavigateToWelcome()
         }
     }
 

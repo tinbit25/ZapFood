@@ -50,6 +50,12 @@ class PreferenceViewModel(
         }
     }
     
+    fun savePreferences(prefs: UserFoodPreference) {
+        viewModelScope.launch {
+            useCase.saveExplicitPreferences(prefs)
+        }
+    }
+    
     fun resetOnboardingStatus() {
         _onboardingStatus.value = null
     }

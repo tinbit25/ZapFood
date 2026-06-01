@@ -55,6 +55,7 @@ class OrderUseCase(
         }
 
         val deliveryFee = com.example.food.domain.manager.PricingEngine.calculateDeliveryFee(OrderType.DELIVERY)
+        val packagingFee = com.example.food.domain.manager.PricingEngine.calculatePackagingFee(OrderType.DELIVERY)
         val order = Order(
             orderId = UUID.randomUUID().toString(),
             customerId = user.userId,
@@ -63,7 +64,7 @@ class OrderUseCase(
             businessName = businessName ?: "",
             mealPlanId = mealPlanId,
             items = orderItems,
-            totalAmount = com.example.food.domain.manager.PricingEngine.calculateTotal(subtotal, deliveryFee, 0.0),
+            totalAmount = com.example.food.domain.manager.PricingEngine.calculateTotal(subtotal, deliveryFee, packagingFee, 0.0),
             deliveryFee = deliveryFee,
             orderStatus = OrderStatus.PENDING,
             createdAt = System.currentTimeMillis(),

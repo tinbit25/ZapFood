@@ -248,8 +248,14 @@ fun AppNavigation(
                 OnboardingScreen(
                     viewModel = onboardingViewModel,
                     onNavigateToWelcome = {
-                        navController.navigate(Screen.Welcome.route) {
-                            popUpTo(Screen.Onboarding.route) { inclusive = true }
+                        if (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser != null) {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Onboarding.route) { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate(Screen.Welcome.route) {
+                                popUpTo(Screen.Onboarding.route) { inclusive = true }
+                            }
                         }
                     }
                 )
@@ -302,7 +308,7 @@ fun AppNavigation(
                                 popUpTo(Screen.Welcome.route) { inclusive = true }
                             }
                         } else {
-                            navController.navigate(Screen.PreferencesOnboarding.route) {
+                            navController.navigate(Screen.Home.route) {
                                 popUpTo(Screen.Welcome.route) { inclusive = true }
                             }
                         }
@@ -400,6 +406,9 @@ fun AppNavigation(
                     },
                     onNavigateToVendor = { vendorId -> 
                         navController.navigate(Screen.VendorStorefront.createRoute(vendorId))
+                    },
+                    onNavigateToCart = {
+                        navController.navigate(Screen.Cart.route)
                     },
                     userViewModel = userViewModel,
                     recommendationViewModel = recommendationViewModel,

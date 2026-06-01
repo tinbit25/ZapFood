@@ -53,10 +53,12 @@ fun CheckoutScreen(
     
     var pointsToRedeem by remember { mutableIntStateOf(0) }
     val rewardDiscount = (pointsToRedeem / 10) * 100.0 // 10 points = 100 ETB
-    
-    val deliveryFee = 50.0 // ETB
+
+    var selectedOrderType by remember { mutableStateOf(OrderType.DELIVERY) }
+    val deliveryFee = if (selectedOrderType == OrderType.DELIVERY) 50.0 else 0.0
+    val takeawayFee = if (selectedOrderType == OrderType.TAKEAWAY) 20.0 else 0.0
     val subtotal = cartState.subtotal
-    val total = subtotal + deliveryFee - rewardDiscount
+    val total = subtotal + deliveryFee + takeawayFee - rewardDiscount
 
     val paymentState by paymentViewModel.paymentState.collectAsState()
     
@@ -120,15 +122,51 @@ fun CheckoutScreen(
                     .padding(24.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                Text(text = "Delivery Address", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                // Order Type Selector
+                Text(text = "Order Type", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 Spacer(modifier = Modifier.height(12.dp))
-                CheckoutOptionCard(
-                    title = selectedAddress,
-                    icon = Icons.Default.LocationOn,
-                    onClick = { /* Navigate to address selection */ }
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(OrderType.DELIVERY, OrderType.TAKEAWAY, OrderType.DINE_IN).forEach { type ->
+                        val label = when (type) {
+                            OrderType.DELIVERY -> "🛵 Delivery"
+                            OrderType.TAKEAWAY -> "🥡 Takeaway"
+                            OrderType.DINE_IN  -> "🍽️ Dine-In"
+                            else -> type.name
+                        }
+                        Surface(
+                            modifier = androidx.compose.ui.Modifier.weight(1f)
+                                .clickable { selectedOrderType = type },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (selectedOrderType == type) Color(0xFFF16B24) else Color(0xFF1A1A1A),
+                            border = if (selectedOrderType != type)
+                                androidx.compose.foundation.BorderStroke(1.dp, Color.Gray.copy(alpha = 0.3f))
+                            else null
+                        ) {
+                            Text(
+                                text = label,
+                                modifier = androidx.compose.ui.Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (selectedOrderType == type) Color.White else Color.Gray,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+                }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Show address only for Delivery
+                if (selectedOrderType == OrderType.DELIVERY) {
+                    Text(text = "Delivery Address", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    CheckoutOptionCard(
+                        title = selectedAddress,
+                        icon = Icons.Default.LocationOn,
+                        onClick = { /* Navigate to address selection */ }
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
 
                 // Reward Points Section
                 if (pointsBalance > 0) {
@@ -204,7 +242,8 @@ fun CheckoutScreen(
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.Gray.copy(alpha = 0.3f))
                     
                     SummaryRow("Subtotal", "", "ETB ${"%,.0f".format(subtotal)}")
-                    SummaryRow("Delivery Fee", "", "ETB ${"%,.0f".format(deliveryFee)}")
+                    if (deliveryFee > 0) SummaryRow("Delivery Fee", "", "ETB ${"%,.0f".format(deliveryFee)}")
+                    if (takeawayFee > 0) SummaryRow("Packaging Fee", "", "ETB ${"%,.0f".format(takeawayFee)}")
                     if (rewardDiscount > 0) {
                         SummaryRow("Reward Discount", "", "- ETB ${"%,.0f".format(rewardDiscount)}")
                     }

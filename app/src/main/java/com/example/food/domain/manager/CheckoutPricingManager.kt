@@ -9,13 +9,15 @@ class CheckoutPricingManager {
         pointsToRedeem: Int = 0
     ): CheckoutSummary {
         val deliveryFee = PricingEngine.calculateDeliveryFee(orderType)
+        val packagingFee = PricingEngine.calculatePackagingFee(orderType)
         val discount = PricingEngine.calculateDiscount(pointsToRedeem)
         val tax = PricingEngine.calculateTax(subtotal)
-        val total = PricingEngine.calculateTotal(subtotal, deliveryFee, discount)
+        val total = PricingEngine.calculateTotal(subtotal, deliveryFee, packagingFee, discount)
 
         return CheckoutSummary(
             subtotal = subtotal,
             deliveryFee = deliveryFee,
+            packagingFee = packagingFee,
             discount = discount,
             tax = tax,
             total = total
@@ -26,6 +28,7 @@ class CheckoutPricingManager {
 data class CheckoutSummary(
     val subtotal: Double,
     val deliveryFee: Double,
+    val packagingFee: Double,
     val discount: Double,
     val tax: Double,
     val total: Double

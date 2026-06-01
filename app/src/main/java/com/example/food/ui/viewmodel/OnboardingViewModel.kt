@@ -32,24 +32,22 @@ class OnboardingViewModel(
     private fun loadOnboardingItems() {
         _onboardingItems.value = listOf(
             OnboardingItem(
-                title = "Discover Ethiopian Meals",
-                description = "Browse a wide selection of authentic Ethiopian dishes from your favorite local vendors and restaurants.",
-                icon = "🥘"
+                title = "Discover Ethiopian Foods",
+                description = "Experience authentic Injera, savory Tibs, traditional coffee, and delicious cultural meals from local restaurants.",
+                type = "discover",
+                tags = listOf("Injera", "Tibs", "Coffee", "Traditional")
             ),
             OnboardingItem(
-                title = "Fast Delivery & Takeaway",
-                description = "Get your favorite meals delivered straight to your door or ready for pickup in record time.",
-                icon = "🛵"
+                title = "Order Your Way",
+                description = "Get your meals delivered hot to your doorstep, prepared for quick takeaway, or enjoy dining in at restaurants.",
+                type = "order",
+                tags = listOf("Delivery", "Takeaway", "Dine-In")
             ),
             OnboardingItem(
-                title = "Personalized Meal Plans",
-                description = "Stay healthy and organized with our AI-powered meal planning tailored to your dietary needs and fasting habits.",
-                icon = "📅"
-            ),
-            OnboardingItem(
-                title = "Experience Ethiopian Culture",
-                description = "Celebrate our rich culinary heritage with every bite. Discover hidden gems and traditional flavors.",
-                icon = "🇪🇹"
+                title = "Fast & Personalized",
+                description = "Get AI-powered smart recommendations, find nearby restaurants, and quickly reorders customized just for you.",
+                type = "personalized",
+                tags = listOf("Smart Recommendations", "Nearby", "Quick Reorder")
             )
         )
     }

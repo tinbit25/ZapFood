@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.food.ui.components.CustomTextField
 import com.example.food.ui.components.PrimaryButton
 import com.example.food.ui.components.TopNavBar
+import com.example.food.ui.components.AppSnackbarHost
 
 @Composable
 fun LoginScreen(
@@ -37,6 +38,8 @@ fun LoginScreen(
     val emailError by viewModel.emailError.collectAsState()
     val passwordError by viewModel.passwordError.collectAsState()
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(Unit) {
         viewModel.clearValidationErrors()
     }
@@ -45,6 +48,12 @@ fun LoginScreen(
         if (authState is AdvancedAuthState.Success) {
             onNavigateToHome()
             // viewModel.resetState() // Optionally reset or keep state
+        } else if (authState is AdvancedAuthState.Error) {
+            snackbarHostState.showSnackbar(
+                message = (authState as AdvancedAuthState.Error).message,
+                actionLabel = "ERROR",
+                duration = SnackbarDuration.Short
+            )
         }
     }
 
@@ -52,17 +61,21 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF0F0F0F))
-    ) {
-        TopNavBar(title = "Log In")
-
+    Scaffold(
+        snackbarHost = { AppSnackbarHost(snackbarHostState) },
+        containerColor = Color(0xFF0F0F0F)
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(paddingValues)
+        ) {
+            TopNavBar(title = "Log In")
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(32.dp))
@@ -186,13 +199,7 @@ fun LoginScreen(
 
             // Removed duplicate loading indicator as PrimaryButton handles it now
 
-            if (authState is AdvancedAuthState.Error) {
-                Text(
-                    text = (authState as AdvancedAuthState.Error).message,
-                    color = Color(0xFFE57373),
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-            }
+            // Removed generic error text, now handled by AppSnackbarHost
 
             Spacer(modifier = Modifier.weight(1f))
             Row(
@@ -210,4 +217,5 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
+}
 }

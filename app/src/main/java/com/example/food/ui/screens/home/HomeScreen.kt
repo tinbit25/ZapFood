@@ -125,30 +125,6 @@ fun HomeScreen(
             HomeSearchBar(onSearchClick = onNavigateToSearch)
         }
 
-        // Ethiopian Classification Filters
-        item {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(foodFilters) { filter ->
-                    FilterChip(
-                        filter = filter,
-                        isSelected = selectedFilter == filter,
-                        onClick = {
-                            selectedFilter = if (selectedFilter == filter) null else filter
-                            mealViewModel.updateFilters(
-                                mealViewModel.currentFilters.value.copy(
-                                    foodType = selectedFilter?.foodType,
-                                    dietType = selectedFilter?.dietType
-                                )
-                            )
-                        }
-                    )
-                }
-            }
-        }
-
         // Discovery Center
         item {
             Column(
@@ -163,28 +139,10 @@ fun HomeScreen(
                     color = colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    com.example.food.ui.components.onboarding.FeatureDiscoveryHint(
-                        text = "Find restaurants nearby",
-                        icon = "📍",
-                        modifier = Modifier.weight(1f).clickable { onNavigateToVendorDiscovery() }
-                    )
-                    com.example.food.ui.components.onboarding.FeatureDiscoveryHint(
-                        text = "Track your order live",
-                        icon = "🛵",
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                
-                var showTooltip by remember { mutableStateOf(true) }
-                com.example.food.ui.components.onboarding.ContextualTooltip(
-                    text = "New: Personalized AI picks based on your fasting habits!",
-                    isVisible = showTooltip,
-                    onDismiss = { showTooltip = false },
-                    modifier = Modifier.padding(top = 12.dp)
+                com.example.food.ui.components.onboarding.FeatureDiscoveryHint(
+                    text = "Find Nearby Restaurants",
+                    icon = "📍",
+                    modifier = Modifier.fillMaxWidth().clickable { onNavigateToVendorDiscovery() }
                 )
             }
         }
@@ -241,41 +199,31 @@ fun HomeScreen(
             FeaturedPromoBanner()
         }
 
-        // Recommendations Hub Entry
+        // Ethiopian Classification Filters (Moved Above Food List)
         item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
-                    .clickable { onNavigateToSmartPreference() },
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant)
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        modifier = Modifier.size(48.dp),
-                        shape = CircleShape,
-                        color = colorScheme.primary.copy(alpha = 0.1f)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = colorScheme.primary)
+                items(foodFilters) { filter ->
+                    FilterChip(
+                        filter = filter,
+                        isSelected = selectedFilter == filter,
+                        onClick = {
+                            selectedFilter = if (selectedFilter == filter) null else filter
+                            mealViewModel.updateFilters(
+                                mealViewModel.currentFilters.value.copy(
+                                    foodType = selectedFilter?.foodType,
+                                    dietType = selectedFilter?.dietType
+                                )
+                            )
                         }
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(text = "Smart Picks", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colorScheme.onSurface)
-                        Text(text = "Personalized Ethiopian favorites", fontSize = 12.sp, color = colorScheme.onSurfaceVariant)
-                    }
-                    Spacer(modifier = Modifier.weight(1f))
-                    Icon(imageVector = Icons.Default.ChevronRight, contentDescription = null, tint = colorScheme.onSurfaceVariant)
+                    )
                 }
             }
         }
 
-        // Smart Picks Logic
+        // Smart Picks Logic (Simplified)
         if (recommendationState is RecommendationState.Loading) {
             item {
                 Box(modifier = Modifier.fillMaxWidth().height(150.dp), contentAlignment = Alignment.Center) {
@@ -285,7 +233,7 @@ fun HomeScreen(
         } else if (recommendationState is RecommendationState.Success) {
             val recData = recommendationState as RecommendationState.Success
             
-            // NEW: Top Restaurants Section
+            // Top Restaurants Section
             item {
                 SectionHeader(
                     title = "Top Restaurants 🏆", 
@@ -295,10 +243,7 @@ fun HomeScreen(
                     contentPadding = PaddingValues(horizontal = 20.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Using discovery UI style for consistency
                     items(recData.popularInAddis.take(5)) { scoredMeal ->
-                        // Since we don't have the full vendor list here yet, 
-                        // we show a simplified placeholder or just link to discovery
                         Surface(
                             modifier = Modifier
                                 .width(280.dp)
@@ -323,20 +268,6 @@ fun HomeScreen(
                 }
             }
 
-            if (recData.smartPicks.isNotEmpty()) {
-                item {
-                    SectionHeader(title = "Smart Picks For You ✨", onActionClick = {})
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(recData.smartPicks) { scoredMeal ->
-                            PopularMealCard(scoredMeal = scoredMeal, onClick = { onNavigateToDetails(scoredMeal.mealId) })
-                        }
-                    }
-                }
-            }
-
             if (recData.fastingMeals.isNotEmpty()) {
                 item {
                     SectionHeader(title = "Today's Fasting Specials 🌱", onActionClick = {})
@@ -347,18 +278,6 @@ fun HomeScreen(
                         items(recData.fastingMeals) { scoredMeal ->
                             PopularMealCard(scoredMeal = scoredMeal, onClick = { onNavigateToDetails(scoredMeal.mealId) })
                         }
-                    }
-                }
-            }
-
-            item {
-                SectionHeader(title = "Popular in Addis Ababa \uD83D\uDCCD", onActionClick = {})
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(recData.popularInAddis) { scoredMeal ->
-                        PopularMealCard(scoredMeal = scoredMeal, onClick = { onNavigateToDetails(scoredMeal.mealId) })
                     }
                 }
             }
@@ -548,7 +467,7 @@ fun HomeHeader(
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(text = "Deliver to", fontSize = 11.sp, color = colorScheme.onSurfaceVariant)
+                Text(text = "Hello,", fontSize = 11.sp, color = colorScheme.onSurfaceVariant)
                 Text(
                     text = userName, 
                     fontSize = 16.sp, 

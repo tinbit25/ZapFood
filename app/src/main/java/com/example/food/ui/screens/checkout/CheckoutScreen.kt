@@ -61,6 +61,7 @@ fun CheckoutScreen(
     }
     val rewardDiscount = pricingSummary.discount
     val deliveryFee = pricingSummary.deliveryFee
+    val packagingFee = pricingSummary.packagingFee
     val subtotal = pricingSummary.subtotal
     val total = pricingSummary.total
 
@@ -213,7 +214,7 @@ fun CheckoutScreen(
 
             item { PaymentMethodSection(uiState.paymentMethod, checkoutViewModel::setPaymentMethod) }
 
-            item { OrderSummarySection(cartState, deliveryFee, rewardDiscount, total) }
+            item { OrderSummarySection(cartState, deliveryFee, packagingFee, rewardDiscount, total) }
             
             item { Spacer(modifier = Modifier.height(100.dp)) }
         }
@@ -242,7 +243,7 @@ fun RewardSection(balance: Int, redeemed: Int, onToggle: () -> Unit) {
 }
 
 @Composable
-fun OrderSummarySection(cartState: CartState, deliveryFee: Double, discount: Double, total: Double) {
+fun OrderSummarySection(cartState: CartState, deliveryFee: Double, packagingFee: Double, discount: Double, total: Double) {
     Column(modifier = Modifier.padding(16.dp)) {
         Text("Order Summary", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(12.dp))
@@ -258,6 +259,7 @@ fun OrderSummarySection(cartState: CartState, deliveryFee: Double, discount: Dou
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 SummaryRow("Subtotal", "", "ETB ${cartState.subtotal}")
                 if (deliveryFee > 0) SummaryRow("Delivery Fee", "", "ETB $deliveryFee")
+                if (packagingFee > 0) SummaryRow("Packaging Fee", "", "ETB $packagingFee")
                 if (discount > 0) SummaryRow("Discount", "", "- ETB $discount", isNegative = true)
                 Spacer(Modifier.height(8.dp))
                 SummaryRow("Total", "", "ETB $total", isBold = true)

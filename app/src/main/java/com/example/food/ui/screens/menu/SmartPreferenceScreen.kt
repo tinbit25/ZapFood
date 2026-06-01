@@ -75,7 +75,7 @@ fun SmartPreferenceScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0A0A0A))
+            .background(MaterialTheme.colorScheme.background)
     ) {
         TopNavBar(
             title = "Smart Preferences",
@@ -102,7 +102,7 @@ fun SmartPreferenceScreen(
                     text = "Personalize Your Taste",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
                     text = "We'll tailor your smart picks to match your cultural habits.",
@@ -113,6 +113,27 @@ fun SmartPreferenceScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
+                // Auto-save logic for instant refresh
+                LaunchedEffect(fastingMode, selectedSpice, selectedBudget, dietaryType) {
+                    if (hasLoadedInitialData && userId.isNotEmpty()) {
+                        val prefs = UserFoodPreference(
+                            userId = userId,
+                            fastingMode = fastingMode,
+                            spicePreference = selectedSpice,
+                            budgetPreference = selectedBudget,
+                            dietaryType = dietaryType,
+                            favoriteFoods = favoriteFoods.split(",").map { it.trim() }.filter { it.isNotEmpty() },
+                            preferredMealTime = preferredMealTime,
+                            lastUpdated = System.currentTimeMillis()
+                        )
+                        // Save to Python AI Backend
+                        recommendationViewModel.saveUserPreferences(prefs) { }
+                        
+                        // Save to Android Firestore (so the UI updates)
+                        preferenceViewModel.savePreferences(prefs)
+                    }
+                }
+
                 // Fasting Mode
                 PreferenceSection(title = "Fasting Adherence") {
                     Row(
@@ -121,7 +142,7 @@ fun SmartPreferenceScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Strict Fasting Mode", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                            Text("Strict Fasting Mode", color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp, fontWeight = FontWeight.Medium)
                             Text("Only show fasting/vegan meals during fasting periods.", color = Color.Gray, fontSize = 12.sp)
                         }
                         Switch(
@@ -129,6 +150,30 @@ fun SmartPreferenceScreen(
                             onCheckedChange = { fastingMode = it },
                             colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFFF16B24), checkedTrackColor = Color(0xFFF16B24).copy(alpha = 0.5f))
                         )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Dietary Preference
+                PreferenceSection(title = "Dietary Preference") {
+                    val dietaryOptions = listOf("ANY", "VEGAN", "MEAT")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        dietaryOptions.forEach { type ->
+                            FilterChip(
+                                selected = dietaryType == type,
+                                onClick = { dietaryType = type },
+                                label = { Text(type.lowercase().replaceFirstChar { it.uppercase() }) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Color(0xFFF16B24),
+                                    selectedLabelColor = Color.White,
+                                    labelColor = Color.Gray
+                                )
+                            )
+                        }
                     }
                 }
 
@@ -198,32 +243,11 @@ fun SmartPreferenceScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 PrimaryButton(
-                    text = if (isSaving) "Saving..." else "Update Smart Picks ✨",
-                    onClick = {
-                        val uid = user?.userId ?: return@PrimaryButton
-                        isSaving = true
-                        val prefs = UserFoodPreference(
-                            userId = uid,
-                            fastingMode = fastingMode,
-                            spicePreference = selectedSpice,
-                            budgetPreference = selectedBudget,
-                            dietaryType = dietaryType,
-                            favoriteFoods = favoriteFoods.split(",").map { it.trim() }.filter { it.isNotEmpty() },
-                            preferredMealTime = preferredMealTime,
-                            lastUpdated = System.currentTimeMillis()
-                        )
-                        
-                        recommendationViewModel.saveUserPreferences(prefs) { success ->
-                            isSaving = false
-                            if (success) {
-                                onPreferencesSaved()
-                            }
-                        }
-                    },
-                    enabled = !isSaving,
+                    text = "Done ✨",
+                    onClick = onPreferencesSaved,
                     backgroundColor = Color(0xFFF16B24)
                 )
-                
+
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }
@@ -233,7 +257,7 @@ fun SmartPreferenceScreen(
 @Composable
 fun PreferenceSection(title: String, content: @Composable () -> Unit) {
     Column {
-        Text(text = title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text(text = title, color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(12.dp))
         content()
     }

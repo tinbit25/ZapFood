@@ -53,7 +53,7 @@ fun ProfileScreen(
     val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(user) {
-        user?.let { 
+        user?.let {
             rewardViewModel.fetchBalance(it.userId)
             try {
                 vendorStateManager.startObserving(it.userId)
@@ -97,7 +97,7 @@ fun ProfileScreen(
                 fontSize = 14.sp,
                 color = colorScheme.onSurfaceVariant
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
             Surface(
                 color = colorScheme.primary.copy(alpha = 0.1f),
@@ -111,27 +111,27 @@ fun ProfileScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             ProfileMenuItem(icon = Icons.Default.Edit, title = "Edit Profile", onClick = onNavigateToEdit)
-            
+
             ProfileMenuItem(icon = Icons.Default.Receipt, title = "My Orders", onClick = onNavigateToOrders)
             ProfileMenuItem(icon = Icons.Default.LocationOn, title = "Delivery Addresses", onClick = onNavigateToAddresses)
             ProfileMenuItem(icon = Icons.Default.Support, title = "Help & Support", onClick = onNavigateToSupportTickets)
-            
+
             if (user?.role == UserRole.ADMIN) {
                 ProfileMenuItem(icon = Icons.Default.Security, title = "Admin Panel", onClick = onNavigateToAdmin)
                 ProfileMenuItem(icon = Icons.Default.SupportAgent, title = "Support Dashboard", onClick = onNavigateToAdminSupport)
             }
-            
+
             if (user?.role == UserRole.VENDOR) {
                 ProfileMenuItem(icon = Icons.Default.Store, title = "Business Dashboard", onClick = onNavigateToVendorDashboard)
                 ProfileMenuItem(icon = Icons.Default.RestaurantMenu, title = "Manage Menu", onClick = onNavigateToVendorMenu)
             }
-            
+
             val vendorUIState by vendorStateManager.uiState.collectAsState()
-            
+
             if (user?.role == UserRole.VENDOR && vendorUIState == com.example.food.ui.viewmodel.VendorUIState.OnboardingRequired) {
                 Surface(
                     onClick = onNavigateToVendorDashboard, // Now routes through state manager
@@ -179,7 +179,7 @@ fun ProfileScreen(
             if (user?.role == UserRole.CUSTOMER) {
                 ProfileMenuItem(icon = Icons.Default.Favorite, title = "Favorite Meals", onClick = { /* Navigate to Favorites */ })
                 ProfileMenuItem(icon = Icons.Default.Stars, title = "Reward Points: $pointsBalance", onClick = { /* Show points details */ })
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
                 Surface(
                     onClick = onNavigateToVendorRegistration,
@@ -205,7 +205,7 @@ fun ProfileScreen(
             }
 
             ProfileMenuItem(icon = Icons.Default.Settings, title = "Settings", onClick = onNavigateToSettings)
-            
+
             if (user?.phoneNumber.isNullOrEmpty()) {
                 ProfileMenuItem(
                     icon = Icons.Default.Phone,
@@ -248,7 +248,7 @@ fun ProfileMenuItem(
         ) {
             val titleColor = if (isDestructive) colorScheme.error else colorScheme.onSurface
             val iconColor = if (isDestructive) colorScheme.error else colorScheme.primary
-            
+
             Icon(imageVector = icon, contentDescription = title, tint = iconColor, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(16.dp))
             Text(

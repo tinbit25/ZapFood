@@ -54,6 +54,7 @@ fun MenuScreen(
     onNavigateToBrowse: () -> Unit,
     onNavigateToMeal: (String) -> Unit,
     onNavigateToVendor: (String) -> Unit,
+    onNavigateToCart: () -> Unit,
     userViewModel: UserViewModel,
     recommendationViewModel: RecommendationViewModel,
     mealViewModel: MealViewModel,
@@ -212,7 +213,8 @@ fun MenuScreen(
                         interactionTracker = interactionTracker,
                         userId = userId,
                         cartViewModel = cartViewModel,
-                        userName = user?.displayName ?: "Habesha Customer"
+                        userName = user?.displayName ?: "Habesha Customer",
+                        onNavigateToCart = onNavigateToCart
                     )
                 }
                 1 -> {
@@ -228,7 +230,8 @@ fun MenuScreen(
                             }
                         },
                         cartViewModel = cartViewModel,
-                        userId = userId
+                        userId = userId,
+                        onNavigateToCart = onNavigateToCart
                     )
                 }
             }
@@ -252,7 +255,8 @@ fun SmartPicksTabContent(
     interactionTracker: UserInteractionTracker,
     userId: String,
     cartViewModel: CartViewModel,
-    userName: String
+    userName: String,
+    onNavigateToCart: () -> Unit
 ) {
     val allMeals = (mealsResource as? Resource.Success)?.data ?: emptyList()
     val isFastingDay = EthiopianBehaviorIntelligence.isFastingDay()
@@ -370,6 +374,7 @@ fun SmartPicksTabContent(
                     onQuickOrder = {
                         // Direct cart inject reorder shortcut
                         cartViewModel.addMeal(result.meal, userId)
+                        onNavigateToCart()
                     }
                 )
             }
@@ -385,7 +390,8 @@ fun SavedPicksTabContent(
     onNavigateToVendor: (String) -> Unit,
     onUnsave: (String) -> Unit,
     cartViewModel: CartViewModel,
-    userId: String
+    userId: String,
+    onNavigateToCart: () -> Unit
 ) {
     val allMeals = (mealsResource as? Resource.Success)?.data ?: emptyList()
     val savedMeals = allMeals.filter { savedMealIds.contains(it.id) }
@@ -433,6 +439,7 @@ fun SavedPicksTabContent(
                     onClick = { onNavigateToMeal(meal.id) },
                     onQuickOrder = {
                         cartViewModel.addMeal(meal, userId)
+                        onNavigateToCart()
                     }
                 )
             }
@@ -451,43 +458,24 @@ fun SmartRecommendationHeroCard(
     val hour = calendar.get(Calendar.HOUR_OF_DAY)
     
     val timeGreeting = when (hour) {
-        in 5..11 -> "Melkam Tegat ☀️ Good Morning"
-        in 12..16 -> "Melkam Kene 🌤️ Good Afternoon"
-        else -> "Melkam Meshet 🌙 Good Evening"
+        in 5..11 -> "Good Morning"
+        in 12..16 -> "Good Afternoon"
+        else -> "Good Evening"
     }
 
-    val dynamicBackground = if (isFastingDay) {
-        Brush.horizontalGradient(listOf(Color(0xFF0F5A2A), Color(0xFF1B8A44))) // Rich Green for fasting
-    } else {
-        Brush.horizontalGradient(listOf(Color(0xFF7A1B0C), Color(0xFFC93B2B))) // Premium Habesha Gold/Red
-    }
-
-    Box(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(dynamicBackground)
-            .padding(20.dp)
+            .padding(16.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
     ) {
-        Column {
+        Column(modifier = Modifier.padding(20.dp)) {
             Text(
-                text = "$timeGreeting, $userName!",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = if (isFastingDay) {
-                    "Today is a strict Orthodox fasting day. 🌱 We've boosted all vegan delicacies (Shiro, Misir, Gomen) to the top of your feed."
-                } else {
-                    "Your personal AI taste preferences are active! We've hand-picked these spicy & traditional Habesha delicacies tailored for you."
-                },
-                fontSize = 13.sp,
-                color = Color.White.copy(alpha = 0.9f)
+                text = "$timeGreeting, ${userName.split(" ").firstOrNull() ?: ""}",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
             )
         }
     }

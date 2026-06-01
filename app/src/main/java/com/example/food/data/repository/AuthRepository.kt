@@ -1,6 +1,7 @@
 package com.example.food.data.repository
 
 import com.example.food.core.util.Resource
+import com.example.food.core.error.ErrorHandler
 import com.example.food.data.model.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
@@ -25,7 +26,7 @@ open class AuthRepository {
             firestore.collection("users").document(firebaseUid).set(userToSave).await()
             Resource.Success(userToSave)
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Registration failed")
+            Resource.Error(ErrorHandler.getReadableMessage(e))
         }
     }
 
@@ -34,7 +35,7 @@ open class AuthRepository {
             firestore.collection("sessions").document(session.sessionId).set(session).await()
             Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Failed to save session")
+            Resource.Error(ErrorHandler.getReadableMessage(e))
         }
     }
 
@@ -43,7 +44,7 @@ open class AuthRepository {
             firestore.collection("sessions").document(sessionId).delete().await()
             Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Failed to remove session")
+            Resource.Error(ErrorHandler.getReadableMessage(e))
         }
     }
 
@@ -61,7 +62,7 @@ open class AuthRepository {
             batch.commit().await()
             Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Failed to remove all sessions")
+            Resource.Error(ErrorHandler.getReadableMessage(e))
         }
     }
 
@@ -70,7 +71,7 @@ open class AuthRepository {
             firestore.collection("reset_tokens").document(resetToken.token).set(resetToken).await()
             Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Failed to save reset token")
+            Resource.Error(ErrorHandler.getReadableMessage(e))
         }
     }
 
@@ -88,7 +89,7 @@ open class AuthRepository {
             firestore.collection("users").document(userId).update("passwordHash", passwordHash).await()
             Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Failed to update password")
+            Resource.Error(ErrorHandler.getReadableMessage(e))
         }
     }
 
@@ -126,7 +127,7 @@ open class AuthRepository {
             val user = authResult.user ?: return Resource.Error("Phone login failed: No user returned")
             Resource.Success(user)
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Phone login failed")
+            Resource.Error(ErrorHandler.getReadableMessage(e))
         }
     }
 
@@ -135,7 +136,7 @@ open class AuthRepository {
             firestore.collection("users").document(user.userId).set(user).await()
             Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Failed to create user profile")
+            Resource.Error(ErrorHandler.getReadableMessage(e))
         }
     }
 }

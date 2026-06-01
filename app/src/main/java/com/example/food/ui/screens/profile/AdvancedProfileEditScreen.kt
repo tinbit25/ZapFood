@@ -154,14 +154,35 @@ fun AdvancedProfileEditScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 SectionTitle("Identity & Bio")
-                // Gender Dropdown Placeholder or Simple TextField for now
-                CustomTextField(
-                    value = gender,
-                    onValueChange = { gender = it },
-                    placeholder = "Gender (Male/Female/Other)",
-                    leadingIcon = Icons.Default.Face
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+                // Gender Selection
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable { gender = "Male" }
+                    ) {
+                        RadioButton(
+                            selected = gender.equals("Male", ignoreCase = true),
+                            onClick = { gender = "Male" },
+                            colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFF16B24), unselectedColor = Color.Gray)
+                        )
+                        Text("Male", color = Color.White, fontSize = 16.sp)
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable { gender = "Female" }
+                    ) {
+                        RadioButton(
+                            selected = gender.equals("Female", ignoreCase = true),
+                            onClick = { gender = "Female" },
+                            colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFF16B24), unselectedColor = Color.Gray)
+                        )
+                        Text("Female", color = Color.White, fontSize = 16.sp)
+                    }
+                }
                 CustomTextField(
                     value = bio,
                     onValueChange = { bio = it },

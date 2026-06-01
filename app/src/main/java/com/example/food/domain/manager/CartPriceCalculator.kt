@@ -12,13 +12,15 @@ class CartPriceCalculator {
         val itemsMap = cartItems.map { it.first.price to it.second }
         val subtotal = PricingEngine.calculateSubtotal(itemsMap)
         val deliveryFee = PricingEngine.calculateDeliveryFee(orderType)
+        val packagingFee = PricingEngine.calculatePackagingFee(orderType)
         val discount = PricingEngine.calculateDiscount(pointsToRedeem)
         val tax = PricingEngine.calculateTax(subtotal)
-        val total = PricingEngine.calculateTotal(subtotal, deliveryFee, discount)
+        val total = PricingEngine.calculateTotal(subtotal, deliveryFee, packagingFee, discount)
 
         return CartSummary(
             subtotal = subtotal,
             deliveryFee = deliveryFee,
+            packagingFee = packagingFee,
             discount = discount,
             tax = tax,
             total = total
@@ -29,6 +31,7 @@ class CartPriceCalculator {
 data class CartSummary(
     val subtotal: Double,
     val deliveryFee: Double,
+    val packagingFee: Double,
     val discount: Double,
     val tax: Double,
     val total: Double
