@@ -70,14 +70,11 @@ fun VendorOrdersScreen(
     ) { padding ->
         val filteredOrders = remember(ordersState, selectedTab) {
             val allOrders = (ordersState as? Resource.Success)?.data ?: emptyList()
-            // Payment gate: only show paid or cash orders
-            val orders = allOrders.filter { order ->
-                order.paymentStatus == com.example.food.data.model.PaymentStatus.SUCCESS ||
-                order.paymentMethod == com.example.food.data.model.PaymentMethod.CASH
-            }
+            // Remove payment gate - show all orders regardless of payment status
+            val orders = allOrders
             when (selectedTab) {
-                0 -> orders.filter { it.orderStatus == OrderStatus.PENDING || it.orderStatus == OrderStatus.BOOKED || it.orderStatus == OrderStatus.SENT_TO_VENDOR }
-                1 -> orders.filter { it.orderStatus == OrderStatus.ACCEPTED || it.orderStatus == OrderStatus.PREPARING }
+                0 -> orders.filter { it.orderStatus == OrderStatus.PENDING || it.orderStatus == OrderStatus.BOOKED || it.orderStatus == OrderStatus.SENT_TO_VENDOR || it.orderStatus == OrderStatus.ACCEPTED }
+                1 -> orders.filter { it.orderStatus == OrderStatus.PREPARING }
                 2 -> orders.filter { it.orderStatus == OrderStatus.READY }
                 3 -> orders.filter { it.orderStatus == OrderStatus.ON_THE_WAY || it.orderStatus == OrderStatus.ARRIVED }
                 4 -> orders.filter { it.orderStatus == OrderStatus.DELIVERED || it.orderStatus == OrderStatus.COMPLETED }
@@ -134,23 +131,128 @@ fun VendorProfessionalOrderCard(order: Order, onUpdateStatus: (OrderStatus) -> U
                         OrderStatusBadge(order.orderStatus)
                     }
                     Text(text = order.customerName, fontSize = 12.sp, color = Color.Gray)
+                    if (order.customerPhone.isNotEmpty()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Phone, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(12.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text(text = order.customerPhone, fontSize = 11.sp, color = Color.Gray)
+                        }
+                    }
                 }
-                Text(text = dateFormat.format(Date(order.createdAt)), fontSize = 12.sp, color = Color.Gray)
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(text = dateFormat.format(Date(order.createdAt)), fontSize = 12.sp, color = Color.Gray)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (order.orderType == com.example.food.data.model.OrderType.DELIVERY) Icons.Default.LocalShipping else Icons.Default.ShoppingBag,
+                            contentDescription = null,
+                            tint = Color(0xFFF16B24),
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = order.orderType.name,
+                            fontSize = 10.sp,
+                            color = Color(0xFFF16B24),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
             
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             order.items.forEach { item ->
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(text = "${item.quantity}x ${item.name}", fontSize = 14.sp, color = Color.LightGray)
                     Text(text = "ETB ${"%,.0f".format(item.price * item.quantity)}", fontSize = 14.sp, color = Color.Gray)
                 }
             }
-            
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Delivery Address Section
+            if (order.deliveryInfo != null) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFF2A2A2A),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color(0xFFF16B24), modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "Delivery Address", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = order.deliveryInfo!!.address,
+                            fontSize = 13.sp,
+                            color = Color.LightGray
+                        )
+                        Text(
+                            text = order.deliveryInfo!!.city,
+                            fontSize = 13.sp,
+                            color = Color.LightGray
+                        )
+                        if (order.deliveryInfo!!.instructions != null && order.deliveryInfo!!.instructions!!.isNotEmpty()) {
+                            Text(
+                                text = "Instructions: ${order.deliveryInfo!!.instructions}",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                        }
+                        if (order.deliveryInfo!!.latitude != null && order.deliveryInfo!!.longitude != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                onClick = {
+                                    val gmmIntentUri = android.net.Uri.parse(
+                                        "geo:${order.deliveryInfo!!.latitude},${order.deliveryInfo!!.longitude}?q=${order.deliveryInfo!!.latitude},${order.deliveryInfo!!.longitude}"
+                                    )
+                                    val mapIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, gmmIntentUri)
+                                    mapIntent.setPackage("com.google.android.apps.maps")
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4285F4)),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.Map, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Open in Google Maps", fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
             Divider(color = Color(0xFF2A2A2A))
             Spacer(modifier = Modifier.height(16.dp))
-            
+
+            // Payment Method Info
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (order.paymentMethod == com.example.food.data.model.PaymentMethod.CASH) Icons.Default.Money else Icons.Default.CreditCard,
+                        contentDescription = null,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "${order.paymentMethod.name} • ${order.paymentStatus.name}",
+                        fontSize = 11.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column {
                     Text(text = "Total Amount", fontSize = 10.sp, color = Color.Gray)

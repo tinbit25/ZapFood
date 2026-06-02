@@ -177,9 +177,6 @@ fun ProfileScreen(
             }
 
             if (user?.role == UserRole.CUSTOMER) {
-                ProfileMenuItem(icon = Icons.Default.Favorite, title = "Favorite Meals", onClick = { /* Navigate to Favorites */ })
-                ProfileMenuItem(icon = Icons.Default.Stars, title = "Reward Points: $pointsBalance", onClick = { /* Show points details */ })
-
                 Spacer(modifier = Modifier.height(16.dp))
                 Surface(
                     onClick = onNavigateToVendorRegistration,

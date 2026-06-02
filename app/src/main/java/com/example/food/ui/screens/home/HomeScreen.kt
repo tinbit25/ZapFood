@@ -55,6 +55,7 @@ fun HomeScreen(
     onNavigateToNotifications: () -> Unit,
     onNavigateToVendorDiscovery: () -> Unit,
     onNavigateToTableScan: () -> Unit,
+    onNavigateToVendorQRScanner: () -> Unit = {},
     smartTableViewModel: com.example.food.ui.viewmodel.SmartTableViewModel = viewModel(),
     notificationViewModel: com.example.food.ui.viewmodel.NotificationViewModel = viewModel()
 ) {
@@ -87,19 +88,20 @@ fun HomeScreen(
     }
 
     LaunchedEffect(user) {
-        user?.let { 
+        user?.let {
             recommendationViewModel.loadHomeRecommendations(it.userId)
             smartTableViewModel.checkForActiveBooking(it.userId)
             notificationViewModel.startObserving(it.userId)
         }
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colorScheme.background),
-        contentPadding = PaddingValues(bottom = 100.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colorScheme.background),
+            contentPadding = PaddingValues(bottom = 100.dp)
+        ) {
         // Top Header
         item {
             HomeHeader(
@@ -108,16 +110,6 @@ fun HomeScreen(
                 onNotificationClick = onNavigateToNotifications,
                 notificationCount = notificationViewModel.unreadCountState.value
             )
-        }
-
-        // Smart Table Entry Point (I'm at the Hotel)
-        if (smartTableState.activeBooking != null) {
-            item {
-                HotelCheckInCard(
-                    booking = smartTableState.activeBooking!!,
-                    onCheckInClick = onNavigateToTableScan
-                )
-            }
         }
 
         // Search Bar
@@ -294,6 +286,22 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    // QR Scanner FAB
+    FloatingActionButton(
+        onClick = onNavigateToVendorQRScanner,
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(16.dp),
+        containerColor = Color(0xFFF16B24),
+        contentColor = Color.White
+    ) {
+        Icon(
+            imageVector = Icons.Default.QrCode,
+            contentDescription = "Scan Vendor QR"
+        )
+    }
     }
 }
 

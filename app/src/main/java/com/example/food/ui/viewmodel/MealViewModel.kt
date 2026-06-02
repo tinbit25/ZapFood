@@ -90,5 +90,14 @@ class MealViewModel(
             onResult(result)
         }
     }
+
+    fun fetchMealsByVendor(vendorId: String) {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
+            mealUseCase.getMealsByVendor(vendorId).collect {
+                _mealsState.value = it
+            }
+        }
+    }
 }
 

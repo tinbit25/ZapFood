@@ -26,6 +26,11 @@ import com.example.food.ui.components.OrderTypeSelector
 import com.example.food.ui.viewmodel.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
+import android.Manifest
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -37,9 +42,11 @@ fun CheckoutScreen(
     paymentViewModel: PaymentViewModel,
     checkoutViewModel: CheckoutViewModel,
     smartTableViewModel: SmartTableViewModel = viewModel(),
+    locationViewModel: LocationViewModel = viewModel(),
     onNavigateBack: () -> Unit,
     onOrderSuccess: (String) -> Unit
 ) {
+    val context = LocalContext.current
     val user by userViewModel.user.collectAsState()
     val cartState by cartViewModel.cartState.collectAsState()
     val uiState by checkoutViewModel.uiState.collectAsState()
@@ -47,10 +54,55 @@ fun CheckoutScreen(
     val isPlacingOrder by checkoutViewModel.isPlacingOrder.collectAsState()
     val paymentState by paymentViewModel.paymentState.collectAsState()
     val pointsBalance by rewardViewModel.pointsBalance.collectAsState()
-    
+    val locationState by locationViewModel.locationState.collectAsState()
+
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineLocation = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseLocation = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+
+        if (fineLocation || coarseLocation) {
+            locationViewModel.getCurrentLocation(context)
+        } else {
+            scope.launch {
+                snackbarHostState.showSnackbar("Location permission is required to get your current location")
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        locationViewModel.initialize(context)
+    }
+
+    LaunchedEffect(locationState.address) {
+        if (locationState.address.isNotEmpty()) {
+            checkoutViewModel.updateDeliveryInfo(
+                uiState.deliveryInfo?.copy(
+                    address = locationState.address,
+                    city = locationState.city,
+                    latitude = locationState.latitude,
+                    longitude = locationState.longitude
+                ) ?: DeliveryDetails(
+                    address = locationState.address,
+                    city = locationState.city,
+                    latitude = locationState.latitude,
+                    longitude = locationState.longitude
+                )
+            )
+        }
+    }
+
+    LaunchedEffect(locationState.error) {
+        locationState.error?.let { error ->
+            scope.launch {
+                snackbarHostState.showSnackbar(error)
+            }
+        }
+    }
 
     val pricingSummary = remember(cartState.subtotal, uiState.orderType, checkoutViewModel.pointsToRedeem) {
         com.example.food.domain.manager.CheckoutPricingManager().getPricingSummary(
@@ -140,6 +192,7 @@ fun CheckoutScreen(
                     val baseOrder = Order(
                         customerId = currentUser.userId,
                         customerName = currentUser.displayName ?: "Guest",
+                        customerPhone = uiState.deliveryInfo?.contactPhone ?: currentUser.phoneNumber ?: "",
                         vendorId = cartState.meals.firstOrNull()?.first?.vendorId ?: "",
                         businessName = "ZapFood Vendor",
                         items = cartState.meals.map { OrderItem(it.first.id, it.first.name, it.first.price, it.second) },
@@ -197,7 +250,7 @@ fun CheckoutScreen(
             item {
                 AnimatedContent(targetState = uiState.orderType, transitionSpec = { fadeIn() togetherWith fadeOut() }) { type ->
                     when (type) {
-                        OrderType.DELIVERY -> DeliverySection(uiState.deliveryInfo) { checkoutViewModel.updateDeliveryInfo(it) }
+                        OrderType.DELIVERY -> DeliverySection(uiState.deliveryInfo, locationViewModel, context, locationPermissionLauncher) { checkoutViewModel.updateDeliveryInfo(it) }
                         OrderType.TAKEAWAY -> TakeawaySection(uiState.pickupInfo)   { checkoutViewModel.updatePickupInfo(it) }
                         OrderType.DINE_IN  -> DineInSection(uiState.dineInInfo)    { checkoutViewModel.updateDineInInfo(it) }
                     }
@@ -280,7 +333,15 @@ fun SummaryRow(label: String, qty: String, price: String, isBold: Boolean = fals
 }
 
 @Composable
-fun DeliverySection(details: DeliveryDetails, onUpdate: (DeliveryDetails) -> Unit) {
+fun DeliverySection(
+    details: DeliveryDetails,
+    locationViewModel: LocationViewModel,
+    context: Context,
+    locationPermissionLauncher: androidx.activity.compose.ManagedActivityResultLauncher<Array<String>, Map<String, Boolean>>,
+    onUpdate: (DeliveryDetails) -> Unit
+) {
+    val locationState by locationViewModel.locationState.collectAsState()
+
     Column(modifier = Modifier.padding(16.dp)) {
         Text("Delivery Details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
@@ -291,6 +352,104 @@ fun DeliverySection(details: DeliveryDetails, onUpdate: (DeliveryDetails) -> Uni
             label = { Text("Delivery Address") },
             shape = RoundedCornerShape(12.dp)
         )
+        Spacer(modifier = Modifier.height(12.dp))
+        OutlinedTextField(
+            value = details.instructions ?: "",
+            onValueChange = { onUpdate(details.copy(instructions = it)) },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Delivery Instructions") },
+            shape = RoundedCornerShape(12.dp),
+            maxLines = 3
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        OutlinedTextField(
+            value = details.contactPhone ?: "",
+            onValueChange = { onUpdate(details.copy(contactPhone = it)) },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Contact Phone Number") },
+            shape = RoundedCornerShape(12.dp),
+            leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) }
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Get Current Location Button
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Current Location",
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        if (details.latitude != null && details.longitude != null) {
+                            Text(
+                                text = "Lat: ${String.format("%.6f", details.latitude)}, Lng: ${String.format("%.6f", details.longitude)}",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 12.sp
+                            )
+                        } else {
+                            Text(
+                                text = "Tap to get your current location",
+                                color = Color.Gray,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                    Button(
+                        onClick = {
+                            if (ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.ACCESS_FINE_LOCATION
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                locationViewModel.getCurrentLocation(context)
+                            } else {
+                                locationPermissionLauncher.launch(
+                                    arrayOf(
+                                        Manifest.permission.ACCESS_FINE_LOCATION,
+                                        Manifest.permission.ACCESS_COARSE_LOCATION
+                                    )
+                                )
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.height(40.dp),
+                        enabled = !locationState.isLoading
+                    ) {
+                        if (locationState.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(Icons.Default.MyLocation, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Get Location", fontSize = 12.sp)
+                        }
+                    }
+                }
+                if (locationState.error != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = locationState.error!!,
+                        color = Color.Red,
+                        fontSize = 11.sp
+                    )
+                }
+            }
+        }
     }
 }
 

@@ -27,6 +27,9 @@ sealed class Screen(val route: String) {
     object VendorStore          : Screen("vendor_store")
     object VendorPickupScan     : Screen("vendor_pickup_scan")
     object VendorPickupScanner  : Screen("vendor_pickup_scan") // alias for nav bar
+    object VendorMenuQR         : Screen("vendor_menu_qr/{vendorId}") {
+        fun createRoute(vendorId: String) = "vendor_menu_qr/$vendorId"
+    }
 
     // Main App Flow
     object Home : Screen("home_screen")
@@ -97,4 +100,10 @@ sealed class Screen(val route: String) {
     }
     object SmartTableScan : Screen("smart_table_scan")
     object SmartTableSession : Screen("smart_table_session")
+    
+    // Vendor Menu QR Features
+    object VendorMenuQRScanner : Screen("vendor_menu_qr_scanner")
+    object VendorMenuFromQR : Screen("vendor_menu_from_qr/{vendorId}/{vendorName}") {
+        fun createRoute(vendorId: String, vendorName: String) = "vendor_menu_from_qr/$vendorId/${vendorName.replace(" ", "_")}"
+    }
 }

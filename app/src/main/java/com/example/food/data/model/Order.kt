@@ -55,7 +55,8 @@ data class DeliveryDetails(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val instructions: String? = null,
-    val estimatedArrival: Long? = null
+    val estimatedArrival: Long? = null,
+    val contactPhone: String? = null
 )
 
 data class TakeawayDetails(
@@ -78,6 +79,7 @@ data class Order(
     val orderId: String = UUID.randomUUID().toString(),
     val customerId: String = "",
     val customerName: String = "",
+    val customerPhone: String = "",
     val vendorId: String = "",
     val businessName: String = "",
     val mealPlanId: String? = null,

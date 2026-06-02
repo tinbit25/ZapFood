@@ -48,6 +48,9 @@ import com.example.food.ui.screens.vendor.VendorMenuManagementScreen
 import com.example.food.ui.screens.vendor.VendorAnalyticsScreen
 import com.example.food.ui.screens.vendor.VendorStoreScreen
 import com.example.food.ui.screens.vendor.VendorPickupScannerScreen
+import com.example.food.ui.screens.vendor.VendorMenuQRScreen
+import com.example.food.ui.screens.menu.VendorMenuQRScannerScreen
+import com.example.food.ui.screens.menu.VendorMenuFromQRScreen
 import com.example.food.ui.screens.support.SupportTicketScreen
 import com.example.food.ui.screens.admin.AdminSupportDashboardScreen
 import com.example.food.ui.screens.feedback.FeedbackScreen
@@ -135,7 +138,7 @@ fun AppNavigation(
     // REACTIVE REDIRECT — fixes the Firestore race condition.
     // The splash navigates before user data loads. Once the user flow emits,
     // we check the role and redirect vendors/admins to their respective OS immediately.
-    LaunchedEffect(user) {
+    LaunchedEffect(user, currentRoute) {
         val loadedUser = user ?: return@LaunchedEffect
         val isOnCustomerScreen = currentRoute in customerBottomBarRoutes
         val isOnSplash = currentRoute == Screen.Splash.route
@@ -392,6 +395,9 @@ fun AppNavigation(
                     onNavigateToTableScan = {
                         navController.navigate(Screen.SmartTableScan.route)
                     },
+                    onNavigateToVendorQRScanner = {
+                        navController.navigate(Screen.VendorMenuQRScanner.route)
+                    },
                     smartTableViewModel = smartTableViewModel
                 )
             }
@@ -623,6 +629,12 @@ fun AppNavigation(
                                 val currentVendorId = vendorStateManager.vendor.value?.id
                                 if (currentVendorId != null) {
                                     navController.navigate(Screen.VendorFeedback.createRoute(currentVendorId))
+                                }
+                            },
+                            onNavigateToMenuQR = {
+                                val currentVendorId = vendorStateManager.vendor.value?.id
+                                if (currentVendorId != null) {
+                                    navController.navigate(Screen.VendorMenuQR.createRoute(currentVendorId))
                                 }
                             }
                         )
@@ -914,6 +926,60 @@ fun AppNavigation(
                         navController.navigate(Screen.VendorStorefront.createRoute(vendorId))
                     },
                     viewModel = smartTableViewModel
+                )
+            }
+
+            // Vendor Menu QR Features
+            composable(
+                route = Screen.VendorMenuQR.route,
+                arguments = listOf(navArgument("vendorId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val vendorId = backStackEntry.arguments?.getString("vendorId") ?: ""
+                VendorMenuQRScreen(
+                    vendorId = vendorId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(route = Screen.VendorMenuQRScanner.route) {
+                VendorMenuQRScannerScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onVendorFound = { vendorId ->
+                        val vendor = vendorStateManager.vendor.value
+                        val vendorName = vendor?.businessName ?: "Vendor"
+                        navController.navigate(Screen.VendorMenuFromQR.createRoute(vendorId, vendorName))
+                    }
+                )
+            }
+
+            composable(
+                route = Screen.VendorMenuFromQR.route,
+                arguments = listOf(
+                    navArgument("vendorId") { type = NavType.StringType },
+                    navArgument("vendorName") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val vendorId = backStackEntry.arguments?.getString("vendorId") ?: ""
+                val vendorName = backStackEntry.arguments?.getString("vendorName")?.replace("_", " ") ?: "Vendor"
+                
+                // Fetch meals for this vendor
+                LaunchedEffect(vendorId) {
+                    mealViewModel.fetchMealsByVendor(vendorId)
+                }
+                
+                val meals by mealViewModel.mealsState.collectAsState()
+                val isLoading = meals is com.example.food.core.util.Resource.Loading
+                val mealList = (meals as? com.example.food.core.util.Resource.Success)?.data ?: emptyList()
+                
+                VendorMenuFromQRScreen(
+                    vendorId = vendorId,
+                    vendorName = vendorName,
+                    onNavigateBack = { navController.popBackStack() },
+                    onMealClick = { meal ->
+                        navController.navigate(Screen.ProductDetails.createRoute(meal.id))
+                    },
+                    meals = mealList,
+                    isLoading = isLoading
                 )
             }
         }

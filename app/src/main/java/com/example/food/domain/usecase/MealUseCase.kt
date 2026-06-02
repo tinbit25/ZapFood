@@ -67,5 +67,9 @@ class MealUseCase(
     suspend fun updateMeal(meal: Meal): Resource<Unit> {
         return mealRepository.saveMeal(meal)
     }
+
+    fun getMealsByVendor(vendorId: String): Flow<Resource<List<Meal>>> {
+        return mealRepository.getMealsByVendor(vendorId)
+    }
 }
 

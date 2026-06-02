@@ -3,6 +3,7 @@ package com.example.food.ui.screens.address
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -11,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.food.data.model.Address
@@ -42,6 +44,8 @@ fun AddressFormScreen(
     var landmark by remember { mutableStateOf(existingAddress?.landmark ?: "") }
     var phoneNumber by remember { mutableStateOf(existingAddress?.phoneNumber ?: user?.phoneNumber ?: "") }
     var isDefault by remember { mutableStateOf(existingAddress?.isDefault ?: addresses.isEmpty()) }
+    var latitude by remember { mutableStateOf(existingAddress?.latitude ?: 0.0) }
+    var longitude by remember { mutableStateOf(existingAddress?.longitude ?: 0.0) }
 
     Column(
         modifier = Modifier
@@ -132,7 +136,7 @@ fun AddressFormScreen(
                 placeholder = "Contact Phone Number",
                 leadingIcon = Icons.Default.Phone
             )
-            
+
             Spacer(modifier = Modifier.height(24.dp))
 
             Row(
@@ -163,7 +167,9 @@ fun AddressFormScreen(
                             street = street,
                             landmark = landmark,
                             phoneNumber = phoneNumber,
-                            isDefault = isDefault
+                            isDefault = isDefault,
+                            latitude = latitude,
+                            longitude = longitude
                         )
                         addressViewModel.addAddress(uid, address)
                         onNavigateBack()

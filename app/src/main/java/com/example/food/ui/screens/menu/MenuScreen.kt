@@ -142,8 +142,7 @@ fun MenuScreen(
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = "Preferences",
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
+                    tint = Color(0xFFF16B24)
                 )
             }
         }
@@ -309,7 +308,7 @@ fun SmartPicksTabContent(
             )
         }
 
-        // Section 2: Inline Compact Taste Preference Indicator Card
+        // Section 2: Compact Preference Card
         item {
             CompactPreferenceCard(
                 preferences = preferences,
