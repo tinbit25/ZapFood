@@ -183,17 +183,22 @@ fun CheckoutScreen(
                 onPlaceOrder = {
                     val currentUser = user ?: return@CheckoutBottomBar
                     checkoutViewModel.setPlacingOrder(true)
-                    
+
                     val allMealIds = mutableListOf<String>()
                     cartState.meals.forEach { pair -> repeat(pair.second) { allMealIds.add(pair.first.id) } }
                     val planId = cartState.mealPlans.firstOrNull()?.first?.id
+
+                    // Get vendorId from first meal
+                    val vendorIdFromMeal = cartState.meals.firstOrNull()?.first?.vendorId ?: ""
+                    android.util.Log.d("CHECKOUT", "VendorId from meal: $vendorIdFromMeal")
+                    android.util.Log.d("CHECKOUT", "Cart meals count: ${cartState.meals.size}")
 
                     // Build the base order; CheckoutViewModel enriches type-specific info internally
                     val baseOrder = Order(
                         customerId = currentUser.userId,
                         customerName = currentUser.displayName ?: "Guest",
                         customerPhone = uiState.deliveryInfo?.contactPhone ?: currentUser.phoneNumber ?: "",
-                        vendorId = cartState.meals.firstOrNull()?.first?.vendorId ?: "",
+                        vendorId = vendorIdFromMeal,
                         businessName = "ZapFood Vendor",
                         items = cartState.meals.map { OrderItem(it.first.id, it.first.name, it.first.price, it.second) },
                         totalAmount = total,
@@ -205,6 +210,8 @@ fun CheckoutScreen(
                         dineInInfo   = if (uiState.orderType == OrderType.DINE_IN)  uiState.dineInInfo   else null,
                         paymentMethod = uiState.paymentMethod
                     )
+
+                    android.util.Log.d("CHECKOUT", "Order created with vendorId: ${baseOrder.vendorId}")
 
                     // Route through UnifiedOrderManager via CheckoutViewModel
                     checkoutViewModel.placeOrder(baseOrder) { resource ->
