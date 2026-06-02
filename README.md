@@ -1,6 +1,8 @@
 
 # 🍽️ ZapFood — A Real-Time Food Discovery and Flexible Ordering Platform for the Ethiopian Market
 
+> A next-generation Ethiopian food delivery ecosystem combining intelligent meal discovery, smart dine-in experiences, real-time order management, and AI-ready culinary intelligence.
+
 ### 👥 Group Members
 
 | Name | ID Number |
@@ -12,7 +14,7 @@
 | Tinbite Elias | DBU1602103 |
 | Kalkidan K/Mariyam | DBU1501713 |
 
-> A next-generation Ethiopian food delivery ecosystem combining intelligent meal discovery, smart dine-in experiences, real-time order management, and AI-ready culinary intelligence.
+
 
 Built with **Kotlin**, **Jetpack Compose**, **Firebase**, and **FastAPI**, ZapFood serves three interconnected platforms:
 
@@ -424,12 +426,10 @@ uvicorn app.main:app --reload
 
 ---     
 
-### Built with ❤️ for the Ethiopian DBU Food Ecosystem
-
 
 ### Exhaustive State Machines
 Order lifecycles and notification types are strictly governed by exhaustive `when` expressions, ensuring that edge-case states cannot cause UI crashes or silent failures.
 
 ---
 
-### Built with ❤️ for the Ethiopian DBU Food Ecosystem
+ 
