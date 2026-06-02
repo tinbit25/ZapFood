@@ -1,132 +1,434 @@
-# Food Delivery Intelligence Platform
+# 🍽️ ZapFood — AI-Powered Food Delivery & Restaurant Intelligence Platform
 
-A comprehensive, AI-ready food delivery platform built with Kotlin and Jetpack Compose for Android, bac ked by Firebase and a Python FastAPI backend. The platform supports three distinct user roles: Customers, Vendors, and Administrators, with specialized features for Ethiopian food intelligence.
+### 👥 Group Members
 
-## 📸 Visual Preview
+| Name | ID Number |
+| :--- | :--- |
+| Kisanet Hailemariam | DBU1501313 |
+| Yeabsira Behailu | DBU1501550 |
+| Fitsum Niguss | DBU1501424 |
+| Betelhem Hiluf | DBU1501054 |
+| Tinbite Elias | DBU1602103 |
+| Kalkidan K/Mariyam | DBU1501713 |
 
-<table align="center">
-  <tr>
-    <td align="center" valign="top" width="33%">
-      <img src="images/photo_2026-05-17_06-48-19.jpg" alt="Welcome Screen" />
-      <br/><sub><b>Welcome Screen</b></sub>
-    </td>
-    <td align="center" valign="top" width="33%">
-      <img src="images/photo_2026-05-17_06-50-36.jpg" alt="Log In" />
-      <br/><sub><b>Customer Authentication</b></sub>
-    </td>
-    <td align="center" valign="top" width="33%">
-      <img src="images/photo_2026-05-17_06-51-06.jpg" alt="Discovery Hub" />
-      <br/><sub><b>AI Discovery Hub</b></sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="top" width="33%">
-      <img src="images/photo_2026-05-17_06-53-13.jpg" alt="Dine-In Reservation" />
-      <br/><sub><b>Dine-In Reservation & Checkout</b></sub>
-    </td>
-    <td align="center" valign="top" width="33%">
-      <img src="images/photo_2026-05-17_06-36-09.jpg" alt="Order History" />
-      <br/><sub><b>Order History</b></sub>
-    </td>
-    <td align="center" valign="top" width="33%">
-      <img src="images/photo_2026-05-17_06-51-28.jpg" alt="Customer Profile" />
-      <br/><sub><b>Customer Profile & Account</b></sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="top" width="33%">
-      <img src="images/photo_2026-05-17_06-54-41.jpg" alt="Support Tickets" />
-      <br/><sub><b>Support Tickets Hub</b></sub>
-    </td>
-    <td align="center" valign="top" width="33%">
-    </td>
-    <td align="center" valign="top" width="33%">
-    </td>
-  </tr>
-</table>
+> A next-generation Ethiopian food delivery ecosystem combining intelligent meal discovery, smart dine-in experiences, real-time order management, and AI-ready culinary intelligence.
 
-## Achieved Core Capabilities
+Built with **Kotlin**, **Jetpack Compose**, **Firebase**, and **FastAPI**, ZapFood serves three interconnected platforms:
 
-### 🍽️ Customer Discovery & "Arrive & Eat" Dine-In Hub
-- **Cultural Recommendation Engine:** Adaptive discovery recommendations (Fasting, Meat, Vegan) with fasting-day meal alerts driven by real-time fasting state observation (`EthiopianBehaviorIntelligence`).
-- **"Arrive & Eat" Smart Table QR System:** Session-managed, waiter-less dining. Customers scan table-specific QR codes to check-in, browse menu packages, route dine-in orders directly to tables, and perform one-tap settlement.
-- **Fast checkout with Chapa Payment:** Secure digital checkout redirects supporting mobile money channels, deep-linked callbacks (`zapfood://payment/return`), and transaction verification.
+* 👤 **Customers**
+* 🏪 **Vendors**
+* 🛡️ **Administrators**
 
-<p align="center">
-  <img src="images/photo_2026-05-17_06-51-06.jpg" width="30%" alt="Discovery Hub" />
-  <img src="images/photo_2026-05-17_06-53-13.jpg" width="30%" alt="Dine-In Reservation" />
-  <img src="images/photo_2026-05-17_06-36-09.jpg" width="30%" alt="Order History" />
-</p>
+Designed from the ground up for scalability, personalization, and the unique dynamics of Ethiopian dining culture.
 
-### 🏪 Merchant Command OS (Vendor Portal)
-- **Role-Based Single-App Navigation:** Dynamic startup intercepts that seamlessly guide logged-in users directly to their merchant command center or customer discovery center depending on their verified role.
-- **Exhaustive Order Handling State Machine:** Interactive order status timeline (Accept -> Prepare -> Mark Ready -> Deliver) syncing to Firestore document streams.
-- **Detailed Menu & Tagging Management:** Interface for vendors to catalog products with detailed culinary metadata (cuisine type, fasting friendly, spice, and protein levels).
+---
+# ✨ Overview
 
-### 🛡️ Admin Control Center
-- **System Health Monitor:** Real-time analytics dashboard presenting gross sales aggregates, system responsiveness, total active customer nodes, and system logs.
-- **Vendor Onboarding Verification Hub:** Structured review boards listing vendor onboarding requests.
-- **Live Ticket Support Desk:** Central resolution center where platform administrators can live-chat and process dispute resolutions directly.
+ZapFood goes beyond traditional food delivery applications.
 
-<p align="center">
-  <img src="images/photo_2026-05-17_06-54-41.jpg" width="35%" alt="Support Tickets Desk" />
-</p>
+The platform introduces an intelligent restaurant ecosystem where customers can discover culturally relevant meals, vendors can manage operations in real time, and administrators can monitor platform health through centralized controls.
 
-## Tech Stack
+### Core Innovations
 
-### Android (Frontend)
-- **Language**: Kotlin
-- **UI Framework**: Jetpack Compose
-- **Architecture**: Clean Architecture (Presentation, Domain, Data layers) + MVVM
-- **Asynchronous**: Kotlin Coroutines & Flow
-- **Dependency Injection**: Manual DI
-- **Push Notifications**: Firebase Cloud Messaging (FCM)
+✅ AI-Ready Food Recommendation Engine
 
-### Backend & Cloud
-- **Database**: Firebase Firestore (Realtime NoSQL)
-- **Authentication**: Firebase Auth
-- **Payment Gateway Backend**: Python FastAPI (Handles Chapa Webhooks & Security)
-- **Notifications**: Firestore triggers / FCM
+✅ QR-Based "Arrive & Eat" Smart Dining
 
-## Project Structure
+✅ Real-Time Order Synchronization
 
-```text
-app/src/main/java/com/example/food/
-├── core/           # Utilities, standard resource wrappers, UI themes
-├── data/           # Models, Repositories (Firestore), Remote Services
-├── domain/         # Use Cases (Business logic, state machines)
-├── ui/             # Jetpack Compose Screens, ViewModels, Navigation
-└── MainActivity.kt # Entry point
+✅ Ethiopian Fasting-Aware Meal Discovery
+
+✅ Vendor Command Center
+
+✅ Admin Operations Dashboard
+
+✅ Secure Digital Payments with Chapa
+
+✅ Support Ticket Resolution System
+
+---
+
+# 📱 Application Preview
+
+### Customer Experience
+
+| Welcome                                   | Authentication                            | Discovery Hub                             |
+| ----------------------------------------- | ----------------------------------------- | ----------------------------------------- |
+| ![](images/photo_2026-05-17_06-48-19.jpg) | ![](images/photo_2026-05-17_06-50-36.jpg) | ![](images/photo_2026-05-17_06-51-06.jpg) |
+
+| Smart Dine-In                             | Order History                             | Profile                                   |
+| ----------------------------------------- | ----------------------------------------- | ----------------------------------------- |
+| ![](images/photo_2026-05-17_06-53-13.jpg) | ![](images/photo_2026-05-17_06-36-09.jpg) | ![](images/photo_2026-05-17_06-51-28.jpg) |
+
+### Platform Support Center
+
+| Ticket Resolution Hub                     |
+| ----------------------------------------- |
+| ![](images/photo_2026-05-17_06-54-41.jpg) |
+
+---
+
+# 🚀 Key Features
+
+## 👤 Customer Platform
+
+### Intelligent Food Discovery
+
+An adaptive recommendation engine designed specifically for Ethiopian dining habits.
+
+Features include:
+
+* Fasting-aware meal recommendations
+* Meat, vegan, and vegetarian categorization
+* Personalized food suggestions
+* Cuisine-based filtering
+* Behavioral preference learning
+
+The recommendation infrastructure is powered by:
+
+```kotlin
+EthiopianBehaviorIntelligence
 ```
 
-## Setup & Installation
+allowing future AI personalization and predictive recommendations.
 
-### Android Setup
-1. Clone the repository and open it in Android Studio.
-2. Connect your project to Firebase:
-   - Add your `google-services.json` file to the `app/` directory.
-   - Ensure Authentication (Email/Password) and Firestore are enabled in your Firebase console.
-3. Build and run the app on an emulator or physical device running Android API 24+.
+---
 
-### Backend Setup (Payment Webhooks)
-1. Navigate to the `backend/` directory.
-2. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Copy `.env.example` to `.env` and fill in your Chapa API keys and Firebase credentials.
-4. Run the FastAPI server:
-   ```bash
-   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-   ```
+### 🍽️ Smart "Arrive & Eat" Experience
 
-## Key Architectures
+Traditional dine-in experiences often require waiting for menus, waiters, and billing.
 
-### AI-Ready Food Intelligence
-The meal entity is structured to support future AI recommendation engines. It includes highly specific metadata such as `CuisineType`, `SpiceLevel`, `ProteinLevel`, and arrays of tags, allowing for complex vector searches and personalized user diets (e.g., Ethiopian Fasting menus).
+ZapFood introduces a QR-powered dining workflow:
 
-### Realtime State Synchronization
-The app relies heavily on `Flow` and `callbackFlow` to listen to Firestore snapshot changes. This ensures that when a vendor accepts an order, the customer's UI updates instantly without requiring a manual refresh.
+1. Scan table QR code
+2. Automatically check in
+3. Browse menu packages
+4. Order directly to your table
+5. Pay digitally
+6. Leave without waiting
+
+Benefits:
+
+* Reduced waiter dependency
+* Faster table turnover
+* Better customer experience
+* Seamless digital payments
+
+---
+
+### 💳 Secure Payment Processing
+
+Integrated with Chapa for secure Ethiopian payment processing.
+
+Features:
+
+* Mobile money support
+* Digital checkout
+* Transaction verification
+* Deep-link payment callbacks
+
+```text
+zapfood://payment/return
+```
+
+---
+
+## 🏪 Vendor Command Center
+
+A complete operational dashboard for restaurants.
+
+### Order Management System
+
+Real-time order lifecycle management:
+
+```text
+Pending
+   ↓
+Accepted
+   ↓
+Preparing
+   ↓
+Ready
+   ↓
+Delivered
+```
+
+Every transition is synchronized instantly across customer and vendor devices.
+
+---
+
+### Menu Intelligence Management
+
+Vendors can enrich food listings with structured metadata:
+
+* Cuisine Type
+* Protein Level
+* Spice Level
+* Dietary Tags
+* Fasting Compatibility
+* Custom Labels
+
+This structure enables advanced search, filtering, and future AI recommendations.
+
+---
+
+### Role-Aware Navigation
+
+Users are automatically routed to the appropriate experience:
+
+* Customer Portal
+* Vendor Dashboard
+* Admin Console
+
+without requiring separate applications.
+
+---
+
+## 🛡️ Administrative Control Center
+
+### Platform Analytics Dashboard
+
+Administrators gain visibility into:
+
+* Total sales
+* Active users
+* Vendor activity
+* Order volume
+* Platform health
+* System performance
+
+---
+
+### Vendor Verification Workflow
+
+Structured onboarding review system:
+
+* Vendor applications
+* Verification status
+* Approval workflows
+* Restaurant compliance checks
+
+---
+
+### Support & Dispute Resolution
+
+Centralized support infrastructure:
+
+* Customer tickets
+* Vendor disputes
+* Live messaging
+* Resolution tracking
+
+---
+
+# 🏗️ Architecture
+
+The project follows **Clean Architecture** principles with strict separation of concerns.
+
+```text
+Presentation Layer
+        │
+        ▼
+Domain Layer
+        │
+        ▼
+Data Layer
+```
+
+### Architectural Patterns
+
+* Clean Architecture
+* MVVM
+* Repository Pattern
+* Use Case Pattern
+* State Machines
+* Reactive Streams
+
+---
+
+# ⚙️ Technology Stack
+
+## Android
+
+| Technology                  | Purpose                 |
+| --------------------------- | ----------------------- |
+| Kotlin                      | Core Language           |
+| Jetpack Compose             | Modern UI               |
+| Coroutines                  | Asynchronous Operations |
+| Flow                        | Reactive Streams        |
+| Firebase Cloud Messaging    | Push Notifications      |
+| Navigation Compose          | Navigation              |
+| Manual Dependency Injection | Service Management      |
+
+---
+
+## Backend & Infrastructure
+
+| Technology               | Purpose                |
+| ------------------------ | ---------------------- |
+| Firebase Auth            | Authentication         |
+| Firestore                | Realtime Database      |
+| FastAPI                  | Payment & API Services |
+| Chapa                    | Payment Gateway        |
+| Firebase Cloud Messaging | Notifications          |
+
+---
+
+# 📂 Project Structure
+
+```text
+app/src/main/java/com/example/food
+
+├── core/
+│   ├── common
+│   ├── resources
+│   └── theme
+│
+├── data/
+│   ├── repositories
+│   ├── models
+│   └── services
+│
+├── domain/
+│   ├── usecases
+│   ├── statemachines
+│   └── businesslogic
+│
+├── ui/
+│   ├── screens
+│   ├── navigation
+│   ├── viewmodels
+│   └── components
+│
+└── MainActivity.kt
+```
+
+---
+
+# 🔄 Real-Time Synchronization
+
+The platform leverages Firestore snapshot listeners combined with Kotlin Flows:
+
+```kotlin
+callbackFlow { }
+```
+
+This enables:
+
+* Instant order updates
+* Live ticket conversations
+* Real-time vendor notifications
+* Synchronized customer experiences
+
+without requiring manual refreshes.
+
+---
+
+# 🧠 AI-Ready Food Intelligence
+
+Every meal is represented using structured culinary metadata.
+
+```kotlin
+CuisineType
+ProteinLevel
+SpiceLevel
+Tags[]
+```
+
+This design enables future implementation of:
+
+* Vector Search
+* Semantic Recommendations
+* Personalized Diet Planning
+* Predictive Ordering
+* AI Food Discovery
+
+without major database redesigns.
+
+---
+
+# 🔒 State-Driven Reliability
+
+Critical business processes use exhaustive state machines.
+
+Examples include:
+
+* Order Lifecycle
+* Payment Status
+* Ticket Resolution
+* Notification Routing
+
+This approach minimizes invalid states and significantly reduces production failures.
+
+---
+
+# 🚀 Getting Started
+
+## Android Setup
+
+```bash
+git clone <repository-url>
+```
+
+1. Open in Android Studio
+2. Add `google-services.json`
+3. Enable Firebase Authentication
+4. Enable Firestore
+5. Run on Android API 24+
+
+---
+
+## Backend Setup
+
+```bash
+cd backend
+
+pip install -r requirements.txt
+```
+
+Configure:
+
+```env
+CHAPA_SECRET_KEY=
+FIREBASE_CREDENTIALS=
+```
+
+Run:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+---
+
+# 🎯 Future Roadmap
+
+### Version 2
+
+* AI meal recommendations
+* Customer preference modeling
+* Restaurant ranking intelligence
+
+### Version 3
+
+* Driver & logistics module
+* Live delivery tracking
+* Route optimization
+
+### Version 4
+
+* AI chatbot ordering assistant
+* Voice-powered food search
+* Advanced analytics platform
+
+---     
+
+### Built with ❤️ for the Ethiopian DBU Food Ecosystem
+
 
 ### Exhaustive State Machines
 Order lifecycles and notification types are strictly governed by exhaustive `when` expressions, ensuring that edge-case states cannot cause UI crashes or silent failures.
+
+---
+
+### Built with ❤️ for the Ethiopian DBU Food Ecosystem
