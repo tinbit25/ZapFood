@@ -2862,4 +2862,3 @@ This documentation should enable you to:
 - Impress instructors and evaluators
 - Secure funding or partnerships
 
-Good luck with your presentation!
