@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 
 # 🍽️ ZapFood — A Real-Time Food Discovery and Flexible Ordering Platform for the Ethiopian Market
-=======
-# 🍽️ ZapFood — AI-Powered Food Delivery & Restaurant Intelligence Platform
->>>>>>> 2a1657b3550cde28da934d665beb3d13bdeed854
 
 ### 👥 Group Members
 
