@@ -12,7 +12,6 @@ Built with **Kotlin**, **Jetpack Compose**, **Firebase**, and **FastAPI**, ZapFo
 Designed from the ground up for scalability, personalization, and the unique dynamics of Ethiopian dining culture.
 
 ---
-
 # ✨ Overview
 
 ZapFood goes beyond traditional food delivery applications.
