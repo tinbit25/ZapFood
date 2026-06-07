@@ -55,6 +55,10 @@ The platform introduces an intelligent restaurant ecosystem where customers can 
 
 ### Customer Experience
 
+| Onboarding: Discover Foods                | Onboarding: Order Your Way                | Onboarding: Smart Recommendations          |
+| ----------------------------------------- | ----------------------------------------- | ----------------------------------------- |
+| ![](images/customer_onboarding_1.jpg)     | ![](images/customer_onboarding_2.jpg)     | ![](images/customer_onboarding_3.jpg)     |
+
 | Welcome                                   | Authentication                            | Discovery Hub                             |
 | ----------------------------------------- | ----------------------------------------- | ----------------------------------------- |
 | ![](images/photo_2026-05-17_06-48-19.jpg) | ![](images/photo_2026-05-17_06-50-36.jpg) | ![](images/photo_2026-05-17_06-51-06.jpg) |
@@ -68,6 +72,26 @@ The platform introduces an intelligent restaurant ecosystem where customers can 
 | Ticket Resolution Hub                     |
 | ----------------------------------------- |
 | ![](images/photo_2026-05-17_06-54-41.jpg) |
+
+---
+
+### 🏪 Vendor Experience
+
+| Dashboard                                 | Order Management                          | Menu Management                           |
+| ----------------------------------------- | ----------------------------------------- | ----------------------------------------- |
+| ![](images/vendor_dashboard.jpg)          | ![](images/vendor_orders.jpg)             | ![](images/vendor_menu.jpg)               |
+
+| Business Insights                         | Scan Pickup QR                            |
+| ----------------------------------------- | ----------------------------------------- |
+| ![](images/vendor_analytics.jpg)          | ![](images/vendor_qr_scan.jpg)            |
+
+---
+
+### 🛡️ Admin Experience
+
+| System Overview                           | Control Center                            |
+| ----------------------------------------- | ----------------------------------------- |
+| ![](images/admin_dashboard.jpg)           | ![](images/admin_control.jpg)             |
 
 ---
 
