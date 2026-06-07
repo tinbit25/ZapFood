@@ -69,9 +69,9 @@ The platform introduces an intelligent restaurant ecosystem where customers can 
 
 ### Platform Support Center
 
-| Ticket Resolution Hub                     |
-| ----------------------------------------- |
-| ![](images/photo_2026-05-17_06-54-41.jpg) |
+| Ticket Resolution Hub                     | Support Tickets Dashboard                 | Platform Feedback Reviews                 |
+| ----------------------------------------- | ----------------------------------------- | ----------------------------------------- |
+| ![](images/photo_2026-05-17_06-54-41.jpg) | ![](images/support_dashboard_1.jpg)       | ![](images/support_dashboard_2.jpg)       |
 
 ---
 
