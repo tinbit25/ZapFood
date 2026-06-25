@@ -3,17 +3,6 @@
 
 > A next-generation Ethiopian food delivery ecosystem combining intelligent meal discovery, smart dine-in experiences, real-time order management, and AI-ready culinary intelligence.
 
-### 👥 Group Members
-
-| Name | ID Number |
-| :--- | :--- |
-| Kisanet Hailemariam | DBU1501313 |
-| Yeabsira Behailu | DBU1501550 |
-| Fitsum Niguss | DBU1501424 |
-| Betelhem Hiluf | DBU1501054 |
-| Tinbite Elias | DBU1602103 |
-| Kalkidan K/Mariyam | DBU1501713 |
-
 
 
 Built with **Kotlin**, **Jetpack Compose**, **Firebase**, and **FastAPI**, ZapFood serves three interconnected platforms:
